@@ -1,5 +1,9 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 // Auth Pages
@@ -10,14 +14,21 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetOTP from "./pages/ResetOTP";
 import NewPassword from "./pages/NewPassword";
 import Success from "./pages/Success";
+import SelectService from "./pages/SelectService";
+import ProtectedRoute from "./pages/ProtectedRoute";
+import Profile from "./pages/Profile";
+
 
 // Main Pages
 import Home from "./pages/Home";
 import SalonDetails from "./pages/SalonDetails";
+import SalonDetail1 from "./pages/SalonDetail1";
+
 
 export default function App() {
   return (
     <BrowserRouter>
+      {/* Toast */}
       <Toaster
         position="top-center"
         reverseOrder={false}
@@ -32,21 +43,42 @@ export default function App() {
       />
 
       <Routes>
-
+        {/* 🌟 DEFAULT HOME PAGE (Login પહેલા) */}
         <Route path="/" element={<Home />} />
 
         {/* Auth Flow */}
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/otp" element={<OTPVerify />} />
-        <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-otp" element={<ResetOTP />} />
         <Route path="/new-password" element={<NewPassword />} />
         <Route path="/success" element={<Success />} />
+        <Route path="/profile" element={<Profile />} />
 
-        {/* After Login */}
+        {/* Pages */}
         <Route path="/home" element={<Home />} />
-        <Route path="/salon/:id" element={<SalonDetails />} />
+       <Route path="/salon-details/:id" element={<SalonDetails />} />
+       <Route path="/salon/:id" element={<SalonDetail1 />} />
+
+       <Route
+  path="/book/:salonId"
+  element={
+    <ProtectedRoute>
+      <SelectService />
+    </ProtectedRoute>
+  }
+/>
+
+        {/* 404 */}
+        <Route
+          path="*"
+          element={
+            <h1 className="text-center mt-10 text-2xl">
+              404 Page Not Found
+            </h1>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

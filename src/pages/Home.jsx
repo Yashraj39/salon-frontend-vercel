@@ -220,7 +220,7 @@ export default function Home() {
                   </div>
 
                   <button
-                    onClick={() => navigate(`/salon/${salon.salonId}`)}
+                    onClick={() => navigate(`/salon-details/${salon.salonId}`)}
                     className="mt-3 w-full border  py-1.5 rounded-md text-xs cursor-pointer  hover:bg-gray-50"
                   >
                     View Salon

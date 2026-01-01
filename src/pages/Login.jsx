@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../axiosConfig";
+import api from "../api";
 import toast from "react-hot-toast";
 
 export default function Login() {
@@ -20,13 +20,25 @@ export default function Login() {
         password,
       });
 
-      // Store token
-      localStorage.setItem("token", res.data.token);
+      console.log("LOGIN RESPONSE 👉", res.data);
+
+      // ✅ STORE USER DATA (as per your API response)
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          userId: res.data.userId || "",
+          name: res.data.name || "",
+          email: res.data.email || "",
+          isAccountVerified: res.data.isAccountVerified || false,
+        })
+      );
 
       toast.success("Login successful!");
-      navigate("/home");
+      navigate("/success");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Login failed!");
+      toast.error(
+        err?.response?.data?.message || "Login failed!"
+      );
     }
   };
 
