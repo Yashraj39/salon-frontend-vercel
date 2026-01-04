@@ -15,14 +15,9 @@ export default function Login() {
     }
 
     try {
-      const res = await api.post("/login", {
-        email,
-        password,
-      });
+      const res = await api.post("/login", { email, password });
 
-      console.log("LOGIN RESPONSE 👉", res.data);
-
-      // ✅ STORE USER DATA (as per your API response)
+      // ✅ STORE USER IN LOCAL STORAGE
       localStorage.setItem(
         "user",
         JSON.stringify({
@@ -36,9 +31,7 @@ export default function Login() {
       toast.success("Login successful!");
       navigate("/success");
     } catch (err) {
-      toast.error(
-        err?.response?.data?.message || "Login failed!"
-      );
+      toast.error(err?.response?.data?.message || "Login failed!");
     }
   };
 
@@ -85,14 +78,14 @@ export default function Login() {
             <div className="flex gap-3 mb-2">
               <button
                 onClick={handleLogin}
-                className="bg-black text-white px-6 py-2 rounded-md text-sm cursor-pointer"
+                className="bg-black text-white px-6 py-2 cursor-pointer  rounded-md text-sm"
               >
                 Log in
               </button>
 
               <button
                 onClick={() => navigate("/register")}
-                className="border px-6 py-2 rounded-md text-sm cursor-pointer"
+                className="border px-6 py-2 cursor-pointer rounded-md text-sm"
               >
                 Sign Up
               </button>
@@ -104,13 +97,9 @@ export default function Login() {
           </div>
         </div>
 
-        {/* RIGHT ILLUSTRATION */}
+        {/* RIGHT IMAGE */}
         <div className="w-1/2 flex justify-start pl-16">
-          <img
-            src="public/Hero.png"
-            alt="login"
-            className="w-[320px]"
-          />
+          <img src="/Hero.png" alt="login" className="w-[320px]" />
         </div>
       </div>
     </div>

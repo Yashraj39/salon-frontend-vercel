@@ -48,7 +48,7 @@ export default function SalonDetail1() {
         {/* LEFT */}
         <div
           className="flex items-center gap-2 text-lg font-semibold cursor-pointer"
-          onClick={() => navigate("/home")}
+          onClick={() => navigate("/success")}
         >
           <div className="h-7 w-7 rounded-md bg-slate-900"></div>
           Glow & Shine
@@ -57,7 +57,7 @@ export default function SalonDetail1() {
         {/* CENTER */}
         <div className="flex items-center gap-10 text-sm font-medium">
           <span
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/success")}
             className="cursor-pointer text-gray-500 hover:text-black"
           >
             Home
@@ -119,7 +119,7 @@ export default function SalonDetail1() {
            <div className="flex items-center gap-4 mb-4">
               <FaPhone className="text-lg" />
               <p className="text-gray-700">
-                {salon.phone || "Phone not available"}
+                {salon.contact || "Phone not available"}
               </p>
             </div>
 

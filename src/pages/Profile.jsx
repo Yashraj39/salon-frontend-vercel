@@ -7,7 +7,7 @@ import {
   FaLock,
   FaCamera,
 } from "react-icons/fa";
-import { FiBell, FiUser } from "react-icons/fi";
+import { FiBell, FiUser, FiLogOut } from "react-icons/fi";
 import toast from "react-hot-toast";
 
 export default function Profile() {
@@ -17,17 +17,36 @@ export default function Profile() {
   const [backup, setBackup] = useState(null);
 
   const [userData, setUserData] = useState({
+    userId: "",
     name: "",
     email: "",
     phone: "",
     avatar: "",
   });
 
-  /* ================= LOAD USER ================= */
+  /* ================= LOAD USER & IMAGE ================= */
   useEffect(() => {
     const stored = localStorage.getItem("user");
-    if (stored) {
-      setUserData(JSON.parse(stored));
+    if (!stored) return;
+
+    const user = JSON.parse(stored);
+    setUserData(user);
+
+    // 🔹 FETCH PROFILE IMAGE FROM API
+    if (user.userId) {
+      fetch(
+        `https://render-qs89.onrender.com/api/v1.0/get-profile-image/${user.userId}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.imageUrl) {
+            setUserData((prev) => ({
+              ...prev,
+              avatar: data.imageUrl,
+            }));
+          }
+        })
+        .catch((err) => console.error("Image fetch error", err));
     }
   }, []);
 
@@ -37,24 +56,51 @@ export default function Profile() {
     setUserData((prev) => ({ ...prev, [name]: value }));
   };
 
-  /* ================= IMAGE UPLOAD ================= */
-  const handleImageUpload = (e) => {
+  /* ================= IMAGE UPLOAD (BACKEND MATCHED) ================= */
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setUserData((prev) => ({ ...prev, avatar: reader.result }));
-    };
-    reader.readAsDataURL(file);
+    try {
+      const formData = new FormData();
+      formData.append("userId", userData.userId);
+      formData.append("image", file);
+
+      const res = await fetch(
+        "https://render-qs89.onrender.com/api/v1.0/add-profile-image",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const message = await res.text();
+
+      if (!res.ok) throw new Error(message);
+
+      // ✅ CONSOLE MESSAGE
+      console.log(message); // Profile image added successfully
+
+      // ✅ TEMP IMAGE PREVIEW
+      const previewUrl = URL.createObjectURL(file);
+      setUserData((prev) => ({
+        ...prev,
+        avatar: previewUrl,
+      }));
+
+      toast.success("Profile image updated");
+    } catch (error) {
+      console.error("Image upload error:", error.message);
+      toast.error("Failed to upload image");
+    }
   };
 
-  /* ================= REMOVE PHOTO ================= */
+  /* ================= REMOVE PHOTO (UI ONLY) ================= */
   const handleRemovePhoto = () => {
     setUserData((prev) => ({ ...prev, avatar: "" }));
   };
 
-  /* ================= SAVE ================= */
+  /* ================= SAVE PROFILE ================= */
   const handleSave = () => {
     localStorage.setItem("user", JSON.stringify(userData));
     toast.success("Profile updated successfully");
@@ -67,56 +113,52 @@ export default function Profile() {
     setEditMode(false);
   };
 
+  /* ================= LOGOUT ================= */
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    toast.success("Logout successfully");
+    navigate("/home");
+  };
+
   return (
     <div className="min-h-screen bg-white">
-
       {/* ================= NAVBAR ================= */}
-      <div className="flex items-center justify-between px-10 py-4 bg-white border-b">
-        {/* LEFT */}
+      <div className="flex items-center justify-between px-10 py-4 border-b">
         <div
           className="flex items-center gap-2 text-lg font-semibold cursor-pointer"
           onClick={() => navigate("/home")}
         >
-          <div className="h-7 w-7 rounded-md bg-slate-900"></div>
+          <div className="h-7 w-7 rounded-md bg-black"></div>
           Glow & Shine
         </div>
 
-        {/* CENTER */}
-        <div className="flex items-center gap-10 text-sm font-medium">
-          <span
-            onClick={() => navigate("/success")}
-            className="cursor-pointer text-gray-500 hover:text-black"
-          >
+        <div className="flex items-center gap-10 text-sm">
+          <span onClick={() => navigate("/success")} className="cursor-pointer">
             Home
           </span>
-          <span
-            onClick={() => navigate("/bookings")}
-            className="cursor-pointer text-gray-500 hover:text-black"
-          >
+          <span onClick={() => navigate("/bookings")} className="cursor-pointer">
             My Bookings
           </span>
         </div>
 
-        {/* RIGHT */}
         <div className="flex items-center gap-5">
-          <FiBell className="text-xl cursor-pointer" />
-          <div
-            className="cursor-pointer border-b-2 border-black pb-1"
-            onClick={() => navigate("/profile")}
+          <FiBell className="text-2xl cursor-pointer" />
+          <FiUser className="text-2xl cursor-pointer border-b-2 border-black pb-1" />
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 border px-4 py-2 rounded-md cursor-pointer"
           >
-            <FiUser className="text-xl" />
-          </div>
+            <FiLogOut />
+            Logout
+          </button>
         </div>
       </div>
 
       {/* ================= PROFILE CARD ================= */}
       <div className="flex justify-center mt-28">
         <div className="bg-gray-200 w-[1100px] rounded-3xl px-20 py-24 relative">
-
           {/* PROFILE IMAGE */}
           <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center">
-
-            {/* IMAGE CIRCLE */}
             <div className="w-40 h-40 rounded-full border bg-white flex items-center justify-center overflow-hidden shadow">
               {userData.avatar ? (
                 <img
@@ -127,16 +169,14 @@ export default function Profile() {
               ) : (
                 <img
                   src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
-                  alt="default-user"
+                  alt="default"
                   className="w-24 opacity-70"
                 />
               )}
             </div>
 
-            {/* IMAGE ACTIONS */}
             {editMode && (
               <div className="mt-3 flex gap-3">
-                {/* CHANGE PHOTO */}
                 <label className="flex items-center gap-2 text-sm cursor-pointer bg-white px-4 py-2 rounded-full shadow">
                   <FaCamera />
                   Change Photo
@@ -148,11 +188,10 @@ export default function Profile() {
                   />
                 </label>
 
-                {/* REMOVE PHOTO */}
                 {userData.avatar && (
                   <button
                     onClick={handleRemovePhoto}
-                    className="text-sm bg-white px-4 cursor-pointer py-2 rounded-full shadow hover:bg-gray-100"
+                    className="text-sm bg-white px-4 py-2 rounded-full shadow"
                   >
                     Remove Photo
                   </button>
@@ -163,8 +202,6 @@ export default function Profile() {
 
           {/* ================= FORM ================= */}
           <div className="grid grid-cols-2 gap-12 mt-20">
-
-            {/* USERNAME */}
             <div>
               <label className="text-sm font-medium">Username</label>
               <div className="mt-2 bg-white rounded-full flex items-center px-5">
@@ -179,7 +216,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* EMAIL */}
             <div>
               <label className="text-sm font-medium">Your Email</label>
               <div className="mt-2 bg-white rounded-full flex items-center px-5">
@@ -192,7 +228,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* PHONE */}
             <div>
               <label className="text-sm font-medium">Phone</label>
               <div className="mt-2 bg-white rounded-full flex items-center px-5">
@@ -207,7 +242,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* PASSWORD */}
             <div>
               <label className="text-sm font-medium">Password</label>
               <div className="mt-2 bg-white rounded-full flex items-center px-5">
@@ -230,7 +264,7 @@ export default function Profile() {
                   setBackup(userData);
                   setEditMode(true);
                 }}
-                className="bg-slate-900 text-white cursor-pointer px-14 py-3 rounded-xl"
+                className="bg-slate-900 text-white px-14 py-3 rounded-xl cursor-pointer"
               >
                 Edit
               </button>
@@ -238,20 +272,19 @@ export default function Profile() {
               <>
                 <button
                   onClick={handleSave}
-                  className="bg-slate-900 text-white px-14 cursor-pointer py-3 rounded-xl"
+                  className="bg-slate-900 text-white px-14 py-3 rounded-xl cursor-pointer"
                 >
                   Save
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="border px-14 py-3 cursor-pointer rounded-xl"
+                  className="border px-14 py-3 rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>
               </>
             )}
           </div>
-
         </div>
       </div>
     </div>

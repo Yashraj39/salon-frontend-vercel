@@ -98,7 +98,7 @@ export default function SalonDetails() {
             <div className="flex items-center gap-4 mb-4">
               <FaPhone className="text-lg" />
               <p className="text-gray-700">
-                {salon.phone || "Phone not available"}
+                {salon.contact || "Phone not available"}
               </p>
             </div>
 

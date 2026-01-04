@@ -80,7 +80,7 @@ export default function Home() {
         {/* LEFT */}
         <div
           className="flex items-center gap-2 text-lg font-semibold cursor-pointer"
-          onClick={() => navigate("/home")}
+          onClick={() => navigate("/success")}
         >
           <div className="h-7 w-7 rounded-md bg-slate-900"></div>
           Glow & Shine
@@ -89,7 +89,7 @@ export default function Home() {
         {/* CENTER */}
         <div className="flex items-center gap-10 text-sm font-medium">
           <span
-            onClick={() => navigate("/home")}
+            onClick={() => navigate("/success")}
             className="cursor-pointer border-b-2 border-black pb-1"
           >
             Home
@@ -135,7 +135,7 @@ export default function Home() {
           />
           <button
             onClick={handleSearch}
-            className="bg-black text-white px-6 rounded-lg"
+            className="bg-black text-white cursor-pointer  px-6 rounded-lg"
           >
             Search
           </button>

@@ -19,10 +19,12 @@ import ProtectedRoute from "./pages/ProtectedRoute";
 import Profile from "./pages/Profile";
 
 
+
 // Main Pages
 import Home from "./pages/Home";
 import SalonDetails from "./pages/SalonDetails";
 import SalonDetail1 from "./pages/SalonDetail1";
+import AddServices from "./pages/AddServices";
 
 
 export default function App() {
@@ -60,6 +62,8 @@ export default function App() {
         <Route path="/home" element={<Home />} />
        <Route path="/salon-details/:id" element={<SalonDetails />} />
        <Route path="/salon/:id" element={<SalonDetail1 />} />
+       <Route path="/add-services/:salonId" element={<AddServices/>} />
+
 
        <Route
   path="/book/:salonId"
