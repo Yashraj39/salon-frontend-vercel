@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { IoArrowBack } from "react-icons/io5";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { FiBell, FiUser } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 export default function SelectService() {
   const { salonId } = useParams();
@@ -43,7 +44,6 @@ export default function SelectService() {
 
         let filteredData = Array.isArray(data) ? data : [];
 
-        // FRONTEND gender filter (API ma gender param nathi)
         if (gender !== "all") {
           filteredData = filteredData.filter(
             (s) =>
@@ -65,37 +65,62 @@ export default function SelectService() {
   }, [salonId, selectedCategory, gender]);
 
   /* ================= ADD SERVICE ================= */
-const handleAddService = async (service) => {
-  try {
-    const serviceId = service._id || service.id;
-
-    const formData = new FormData();
-    formData.append("userId", "694800ad64ee233d55c0ba67");
-    formData.append("salonId", salonId);
-    formData.append("serviceId", serviceId);
-
-    const res = await fetch(
-      "https://render-qs89.onrender.com/api/cart/add",
-      {
-        method: "POST",
-        body: formData,
+  const handleAddService = async (service) => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user")) || {};
+      const userId = user.userId;
+      if (!userId) {
+        toast.error("User not logged in!");
+        navigate("/login");
+        return;
       }
-    );
 
-    const data = await res.json();
+      const serviceId = service._id || service.id;
 
-    // 🔥 IMPORTANT: backend cart save
-    localStorage.setItem("cartData", JSON.stringify(data));
+      // 🔹 LOCAL STORAGE
+      let cartData = JSON.parse(localStorage.getItem("cartData")) || { items: [] };
+      cartData.items.push({
+        serviceId,
+        salonId,
+        userId,
+        serviceName: service.name,
+        price: service.price,
+        time: service.time,
+        imageUrl: service.imageUrl,
+      });
+      localStorage.setItem("cartData", JSON.stringify(cartData));
 
-    navigate(`/add-services/${salonId}`);
-  } catch (err) {
-    console.error(err);
-  }
-};
+      toast.success("Service added to cart!");
 
+      // 🔹 BACKEND FETCH (NO TOKEN)
+      try {
+        const url = `https://render-qs89.onrender.com/api/cart/add`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            salonId,
+            serviceId,
+            serviceName: service.name,
+            price: service.price,
+            time: service.time,
+          }),
+        });
 
+        if (!res.ok) {
+          console.warn("Backend returned", res.status);
+        }
+      } catch (err) {
+        console.warn("Backend add service failed:", err);
+      }
 
-
+      navigate(`/add-services/${salonId}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Cannot add service to cart!");
+    }
+  };
 
   return (
     <div className="h-screen flex flex-col bg-white">
@@ -242,41 +267,19 @@ const handleAddService = async (service) => {
                   ⏱ {s.time} Min
                 </div>
 
-                <p className="mt-2 font-semibold text-sm">
-                  ₹ {s.price}
-                </p>
+                <p className="mt-2 font-semibold text-sm">₹ {s.price}</p>
 
                 <button
-  className="mt-4 bg-black text-white text-xs py-2 cursor-pointer rounded-full"
-  onClick={() => handleAddService(s)}
->
-  Add Service
-</button>
-
+                  className="mt-4 bg-black text-white text-xs py-2 cursor-pointer rounded-full"
+                  onClick={() => handleAddService(s)}
+                >
+                  Add Service
+                </button>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {/* FOOTER */}
-      {/* <footer className="fixed bottom-0 left-0 w-full border-t bg-white z-50">
-        <div className="max-w-7xl mx-auto px-14 py-4 flex justify-between items-center text-sm text-gray-500">
-          <div className="flex items-center gap-3">
-            <div className="h-6 w-6 rounded-md bg-black" />
-            <span className="font-semibold text-black">Glow & Shine</span>
-          </div>
-          <p>© 2025 Glow & Shine Inc. All rights reserved.</p>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-black">
-              Terms
-            </a>
-            <a href="#" className="hover:text-black">
-              Privacy
-            </a>
-          </div>
-        </div>
-      </footer> */}
     </div>
   );
 }
