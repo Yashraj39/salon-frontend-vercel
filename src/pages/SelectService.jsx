@@ -66,45 +66,61 @@ export default function SelectService() {
 
   /* ================= ADD SERVICE ================= */
   const handleAddService = async (service) => {
-  try {
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    if (!user || !user._id) {
-      toast.error("User not logged in!");
-      navigate("/login");
-      return;
-    }
-
-    const userId = user._id;
-    const serviceId = service._id || service.id;
-
-    // 🔹 CALL BACKEND FIRST (IMPORTANT)
-    const res = await fetch(
-      "https://render-qs89.onrender.com/api/cart/add",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          salonId,
-          serviceId,
-        }),
+    try {
+      const user = JSON.parse(localStorage.getItem("user")) || {};
+      const userId = user.userId;
+      if (!userId) {
+        toast.error("User not logged in!");
+        navigate("/login");
+        return;
       }
-    );
 
-    if (!res.ok) {
-      const msg = await res.text();
-      toast.error(msg || "Service from this category already added");
-      return;
+      const serviceId = service._id || service.id;
+
+      // 🔹 LOCAL STORAGE
+      let cartData = JSON.parse(localStorage.getItem("cartData")) || { items: [] };
+      cartData.items.push({
+        serviceId,
+        salonId,
+        userId,
+        serviceName: service.name,
+        price: service.price,
+        time: service.time,
+        imageUrl: service.imageUrl,
+      });
+      localStorage.setItem("cartData", JSON.stringify(cartData));
+
+      toast.success("Service added to cart!");
+
+      // 🔹 BACKEND FETCH (NO TOKEN)
+      try {
+        const url = `https://render-qs89.onrender.com/api/cart/add`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            salonId,
+            serviceId,
+            serviceName: service.name,
+            price: service.price,
+            time: service.time,
+          }),
+        });
+
+        if (!res.ok) {
+          console.warn("Backend returned", res.status);
+        }
+      } catch (err) {
+        console.warn("Backend add service failed:", err);
+      }
+
+      navigate(`/add-services/${salonId}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Cannot add service to cart!");
     }
-
-    toast.success("Service added to cart!");
-    navigate(`/add-services/${salonId}`);
-  } catch (err) {
-    console.error(err);
-    toast.error("Cannot add service to cart!");
-  }
-};
+  };
 
   return (
     <div className="h-screen flex flex-col bg-white">
