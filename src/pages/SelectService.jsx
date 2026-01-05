@@ -67,55 +67,39 @@ export default function SelectService() {
   /* ================= ADD SERVICE ================= */
   const handleAddService = async (service) => {
   try {
-    const user = JSON.parse(localStorage.getItem("user")) || {};
-    const userId = user.userId;
+    const user = JSON.parse(localStorage.getItem("user"));
 
-    if (!userId) {
+    if (!user || !user._id) {
       toast.error("User not logged in!");
       navigate("/login");
       return;
     }
 
+    const userId = user._id;
     const serviceId = service._id || service.id;
 
-    // 🔹 BACKEND FIRST (IMPORTANT)
-    const url = `https://render-qs89.onrender.com/api/cart/add`;
+    // 🔹 CALL BACKEND FIRST (IMPORTANT)
+    const res = await fetch(
+      "https://render-qs89.onrender.com/api/cart/add",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          salonId,
+          serviceId,
+        }),
+      }
+    );
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        salonId,
-        serviceId,
-      }),
-    });
-
-    // 🔴 CATEGORY ALREADY EXISTS (BACKEND CHECK)
     if (!res.ok) {
       const msg = await res.text();
       toast.error(msg || "Service from this category already added");
       return;
     }
 
-    // 🔹 UPDATE LOCAL STORAGE ONLY AFTER SUCCESS
-    let cartData = JSON.parse(localStorage.getItem("cartData")) || { items: [] };
-
-    cartData.items.push({
-      serviceId,
-      salonId,
-      userId,
-      serviceName: service.name,
-      price: service.price,
-      time: service.time,
-      imageUrl: service.imageUrl,
-    });
-
-    localStorage.setItem("cartData", JSON.stringify(cartData));
-
     toast.success("Service added to cart!");
     navigate(`/add-services/${salonId}`);
-
   } catch (err) {
     console.error(err);
     toast.error("Cannot add service to cart!");
