@@ -65,62 +65,74 @@ export default function SelectService() {
   }, [salonId, selectedCategory, gender]);
 
   /* ================= ADD SERVICE ================= */
-  const handleAddService = async (service) => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user")) || {};
-      const userId = user.userId;
-      if (!userId) {
-        toast.error("User not logged in!");
-        navigate("/login");
-        return;
-      }
+   const handleAddService = async (service) => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user")) || {};
+    const userId = user.userId;
 
-      const serviceId = service._id || service.id;
-
-      // 🔹 LOCAL STORAGE
-      let cartData = JSON.parse(localStorage.getItem("cartData")) || { items: [] };
-      cartData.items.push({
-        serviceId,
-        salonId,
-        userId,
-        serviceName: service.name,
-        price: service.price,
-        time: service.time,
-        imageUrl: service.imageUrl,
-      });
-      localStorage.setItem("cartData", JSON.stringify(cartData));
-
-      toast.success("Service added to cart!");
-
-      // 🔹 BACKEND FETCH (NO TOKEN)
-      try {
-        const url = `https://render-qs89.onrender.com/api/cart/add`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            salonId,
-            serviceId,
-            serviceName: service.name,
-            price: service.price,
-            time: service.time,
-          }),
-        });
-
-        if (!res.ok) {
-          console.warn("Backend returned", res.status);
-        }
-      } catch (err) {
-        console.warn("Backend add service failed:", err);
-      }
-
-      navigate(`/add-services/${salonId}`);
-    } catch (err) {
-      console.error(err);
-      toast.error("Cannot add service to cart!");
+    if (!userId) {
+      toast.error("User not logged in!");
+      navigate("/login");
+      return;
     }
-  };
+
+    const serviceId = service._id || service.id;
+
+    // 🔹 GET CART
+    let cartData = JSON.parse(localStorage.getItem("cartData")) || { items: [] };
+
+    // 🔴 CHECK SAME SERVICE ALREADY ADDED
+    const alreadyAdded = cartData.items.some(
+      (item) =>
+        item.serviceId === serviceId &&
+        item.salonId === salonId &&
+        item.userId === userId
+    );
+
+    if (alreadyAdded) {
+      toast.error("This service is already added");
+      return;
+    }
+
+    // 🔹 ADD SERVICE
+    cartData.items.push({
+      serviceId,
+      salonId,
+      userId,
+      serviceName: service.name,
+      price: service.price,
+      time: service.time,
+      imageUrl: service.imageUrl,
+    });
+
+    localStorage.setItem("cartData", JSON.stringify(cartData));
+
+    toast.success("Service added to cart!");
+
+    // 🔹 BACKEND (OPTIONAL)
+    try {
+      await fetch(`https://render-qs89.onrender.com/api/cart/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          salonId,
+          serviceId,
+          serviceName: service.name,
+          price: service.price,
+          time: service.time,
+        }),
+      });
+    } catch (err) {
+      console.warn("Backend add failed");
+    }
+
+    navigate(`/add-services/${salonId}`);
+  } catch (err) {
+    console.error(err);
+    toast.error("Cannot add service");
+  }
+};
 
   return (
     <div className="h-screen flex flex-col bg-white">

@@ -24,30 +24,37 @@ export default function Profile() {
     avatar: "",
   });
 
-  /* ================= LOAD USER & IMAGE ================= */
+  /* ================= LOAD USER + IMAGE ================= */
   useEffect(() => {
     const stored = localStorage.getItem("user");
     if (!stored) return;
 
     const user = JSON.parse(stored);
-    setUserData(user);
 
-    // 🔹 FETCH PROFILE IMAGE FROM API
-    if (user.userId) {
-      fetch(
-        `https://render-qs89.onrender.com/api/v1.0/get-profile-image/${user.userId}`
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.imageUrl) {
-            setUserData((prev) => ({
-              ...prev,
-              avatar: data.imageUrl,
-            }));
-          }
-        })
-        .catch((err) => console.error("Image fetch error", err));
-    }
+    setUserData({
+      userId: user.userId,
+      name: user.name || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      avatar: "",
+    });
+
+    // 🔹 GET IMAGE
+    fetch(
+      `https://render-qs89.onrender.com/api/v1.0/get-profile-image/${user.userId}`
+    )
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.imageUrl) {
+          setUserData((prev) => ({
+            ...prev,
+            avatar: data.imageUrl,
+          }));
+        }
+      })
+      .catch(() => {
+        // silent fail
+      });
   }, []);
 
   /* ================= INPUT CHANGE ================= */
@@ -56,10 +63,10 @@ export default function Profile() {
     setUserData((prev) => ({ ...prev, [name]: value }));
   };
 
-  /* ================= IMAGE UPLOAD (BACKEND MATCHED) ================= */
+  /* ================= IMAGE UPLOAD (SAFE) ================= */
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file || !userData.userId) return;
 
     try {
       const formData = new FormData();
@@ -74,24 +81,27 @@ export default function Profile() {
         }
       );
 
-      const message = await res.text();
+      // ❌ backend 403 / empty response handle
+      if (!res.ok) {
+        toast.error("Image upload not allowed");
+        return;
+      }
 
-      if (!res.ok) throw new Error(message);
+      let data = null;
+      try {
+        data = await res.json();
+      } catch {}
 
-      // ✅ CONSOLE MESSAGE
-      console.log(message); // Profile image added successfully
-
-      // ✅ TEMP IMAGE PREVIEW
-      const previewUrl = URL.createObjectURL(file);
-      setUserData((prev) => ({
-        ...prev,
-        avatar: previewUrl,
-      }));
+      if (data?.imageUrl) {
+        setUserData((prev) => ({
+          ...prev,
+          avatar: data.imageUrl,
+        }));
+      }
 
       toast.success("Profile image updated");
-    } catch (error) {
-      console.error("Image upload error:", error.message);
-      toast.error("Failed to upload image");
+    } catch (err) {
+      toast.error("Image upload failed");
     }
   };
 
@@ -102,8 +112,17 @@ export default function Profile() {
 
   /* ================= SAVE PROFILE ================= */
   const handleSave = () => {
-    localStorage.setItem("user", JSON.stringify(userData));
-    toast.success("Profile updated successfully");
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        userId: userData.userId,
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+      })
+    );
+
+    toast.success("Profile updated");
     setEditMode(false);
   };
 
@@ -122,7 +141,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* ================= NAVBAR ================= */}
+      {/* NAVBAR */}
       <div className="flex items-center justify-between px-10 py-4 border-b">
         <div
           className="flex items-center gap-2 text-lg font-semibold cursor-pointer"
@@ -146,7 +165,7 @@ export default function Profile() {
           <FiUser className="text-2xl cursor-pointer border-b-2 border-black pb-1" />
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 border px-4 py-2 rounded-md cursor-pointer"
+            className="flex items-center gap-2 border px-4 py-2 rounded-md"
           >
             <FiLogOut />
             Logout
@@ -154,10 +173,10 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* ================= PROFILE CARD ================= */}
+      {/* PROFILE CARD */}
       <div className="flex justify-center mt-28">
         <div className="bg-gray-200 w-[1100px] rounded-3xl px-20 py-24 relative">
-          {/* PROFILE IMAGE */}
+          {/* IMAGE */}
           <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex flex-col items-center">
             <div className="w-40 h-40 rounded-full border bg-white flex items-center justify-center overflow-hidden shadow">
               {userData.avatar ? (
@@ -200,63 +219,15 @@ export default function Profile() {
             )}
           </div>
 
-          {/* ================= FORM ================= */}
+          {/* FORM */}
           <div className="grid grid-cols-2 gap-12 mt-20">
-            <div>
-              <label className="text-sm font-medium">Username</label>
-              <div className="mt-2 bg-white rounded-full flex items-center px-5">
-                <input
-                  name="name"
-                  value={userData.name}
-                  onChange={handleChange}
-                  disabled={!editMode}
-                  className="flex-1 py-3 outline-none bg-transparent"
-                />
-                <FaUser />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Your Email</label>
-              <div className="mt-2 bg-white rounded-full flex items-center px-5">
-                <input
-                  value={userData.email}
-                  disabled
-                  className="flex-1 py-3 outline-none bg-transparent"
-                />
-                <FaEnvelope />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Phone</label>
-              <div className="mt-2 bg-white rounded-full flex items-center px-5">
-                <input
-                  name="phone"
-                  value={userData.phone}
-                  onChange={handleChange}
-                  disabled={!editMode}
-                  className="flex-1 py-3 outline-none bg-transparent"
-                />
-                <FaPhone />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Password</label>
-              <div className="mt-2 bg-white rounded-full flex items-center px-5">
-                <input
-                  type="password"
-                  value="********"
-                  disabled
-                  className="flex-1 py-3 outline-none bg-transparent"
-                />
-                <FaLock />
-              </div>
-            </div>
+            <Input label="Username" icon={<FaUser />} name="name" value={userData.name} onChange={handleChange} disabled={!editMode} />
+            <Input label="Your Email" icon={<FaEnvelope />} value={userData.email} disabled />
+            <Input label="Phone" icon={<FaPhone />} name="phone" value={userData.phone} onChange={handleChange} disabled={!editMode} />
+            <Input label="Password" icon={<FaLock />} type="password" value="********" disabled />
           </div>
 
-          {/* ================= BUTTONS ================= */}
+          {/* BUTTONS */}
           <div className="flex justify-center mt-16 gap-6">
             {!editMode ? (
               <button
@@ -264,7 +235,7 @@ export default function Profile() {
                   setBackup(userData);
                   setEditMode(true);
                 }}
-                className="bg-slate-900 text-white px-14 py-3 rounded-xl cursor-pointer"
+                className="bg-slate-900 text-white px-14 py-3 rounded-xl"
               >
                 Edit
               </button>
@@ -272,13 +243,13 @@ export default function Profile() {
               <>
                 <button
                   onClick={handleSave}
-                  className="bg-slate-900 text-white px-14 py-3 rounded-xl cursor-pointer"
+                  className="bg-slate-900 text-white px-14 py-3 rounded-xl"
                 >
                   Save
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="border px-14 py-3 rounded-xl cursor-pointer"
+                  className="border px-14 py-3 rounded-xl"
                 >
                   Cancel
                 </button>
@@ -286,6 +257,22 @@ export default function Profile() {
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================= REUSABLE INPUT ================= */
+function Input({ label, icon, ...props }) {
+  return (
+    <div>
+      <label className="text-sm font-medium">{label}</label>
+      <div className="mt-2 bg-white rounded-full flex items-center px-5">
+        <input
+          {...props}
+          className="flex-1 py-3 outline-none bg-transparent"
+        />
+        {icon}
       </div>
     </div>
   );

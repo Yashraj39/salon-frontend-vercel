@@ -15,7 +15,7 @@ import ResetOTP from "./pages/ResetOTP";
 import NewPassword from "./pages/NewPassword";
 import Success from "./pages/Success";
 import SelectService from "./pages/SelectService";
-import ProtectedRoute from "./pages/ProtectedRoute";
+// import ProtectedRoute from "./pages/ProtectedRoute";
 import Profile from "./pages/Profile";
 
 
@@ -63,16 +63,7 @@ export default function App() {
        <Route path="/salon-details/:id" element={<SalonDetails />} />
        <Route path="/salon/:id" element={<SalonDetail1 />} />
        <Route path="/add-services/:salonId" element={<AddServices/>} />
-
-
-       <Route
-  path="/book/:salonId"
-  element={
-    <ProtectedRoute>
-      <SelectService />
-    </ProtectedRoute>
-  }
-/>
+       <Route path="/book/:salonId" element={<SelectService /> }/>
 
         {/* 404 */}
         <Route
