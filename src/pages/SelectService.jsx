@@ -65,7 +65,7 @@ export default function SelectService() {
   }, [salonId, selectedCategory, gender]);
 
   /* ================= ADD SERVICE ================= */
-   const handleAddService = async (service) => {
+     const handleAddService = async (service) => {
   try {
     const user = JSON.parse(localStorage.getItem("user")) || {};
     const userId = user.userId;
@@ -77,20 +77,23 @@ export default function SelectService() {
     }
 
     const serviceId = service._id || service.id;
+    const categoryId = selectedCategory.id; // 👈 IMPORTANT
 
     // 🔹 GET CART
-    let cartData = JSON.parse(localStorage.getItem("cartData")) || { items: [] };
+    let cartData = JSON.parse(localStorage.getItem("cartData")) || {
+      items: [],
+    };
 
-    // 🔴 CHECK SAME SERVICE ALREADY ADDED
-    const alreadyAdded = cartData.items.some(
+    // 🔴 CATEGORY WISE CHECK
+    const categoryAlreadyAdded = cartData.items.some(
       (item) =>
-        item.serviceId === serviceId &&
+        item.userId === userId &&
         item.salonId === salonId &&
-        item.userId === userId
+        item.categoryId === categoryId
     );
 
-    if (alreadyAdded) {
-      toast.error("This service is already added");
+    if (categoryAlreadyAdded) {
+      toast.error("Service from this category already added");
       return;
     }
 
@@ -99,6 +102,7 @@ export default function SelectService() {
       serviceId,
       salonId,
       userId,
+      categoryId, // 👈 store category
       serviceName: service.name,
       price: service.price,
       time: service.time,
@@ -109,7 +113,7 @@ export default function SelectService() {
 
     toast.success("Service added to cart!");
 
-    // 🔹 BACKEND (OPTIONAL)
+    // 🔹 BACKEND CALL (optional – unchanged)
     try {
       await fetch(`https://render-qs89.onrender.com/api/cart/add`, {
         method: "POST",
@@ -118,6 +122,7 @@ export default function SelectService() {
           userId,
           salonId,
           serviceId,
+          categoryId,
           serviceName: service.name,
           price: service.price,
           time: service.time,
