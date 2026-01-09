@@ -94,14 +94,14 @@ export default function Register() {
             <div className="flex flex-col sm:flex-row gap-3 mb-2">
               <button
                 onClick={handleRegister}
-                className="bg-black text-white px-6 py-2 rounded-md text-sm flex-1"
+                className="bg-black text-white px-6 cursor-pointer py-2 rounded-md text-sm flex-1"
               >
                 Sign Up
               </button>
 
               <button
                 onClick={() => navigate("/login")}
-                className="border px-6 py-2 rounded-md text-sm flex-1"
+                className="border px-6 py-2 rounded-md cursor-pointer text-sm flex-1"
               >
                 Log in
               </button>
