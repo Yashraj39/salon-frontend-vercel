@@ -103,7 +103,7 @@ export default function Home() {
           </div>
 
           {openCity && (
-            <div className="mt-3 text-sm max-h-[5rem] overflow-y-auto">
+            <div className="mt-3 text-sm max-h-[5rem] md:max-h-[10rem] overflow-y-auto">
               {["Surat", "Ahmedabad", "Rajkot", "Vadodara"].map((city) => (
                 <label key={city} className="flex gap-2 px-2 py-1">
                   <input
@@ -130,7 +130,7 @@ export default function Home() {
           </div>
 
           {openService && (
-            <div className="mt-3 text-sm max-h-[5rem] overflow-y-auto">
+            <div className="mt-3 text-sm max-h-[5rem] md:max-h-[10rem] overflow-y-auto">
               {["Haircut", "Hair Coloring", "Pedicure", "Facial", "Massage"].map(
                 (service) => (
                   <label key={service} className="flex gap-2 px-2 py-1">
@@ -202,6 +202,35 @@ export default function Home() {
           )}
         </div>
       </div>
+      {/* FOOTER */}
+      <footer className="border-t bg-white mt-10">
+        <div className="max-w-7xl mx-auto px-4 md:px-10 py-6
+                  flex flex-col md:flex-row
+                  items-center justify-between gap-4">
+
+          {/* LEFT */}
+          <div className="flex items-center gap-3">
+            <div className="h-7 w-7 rounded-md bg-slate-900"></div>
+            <span className="font-semibold">Glow & Shine</span>
+          </div>
+
+          {/* CENTER */}
+          <p className="text-sm text-gray-500 text-center">
+            © 2025 Glow & Shine Inc. All rights reserved.
+          </p>
+
+          {/* RIGHT */}
+          <div className="flex gap-6 text-sm text-gray-500">
+            <a href="#" className="hover:text-black cursor-pointer">
+              Terms
+            </a>
+            <a href="#" className="hover:text-black cursor-pointer">
+              Privacy
+            </a>
+          </div>
+
+        </div>
+      </footer>
     </div>
   );
 }
