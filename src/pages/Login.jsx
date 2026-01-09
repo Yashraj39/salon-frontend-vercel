@@ -38,15 +38,15 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* TOP BRAND */}
-      <div className="px-10 py-6">
+      <div className="px-6 sm:px-10 py-6">
         <h1 className="text-lg font-semibold underline">Glow & Shine</h1>
       </div>
 
       {/* MAIN */}
-      <div className="flex flex-1 items-center justify-between px-32">
+      <div className="flex flex-1 flex-col md:flex-row items-center justify-center px-4 md:px-32">
         {/* LEFT FORM */}
-        <div className="w-1/2 flex justify-end pr-16">
-          <div className="w-[320px]">
+        <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-8 md:mb-0 md:pr-16">
+          <div className="w-full max-w-[320px]">
             <h2 className="text-2xl font-semibold mb-2">Log in</h2>
             <p className="text-gray-500 text-sm mb-6">
               Welcome back! Please login to your account.
@@ -75,17 +75,17 @@ export default function Login() {
               Forgot password?
             </p>
 
-            <div className="flex gap-3 mb-2">
+            <div className="flex flex-col sm:flex-row gap-3 mb-2">
               <button
                 onClick={handleLogin}
-                className="bg-black text-white px-6 py-2 cursor-pointer  rounded-md text-sm"
+                className="bg-black text-white px-6 py-2 cursor-pointer rounded-md text-sm flex-1"
               >
                 Log in
               </button>
 
               <button
                 onClick={() => navigate("/register")}
-                className="border px-6 py-2 cursor-pointer rounded-md text-sm"
+                className="border px-6 py-2 cursor-pointer rounded-md text-sm flex-1"
               >
                 Sign Up
               </button>
@@ -97,9 +97,9 @@ export default function Login() {
           </div>
         </div>
 
-        {/* RIGHT IMAGE */}
-        <div className="w-1/2 flex justify-start pl-16">
-          <img src="/Hero.png" alt="login" className="w-[320px]" />
+        {/* RIGHT IMAGE - ONLY SHOW ON DESKTOP */}
+        <div className="hidden md:flex w-1/2 justify-start pl-16">
+          <img src="/Hero.png" alt="login" className="w-[320px] object-contain" />
         </div>
       </div>
     </div>
