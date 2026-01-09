@@ -13,7 +13,6 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetOTP from "./pages/ResetOTP";
 import NewPassword from "./pages/NewPassword";
-import Success from "./pages/Success";
 import SelectService from "./pages/SelectService";
 // import ProtectedRoute from "./pages/ProtectedRoute";
 import Profile from "./pages/Profile";
@@ -23,7 +22,6 @@ import Profile from "./pages/Profile";
 // Main Pages
 import Home from "./pages/Home";
 import SalonDetails from "./pages/SalonDetails";
-import SalonDetail1 from "./pages/SalonDetail1";
 import AddServices from "./pages/AddServices";
 
 
@@ -55,13 +53,13 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-otp" element={<ResetOTP />} />
         <Route path="/new-password" element={<NewPassword />} />
-        <Route path="/success" element={<Success />} />
+        <Route path="/success" element={<Home />} />
         <Route path="/profile" element={<Profile />} />
 
         {/* Pages */}
         <Route path="/home" element={<Home />} />
        <Route path="/salon-details/:id" element={<SalonDetails />} />
-       <Route path="/salon/:id" element={<SalonDetail1 />} />
+       <Route path="/salon/:id" element={<SalonDetails />} />
        <Route path="/add-services/:salonId" element={<AddServices/>} />
        <Route path="/book/:salonId" element={<SelectService /> }/>
 
