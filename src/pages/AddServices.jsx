@@ -12,7 +12,7 @@ export default function AddServices() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const userId = user.userId;
 
-  /* ================= FETCH CART ================= */
+  /* FETCH CART */
   useEffect(() => {
     const fetchCart = async () => {
       if (!userId) return;
@@ -21,45 +21,31 @@ export default function AddServices() {
         const res = await fetch(
           `https://render-qs89.onrender.com/api/cart/get?userId=${userId}&salonId=${salonId}`
         );
-        if (!res.ok) throw new Error("Failed to fetch cart");
         const data = await res.json();
-
         if (data?.items) {
           setItems(data.items);
           localStorage.setItem("cartData", JSON.stringify(data));
-        } else {
-          setItems([]);
         }
-      } catch (err) {
-        console.warn("Backend fetch failed, using localStorage fallback:", err);
+      } catch {
         const raw = localStorage.getItem("cartData");
-        if (raw) {
-          const cart = JSON.parse(raw);
-          setItems(cart.items || []);
-        }
+        if (raw) setItems(JSON.parse(raw).items || []);
       }
     };
-
     fetchCart();
   }, [userId, salonId]);
 
-  /* ================= CLEAR CART ================= */
+  /* CLEAR CART */
   const handleCancelBooking = async () => {
-    if (!userId) return;
-
     try {
       const url = new URL("https://render-qs89.onrender.com/api/cart/clear");
       url.searchParams.append("userId", userId);
       url.searchParams.append("salonId", salonId);
+      await fetch(url.toString(), { method: "DELETE" });
 
-      const res = await fetch(url.toString(), { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to clear cart");
-
-      setItems([]); // update UI
+      setItems([]);
       localStorage.removeItem("cartData");
-      toast.success("All services removed from cart!");
-    } catch (err) {
-      console.error("Failed to clear cart:", err);
+      toast.success("All services removed");
+    } catch {
       toast.error("Cannot cancel booking");
     }
   };
@@ -67,23 +53,21 @@ export default function AddServices() {
   return (
     <div className="min-h-screen bg-white">
       {/* NAVBAR */}
-      <div className="fixed top-0 left-0 w-full bg-white border-b z-50 px-14">
+      <div className="fixed top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
         <div className="flex items-center justify-between py-4">
           <div
-            className="flex items-center gap-2 font-semibold cursor-pointer"
             onClick={() => navigate("/success")}
+            className="flex items-center gap-2 font-semibold cursor-pointer"
           >
             <div className="h-7 w-7 bg-black rounded-md" />
             Glow & Shine
           </div>
 
-          <div className="flex gap-8 text-sm">
-            <span onClick={() => navigate("/success")} className="cursor-pointer">
-              Home
-            </span>
+          <div className="hidden md:flex gap-8 text-sm cursor-pointer">
+            <span onClick={() => navigate("/success")}>Home</span>
             <span
               onClick={() => navigate("/bookings")}
-              className="cursor-pointer border-b-2 border-black"
+              className="border-b-2 border-black cursor-pointer"
             >
               My Bookings
             </span>
@@ -100,13 +84,13 @@ export default function AddServices() {
       </div>
 
       {/* CONTENT */}
-      <div className="px-14 pt-32 pb-36 relative space-y-6">
-        {/* Top row: Back button + Add Services + Cancel Booking */}
-        <div className="flex justify-between items-center mb-4">
+      <div className="px-4 sm:px-6 md:px-14 pt-32 pb-40 space-y-6">
+        {/* TOP BAR */}
+        <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(-1)}
-              className="w-10 h-10 border rounded-full flex items-center cursor-pointer justify-center"
+              className="w-10 h-10 border rounded-full flex cursor-pointer items-center justify-center"
             >
               <IoArrowBack />
             </button>
@@ -115,20 +99,20 @@ export default function AddServices() {
 
           <button
             onClick={handleCancelBooking}
-            className="bg-red-500 text-white px-6 py-2 rounded-lg cursor-pointer"
+            className="bg-red-500 text-white px-6 cursor-pointer py-2 rounded-lg"
           >
             Cancel Booking
           </button>
         </div>
 
-        {/* SERVICE CARDS */}
-        {items.length > 0 ? (
+        {/* SERVICES */}
+        {items.length ? (
           items.map((item, idx) => (
             <div
               key={idx}
-              className="bg-gray-100 rounded-3xl px-10 py-8 flex justify-between items-center"
+              className="bg-gray-100 rounded-3xl px-6 md:px-10 py-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6"
             >
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-6">
                 <img
                   src={item.imageUrl}
                   alt={item.serviceName}
@@ -150,19 +134,19 @@ export default function AddServices() {
         )}
       </div>
 
-      {/* BOTTOM BUTTONS */}
-      <div className="fixed bottom-0 left-0 w-full px-14 pb-8 bg-white">
-        <div className="flex justify-between">
+      {/* BOTTOM BUTTONS – SAME AS BEFORE */}
+      <div className="fixed bottom-0 left-0 w-full bg-white px-4 sm:px-6 md:px-14 pb-8">
+        <div className="flex justify-between gap-6">
           <button
             onClick={() => navigate(-1)}
-            className="bg-[#0B132B] text-white px-16 py-3 cursor-pointer rounded-lg"
+            className="bg-[#0B132B] text-white px-10 cursor-pointer  py-3 rounded-lg "
           >
             Add Another Service
           </button>
 
           <button
             onClick={() => navigate("/checkout")}
-            className="bg-[#0B132B] text-white px-16 cursor-pointer py-3 rounded-lg"
+            className="bg-[#0B132B] text-white px-10 cursor-pointer  py-3 rounded-lg "
           >
             Check Out
           </button>

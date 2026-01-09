@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { FiBell, FiUser } from "react-icons/fi";
 
@@ -19,7 +19,7 @@ export default function Home() {
   const [openCity, setOpenCity] = useState(true);
   const [openService, setOpenService] = useState(true);
 
-  // 🔹 FETCH SALONS
+  /* FETCH SALONS */
   useEffect(() => {
     const fetchSalons = async () => {
       try {
@@ -38,7 +38,7 @@ export default function Home() {
     fetchSalons();
   }, []);
 
-  // 🔍 FILTER LOGIC
+  /* FILTER */
   useEffect(() => {
     let result = [...salons];
 
@@ -63,89 +63,70 @@ export default function Home() {
     setFilteredSalons(result);
   }, [search, selectedCity, selectedService, salons]);
 
-  const handleSearch = () => {
-    setSearch(searchInput);
-  };
-
-  const handleServiceChange = (service) => {
-    setSelectedService((prev) =>
-      prev === service ? "" : service
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* NAVBAR */}
-      <div className="flex items-center justify-between px-10 py-4 bg-white border-b">
-        {/* LEFT */}
-        <div
-          className="flex items-center gap-2 text-lg font-semibold cursor-pointer"
-          onClick={() => navigate("/success")}
-        >
-          <div className="h-7 w-7 rounded-md bg-slate-900"></div>
-          Glow & Shine
-        </div>
-
-        {/* CENTER */}
-        <div className="flex items-center gap-10 text-sm font-medium">
-          <span
+     {/* NAVBAR */}
+      <div className=" top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
+        <div className="flex items-center justify-between py-4">
+          <div
             onClick={() => navigate("/success")}
-            className="cursor-pointer border-b-2 border-black pb-1"
+            className="flex items-center gap-2 font-semibold cursor-pointer"
           >
-            Home
-          </span>
-          <span
-            onClick={() => navigate("/bookings")}
-            className="cursor-pointer text-gray-500 hover:text-black"
-          >
-            My Bookings
-          </span>
-        </div>
+            <div className="h-7 w-7 bg-black rounded-md" />
+            Glow & Shine
+          </div>
 
-        {/* RIGHT */}
-        <div className="flex items-center gap-5">
-         
-            <div className="flex items-center gap-5">
-          <FiBell className="text-xl cursor-pointer" />
+          <div className="hidden md:flex gap-8 text-sm cursor-pointer">
+            <span onClick={() => navigate("/success")}>Home</span>
+            <span
+              onClick={() => navigate("/bookings")}
+              className="border-b-2 border-black cursor-pointer"
+            >
+              My Bookings
+            </span>
+          </div>
 
-          {/* 👇 USER ICON CLICK */}
-          <FiUser
-            className="text-xl cursor-pointer"
-            onClick={() => navigate("/profile")}
-          />
-        </div>
+          <div className="flex gap-5">
+            <FiBell className="text-xl cursor-pointer" />
+            <FiUser
+              className="text-xl cursor-pointer"
+              onClick={() => navigate("/profile")}
+            />
+          </div>
         </div>
       </div>
 
+
+
       {/* HERO */}
-      <div className="bg-white py-12 text-center">
-        <h2 className="text-5xl font-bold mb-4">
+      <div className="bg-white py-10 text-center px-4">
+        <h2 className="text-3xl md:text-5xl font-bold mb-4">
           Find the best salons near you
         </h2>
-        <p className="text-gray-500 mb-6">
+        <p className="text-gray-500 mb-6 text-sm md:text-base">
           Book appointments for hair, nails, spa, and beauty services instantly.
         </p>
 
-        <div className="flex justify-center gap-2">
+        <div className="flex flex-col sm:flex-row justify-center gap-2">
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by salon or city"
-            className="w-96 px-4 py-3 border rounded-lg"
+            className="w-full sm:w-96 px-4 py-3 border rounded-lg"
           />
           <button
-            onClick={handleSearch}
-            className="bg-black text-white cursor-pointer  px-6 rounded-lg"
+            onClick={() => setSearch(searchInput)}
+            className="bg-black text-white px-6 cursor-pointer py-3 rounded-lg"
           >
             Search
           </button>
         </div>
       </div>
 
-      {/* MAIN CONTENT */}
-      <div className="flex px-10 py-8 gap-8">
+      {/* MAIN */}
+      <div className="flex flex-col lg:flex-row px-4 md:px-10 py-8 gap-8">
         {/* SIDEBAR */}
-        <div className="w-72 bg-gray-100 rounded-xl p-6 h-fit">
+        <div className="w-full lg:w-72 bg-gray-100 rounded-xl p-6 h-fit">
           {/* CITY */}
           <div
             onClick={() => setOpenCity(!openCity)}
@@ -158,14 +139,12 @@ export default function Home() {
           {openCity && (
             <div className="mt-3 space-y-2 text-sm">
               {["Surat", "Ahmedabad", "Rajkot"].map((city) => (
-                <label key={city} className="flex items-center  cursor-pointer gap-2">
+                <label key={city} className="flex gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selectedCity === city}
                     onChange={() =>
-                      setSelectedCity((prev) =>
-                        prev === city ? "" : city
-                      )
+                      setSelectedCity((p) => (p === city ? "" : city))
                     }
                   />
                   {city}
@@ -179,20 +158,24 @@ export default function Home() {
           {/* SERVICE */}
           <div
             onClick={() => setOpenService(!openService)}
-            className="flex justify-between font-semibold "
+            className="flex justify-between font-semibold cursor-pointer"
           >
             <span>Search by Service</span>
             {openService ? <IoIosArrowDown /> : <IoIosArrowUp />}
           </div>
 
           {openService && (
-            <div className="mt-3 space-y-2 text-sm  ">
-              {["Haircut", "Hair Color", "Pedicure"].map((service) => (
-                <label key={service} className="flex items-center  cursor-pointer gap-2">
+            <div className="mt-3 space-y-2 text-sm">
+              {["Haircut", "Hair Coloring", "Pedicure"].map((service) => (
+                <label key={service} className="flex gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selectedService === service}
-                    onChange={() => handleServiceChange(service)}
+                    onChange={() =>
+                      setSelectedService((p) =>
+                        p === service ? "" : service
+                      )
+                    }
                   />
                   {service}
                 </label>
@@ -202,7 +185,7 @@ export default function Home() {
         </div>
 
         {/* CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-1">
           {loading ? (
             <p className="col-span-3 text-center">Loading salons...</p>
           ) : filteredSalons.length === 0 ? (
@@ -256,25 +239,36 @@ export default function Home() {
           )}
         </div>
       </div>
-
       {/* FOOTER */}
-      <footer className="border-t bg-white py-5 mt-10">
-        <div className="mx-auto max-w-7xl px-5 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="h-7 w-7 rounded-md bg-slate-900"></div>
-            <span className="font-semibold">Glow & Shine</span>
-          </div>
+<footer className="border-t bg-white mt-10">
+  <div className="max-w-7xl mx-auto px-4 md:px-10 py-6
+                  flex flex-col md:flex-row
+                  items-center justify-between gap-4">
 
-          <p className="text-sm text-gray-500">
-            © 2025 Glow & Shine Inc. All rights reserved.
-          </p>
+    {/* LEFT */}
+    <div className="flex items-center gap-3">
+      <div className="h-7 w-7 rounded-md bg-slate-900"></div>
+      <span className="font-semibold">Glow & Shine</span>
+    </div>
 
-          <div className="flex gap-4 text-sm text-gray-500">
-            <a href="#" className="hover:text-black">Terms</a>
-            <a href="#" className="hover:text-black">Privacy</a>
-          </div>
-        </div>
-      </footer>
+    {/* CENTER */}
+    <p className="text-sm text-gray-500 text-center">
+      © 2025 Glow & Shine Inc. All rights reserved.
+    </p>
+
+    {/* RIGHT */}
+    <div className="flex gap-6 text-sm text-gray-500">
+      <a href="#" className="hover:text-black cursor-pointer">
+        Terms
+      </a>
+      <a href="#" className="hover:text-black cursor-pointer">
+        Privacy
+      </a>
+    </div>
+
+  </div>
+</footer>
+
     </div>
   );
 }

@@ -9,52 +9,82 @@ export default function SelectService() {
   const { salonId } = useParams();
   const navigate = useNavigate();
 
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [categoryOpen, setCategoryOpen] = useState(false);
+  // ✅ OLD GENDER LOGIC
   const [genderOpen, setGenderOpen] = useState(false);
   const [gender, setGender] = useState("all");
 
-  const CATEGORIES = [
-    { name: "Haircut", id: "694ce6be84ba8f65cd26743b" },
-    { name: "Hair Styling", id: "694ce6be84ba8f65cd26743c" },
-    { name: "Hair Coloring", id: "694ce6be84ba8f65cd26743d" },
-    { name: "Facial", id: "694ce6be84ba8f65cd267440" },
-    { name: "Cleanup", id: "694ce6be84ba8f65cd267441" },
-    { name: "Manicure", id: "694ce6be84ba8f65cd267443" },
-    { name: "Pedicure", id: "694ce6be84ba8f65cd267444" },
-    { name: "Waxing", id: "694ce6be84ba8f65cd267446" },
-    { name: "Makeup", id: "694ce6be84ba8f65cd267449" },
-    { name: "Massage", id: "694ce6be84ba8f65cd26744b" },
-  ];
+  /* ================= FETCH CATEGORIES ================= */
+  useEffect(() => {
+    if (!salonId) return;
 
-  const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0]);
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(
+          `https://render-qs89.onrender.com/api/service-category/get-service-categories/${salonId}`
+        );
+        const list = await res.json();
+
+        console.log("CATEGORY API:", list);
+        setCategories(list);
+
+        if (list.length > 0) {
+          setSelectedCategory({
+            id: list[0].id,
+            name: list[0].name,
+          });
+        }
+      } catch (err) {
+        console.error("Category Error:", err);
+        setCategories([]);
+      }
+    };
+
+    fetchCategories();
+  }, [salonId]);
 
   /* ================= FETCH SERVICES ================= */
   useEffect(() => {
-    if (!salonId || !selectedCategory) return;
+    if (!salonId || !selectedCategory?.id) return;
 
     const fetchServices = async () => {
-      setLoading(true);
       try {
+        setLoading(true);
+
         const url = `https://render-qs89.onrender.com/api/service/get-services?salonId=${salonId}&categoryId=${selectedCategory.id}`;
         const res = await fetch(url);
-        const data = await res.json();
+        const json = await res.json();
 
-        let filteredData = Array.isArray(data) ? data : [];
+        const list = Array.isArray(json) ? json : json?.data || [];
+        console.log("RAW SERVICES:", list);
+
+        // ✅ FRONTEND FILTER WITH BACKEND MAPPING
+        let filteredData = list;
 
         if (gender !== "all") {
-          filteredData = filteredData.filter(
-            (s) =>
-              s.genderCategory?.toLowerCase() ===
-              (gender === "kid" ? "kid" : gender)
-          );
+          filteredData = list.filter((s) => {
+            const backendGender =
+              s.genderCategory?.toLowerCase() ||
+              s.gender?.toLowerCase();
+
+            if (gender === "men") return backendGender === "man";
+            if (gender === "women") return backendGender === "female";
+            if (gender === "kid") return backendGender === "kid";
+
+            return true;
+          });
         }
 
+        console.log("FILTERED SERVICES:", filteredData);
         setServices(filteredData);
       } catch (err) {
-        console.error(err);
+        console.error("Service Error:", err);
         setServices([]);
       } finally {
         setLoading(false);
@@ -65,100 +95,73 @@ export default function SelectService() {
   }, [salonId, selectedCategory, gender]);
 
   /* ================= ADD SERVICE ================= */
-     const handleAddService = async (service) => {
-  try {
-    const user = JSON.parse(localStorage.getItem("user")) || {};
-    const userId = user.userId;
-
-    if (!userId) {
-      toast.error("User not logged in!");
-      navigate("/login");
-      return;
-    }
-
-    const serviceId = service._id || service.id;
-    const categoryId = selectedCategory.id; // 👈 IMPORTANT
-
-    // 🔹 GET CART
-    let cartData = JSON.parse(localStorage.getItem("cartData")) || {
-      items: [],
-    };
-
-    // 🔴 CATEGORY WISE CHECK
-    const categoryAlreadyAdded = cartData.items.some(
-      (item) =>
-        item.userId === userId &&
-        item.salonId === salonId &&
-        item.categoryId === categoryId
-    );
-
-    if (categoryAlreadyAdded) {
-      toast.error("Service from this category already added");
-      return;
-    }
-
-    // 🔹 ADD SERVICE
-    cartData.items.push({
-      serviceId,
-      salonId,
-      userId,
-      categoryId, // 👈 store category
-      serviceName: service.name,
-      price: service.price,
-      time: service.time,
-      imageUrl: service.imageUrl,
-    });
-
-    localStorage.setItem("cartData", JSON.stringify(cartData));
-
-    toast.success("Service added to cart!");
-
-    // 🔹 BACKEND CALL (optional – unchanged)
+  const handleAddService = async (service) => {
     try {
-      await fetch(`https://render-qs89.onrender.com/api/cart/add`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          salonId,
-          serviceId,
-          categoryId,
-          serviceName: service.name,
-          price: service.price,
-          time: service.time,
-        }),
-      });
-    } catch (err) {
-      console.warn("Backend add failed");
-    }
+      const user = JSON.parse(localStorage.getItem("user")) || {};
+      const userId = user.userId;
 
-    navigate(`/add-services/${salonId}`);
-  } catch (err) {
-    console.error(err);
-    toast.error("Cannot add service");
-  }
-};
+      if (!userId) {
+        toast.error("User not logged in!");
+        navigate("/login");
+        return;
+      }
+
+      const serviceId = service._id || service.id;
+      const categoryId = selectedCategory.id;
+
+      let cartData = JSON.parse(localStorage.getItem("cartData")) || {
+        items: [],
+      };
+
+      const categoryAlreadyAdded = cartData.items.some(
+        (item) =>
+          item.userId === userId &&
+          item.salonId === salonId &&
+          item.categoryId === categoryId
+      );
+
+      if (categoryAlreadyAdded) {
+        toast.error("Service from this category already added");
+        return;
+      }
+
+      cartData.items.push({
+        serviceId,
+        salonId,
+        userId,
+        categoryId,
+        serviceName: service.name,
+        price: service.price,
+        time: service.time,
+        imageUrl: service.imageUrl,
+      });
+
+      localStorage.setItem("cartData", JSON.stringify(cartData));
+      toast.success("Service added!");
+      navigate(`/add-services/${salonId}`);
+    } catch (err) {
+      toast.error("Cannot add service");
+    }
+  };
 
   return (
     <div className="h-screen flex flex-col bg-white">
       {/* NAVBAR */}
-      <div className="fixed top-0 left-0 w-full bg-white border-b z-50 px-14">
+      <div className="fixed top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
         <div className="flex items-center justify-between py-4">
           <div
-            className="flex items-center gap-2 font-semibold cursor-pointer"
             onClick={() => navigate("/success")}
+            className="flex items-center gap-2 font-semibold cursor-pointer"
           >
             <div className="h-7 w-7 bg-black rounded-md" />
             Glow & Shine
           </div>
 
-          <div className="flex gap-8 text-sm">
-            <span onClick={() => navigate("/success")} className="cursor-pointer">
-              Home
-            </span>
+          <div className="hidden md:flex gap-8 text-sm cursor-pointer">
+            <span onClick={() => navigate("/success")}>Home</span>
             <span
               onClick={() => navigate("/bookings")}
-              className="cursor-pointer border-b-2 border-black"
+              className="border-b-2 border-black cursor-pointer"
             >
               My Bookings
             </span>
@@ -193,17 +196,20 @@ export default function SelectService() {
               onClick={() => setCategoryOpen(!categoryOpen)}
               className="w-full bg-gray-100 px-5 py-3 rounded-full flex justify-between items-center"
             >
-              {selectedCategory.name}
+              {selectedCategory?.name || "Select Category"}
               {categoryOpen ? <IoIosArrowUp /> : <IoIosArrowDown />}
             </button>
 
             {categoryOpen && (
               <div className="absolute w-full bg-white shadow rounded-xl mt-2 z-10 max-h-64 overflow-y-auto">
-                {CATEGORIES.map((cat) => (
+                {categories.map((cat) => (
                   <div
                     key={cat.id}
                     onClick={() => {
-                      setSelectedCategory(cat);
+                      setSelectedCategory({
+                        id: cat.id,
+                        name: cat.name,
+                      });
                       setCategoryOpen(false);
                     }}
                     className="px-5 py-3 hover:bg-gray-100 cursor-pointer"
@@ -215,7 +221,7 @@ export default function SelectService() {
             )}
           </div>
 
-          {/* GENDER */}
+          {/* ✅ GENDER — OLD UI */}
           <div className="relative w-56">
             <button
               onClick={() => setGenderOpen(!genderOpen)}
@@ -260,12 +266,14 @@ export default function SelectService() {
         {loading ? (
           <p className="text-center">Loading services...</p>
         ) : services.length === 0 ? (
-          <p className="text-center text-gray-500">No services found</p>
+          <p className="text-center text-gray-500">
+            No services found
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10">
             {services.map((s) => (
               <div
-                key={s.id}
+                key={s._id || s.id}
                 className="bg-gray-100 rounded-3xl p-4 flex flex-col"
               >
                 <img
@@ -284,7 +292,9 @@ export default function SelectService() {
                   ⏱ {s.time} Min
                 </div>
 
-                <p className="mt-2 font-semibold text-sm">₹ {s.price}</p>
+                <p className="mt-2 font-semibold text-sm">
+                  ₹ {s.price}
+                </p>
 
                 <button
                   className="mt-4 bg-black text-white text-xs py-2 cursor-pointer rounded-full"

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
-import { Link } from "react-router-dom";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -19,7 +18,6 @@ export default function Home() {
   const [openCity, setOpenCity] = useState(true);
   const [openService, setOpenService] = useState(true);
 
-  // 🔹 FETCH SALONS
   useEffect(() => {
     const fetchSalons = async () => {
       try {
@@ -38,7 +36,6 @@ export default function Home() {
     fetchSalons();
   }, []);
 
-  // 🔍 FILTER LOGIC
   useEffect(() => {
     let result = [...salons];
 
@@ -63,73 +60,72 @@ export default function Home() {
     setFilteredSalons(result);
   }, [search, selectedCity, selectedService, salons]);
 
-  const handleSearch = () => {
-    setSearch(searchInput);
-  };
-
-  const handleServiceChange = (service) => {
-    setSelectedService((prev) =>
-      prev === service ? "" : service
-    );
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       {/* NAVBAR */}
-      <div className="flex justify-between items-center px-10 py-4 bg-white border-b">
-        <div
-          className="text-xl flex font-bold cursor-pointer"
-          onClick={() => navigate("/home")}
-        >
-          <div className="h-7 w-7 mr-2 rounded-md bg-slate-900"></div>
-          Glow & Shine
-        </div>
+     <header className="bg-white border-b px-4 md:px-10 py-4">
+  <div className="flex items-center justify-between max-w-7xl mx-auto">
+    
+    {/* LOGO */}
+    <div
+      className="flex items-center font-bold text-base sm:text-lg cursor-pointer"
+      onClick={() => navigate("/home")}
+    >
+      <div className="h-7 w-7 mr-2 rounded-md bg-slate-900" />
+      Glow & Shine
+    </div>
 
-        <div className="flex items-center gap-6">
-          <Link
-            to="/login"
-            className="text-gray-700 hover:text-black"
-          >
-            Log in
-          </Link>
+    {/* LOGIN & SIGNUP — ALWAYS VISIBLE */}
+    <div className="flex items-center gap-3 sm:gap-6">
+      <Link
+        to="/login"
+        className="text-gray-700 hover:text-black text-sm sm:text-base"
+      >
+        Log in
+      </Link>
 
-          <Link
-            to="/register"
-            className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800"
-          >
-            Sign up
-          </Link>
-        </div>
-      </div>
+      <Link
+        to="/register"
+        className="bg-black text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base"
+      >
+        Sign up
+      </Link>
+    </div>
+
+  </div>
+</header>
+
 
       {/* HERO */}
-      <div className="bg-white py-12 text-center">
-        <h2 className="text-5xl font-bold mb-4">Find the best salons near you</h2>
-        <p className="text-gray-500 mb-6">
+      <section className="bg-white py-10 md:py-14 px-4 text-center">
+        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4">
+          Find the best salons near you
+        </h2>
+        <p className="text-gray-500 mb-6 max-w-xl mx-auto text-sm sm:text-base">
           Book appointments for hair, nails, spa, and beauty services instantly.
         </p>
 
-        <div className="flex justify-center gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 max-w-xl mx-auto">
           <input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search by salon or city"
-            className="w-96 px-4 py-3 border rounded-lg"
+            className="w-full px-4 py-3 border rounded-lg"
           />
           <button
-            onClick={handleSearch}
-            className="bg-black text-white px-6 rounded-lg cursor-pointer "
+            onClick={() => setSearch(searchInput)}
+            className="bg-black text-white px-6 py-3 cursor-pointer rounded-lg"
           >
             Search
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* MAIN CONTENT */}
-      <div className="flex px-10 py-8 gap-8">
+     {/* MAIN */}
+      <div className="flex flex-col lg:flex-row px-4 md:px-10 py-8 gap-8">
         {/* SIDEBAR */}
-        <div className="w-72 bg-gray-100 rounded-xl p-6 h-fit">
-          {/* CITY FILTER */}
+        <div className="w-full lg:w-72 bg-gray-100 rounded-xl p-6 h-fit">
+          {/* CITY */}
           <div
             onClick={() => setOpenCity(!openCity)}
             className="flex justify-between font-semibold cursor-pointer"
@@ -141,12 +137,12 @@ export default function Home() {
           {openCity && (
             <div className="mt-3 space-y-2 text-sm">
               {["Surat", "Ahmedabad", "Rajkot"].map((city) => (
-                <label key={city} className="flex items-center gap-2 cursor-pointer ">
+                <label key={city} className="flex gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selectedCity === city}
                     onChange={() =>
-                      setSelectedCity((prev) => (prev === city ? "" : city))
+                      setSelectedCity((p) => (p === city ? "" : city))
                     }
                   />
                   {city}
@@ -157,7 +153,7 @@ export default function Home() {
 
           <hr className="my-5" />
 
-          {/* SERVICE FILTER */}
+          {/* SERVICE */}
           <div
             onClick={() => setOpenService(!openService)}
             className="flex justify-between font-semibold cursor-pointer"
@@ -168,12 +164,16 @@ export default function Home() {
 
           {openService && (
             <div className="mt-3 space-y-2 text-sm">
-              {["Haircut", "Hair Color", "Pedicure"].map((service) => (
-                <label key={service} className="flex items-center gap-2">
+              {["Haircut", "Hair Coloring", "Pedicure"].map((service) => (
+                <label key={service} className="flex gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selectedService === service}
-                    onChange={() => handleServiceChange(service)}
+                    onChange={() =>
+                      setSelectedService((p) =>
+                        p === service ? "" : service
+                      )
+                    }
                   />
                   {service}
                 </label>
@@ -183,11 +183,13 @@ export default function Home() {
         </div>
 
         {/* CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-1">
           {loading ? (
             <p className="col-span-3 text-center">Loading salons...</p>
           ) : filteredSalons.length === 0 ? (
-            <p className="col-span-3 text-center text-gray-500">❌ Salon not found</p>
+            <p className="col-span-3 text-center text-gray-500">
+              ❌ Salon not found
+            </p>
           ) : (
             filteredSalons.map((salon) => (
               <div
@@ -205,7 +207,7 @@ export default function Home() {
                   <p className="text-xs text-gray-500">{salon.city}</p>
 
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {salon.services.length > 0 ? (
+                    {salon.services?.length > 0 ? (
                       salon.services.map((s, i) => (
                         <span
                           key={i}
@@ -215,13 +217,17 @@ export default function Home() {
                         </span>
                       ))
                     ) : (
-                      <span className="text-[10px] text-gray-400">No services</span>
+                      <span className="text-[10px] text-gray-400">
+                        No services
+                      </span>
                     )}
                   </div>
 
                   <button
-                    onClick={() => navigate(`/salon-details/${salon.salonId}`)}
-                    className="mt-3 w-full border  py-1.5 rounded-md text-xs cursor-pointer  hover:bg-gray-50"
+                    onClick={() =>
+                      navigate(`/salon-details/${salon.salonId}`)
+                    }
+                    className="mt-3 w-full border py-1.5 cursor-pointer rounded-md text-xs hover:bg-gray-50"
                   >
                     View Salon
                   </button>
@@ -231,23 +237,36 @@ export default function Home() {
           )}
         </div>
       </div>
-
       {/* FOOTER */}
-      <footer className="border-t border-gray-200 bg-white py-5 mt-10">
-        <div className="mx-auto max-w-7xl px-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-7 w-7 rounded-md bg-slate-900"></div>
-            <span className="font-semibold text-slate-900">Glow & Shine</span>
-          </div>
+<footer className="border-t bg-white mt-10">
+  <div className="max-w-7xl mx-auto px-4 md:px-10 py-6
+                  flex flex-col md:flex-row
+                  items-center justify-between gap-4">
 
-          <p className="text-sm text-gray-500">© 2025 Glow & Shine Inc. All rights reserved.</p>
+    {/* LEFT */}
+    <div className="flex items-center gap-3">
+      <div className="h-7 w-7 rounded-md bg-slate-900"></div>
+      <span className="font-semibold">Glow & Shine</span>
+    </div>
 
-          <div className="flex items-center gap-4 text-sm text-gray-500">
-            <a href="#" className="hover:text-slate-900">Terms</a>
-            <a href="#" className="hover:text-slate-900">Privacy</a>
-          </div>
-        </div>
-      </footer>
+    {/* CENTER */}
+    <p className="text-sm text-gray-500 text-center">
+      © 2025 Glow & Shine Inc. All rights reserved.
+    </p>
+
+    {/* RIGHT */}
+    <div className="flex gap-6 text-sm text-gray-500">
+      <a href="#" className="hover:text-black cursor-pointer">
+        Terms
+      </a>
+      <a href="#" className="hover:text-black cursor-pointer">
+        Privacy
+      </a>
+    </div>
+
+  </div>
+</footer>
+
     </div>
   );
 }
