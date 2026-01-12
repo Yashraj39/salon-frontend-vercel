@@ -11,6 +11,7 @@ export default function SelectService() {
 
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
+
   const [categoryOpen, setCategoryOpen] = useState(false);
 
   const [services, setServices] = useState([]);
@@ -26,6 +27,11 @@ export default function SelectService() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState([]);
   const [aiServices, setAiServices] = useState([]);
+  // AI Modal
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+
+
+
 
 
   /* ================= FETCH CATEGORIES ================= */
@@ -388,6 +394,18 @@ export default function SelectService() {
           </div>
         </div>
         {/* SERVICES */}
+        {/* AI BUTTON */}
+        {isHaircutCategory && (
+          <div className="mb-8 flex justify-center">
+            <button
+              onClick={() => setAiModalOpen(true)}
+              className="bg-black text-white px-6 py-2 rounded-full"
+            >
+              Open AI Hairstyle Suggestion
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <p className="text-center">Loading services...</p>
         ) : services.length === 0 ? (
@@ -432,61 +450,72 @@ export default function SelectService() {
               ))}
             </div>
 
-            {/* ================= AI SUGGESTION SECTION ================= */}
-            {isHaircutCategory && (
-              <div className="mt-20 bg-gray-100 rounded-3xl p-6 sm:p-8">
-
-                <h3 className="text-lg font-semibold mb-6">
-                  Suggest Hairstyle with AI
-                </h3>
-
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setAiImage(e.target.files[0])}
-                    className="flex-1"
-                  />
-
-                  <select
-                    value={aiGender}
-                    onChange={(e) => setAiGender(e.target.value)}
-                    className="bg-white px-4 py-2 rounded-full"
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="men">Men</option>
-                    <option value="women">Women</option>
-                    <option value="kid">Kid</option>
-                  </select>
-
-                  <button
-                    onClick={handleAiSuggest}
-                    className="bg-black text-white px-6 py-2 rounded-full"
-                  >
-                    {aiLoading ? "Analyzing..." : "Suggest with AI"}
-                  </button>
-                </div>
-
-                {aiSuggestions.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {aiSuggestions.map((s, i) => (
-                      <div key={i} className="bg-white p-4 rounded-2xl">
-                        <img
-                          src={s.imageUrl}
-                          alt={s.name}
-                          className="h-36 w-full rounded-xl object-cover"
-                        />
-                        <h4 className="mt-2 font-semibold text-sm">{s.name}</h4>
-                        <p className="text-xs text-gray-500">{s.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              )}
           </>
         )}
       </div>
+      {/* ================= AI MODAL ================= */}
+      {aiModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+          <div className="bg-white w-full max-w-4xl rounded-3xl p-6 relative">
+
+            {/* CLOSE BUTTON */}
+            <button
+              onClick={() => setAiModalOpen(false)}
+              className="absolute top-4 right-4 text-xl"
+            >
+              ✕
+            </button>
+
+            <h3 className="text-lg font-semibold mb-6">
+              Suggest Hairstyle with AI
+            </h3>
+
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setAiImage(e.target.files[0])}
+                className="flex-1"
+              />
+
+              <select
+                value={aiGender}
+                onChange={(e) => setAiGender(e.target.value)}
+                className="bg-gray-100 px-4 py-2 rounded-full"
+              >
+                <option value="">Select Gender</option>
+                <option value="men">Men</option>
+                <option value="women">Women</option>
+                <option value="kid">Kid</option>
+              </select>
+
+              <button
+                onClick={handleAiSuggest}
+                className="bg-black text-white px-6 py-2 rounded-full"
+              >
+                {aiLoading ? "Analyzing..." : "Suggest with AI"}
+              </button>
+            </div>
+
+            {aiSuggestions.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {aiSuggestions.map((s, i) => (
+                  <div key={i} className="bg-gray-100 p-4 rounded-2xl">
+                    <img
+                      src={s.imageUrl}
+                      alt={s.name}
+                      className="h-36 w-full rounded-xl object-cover"
+                    />
+                    <h4 className="mt-2 font-semibold text-sm">{s.name}</h4>
+                    <p className="text-xs text-gray-500">{s.description}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
