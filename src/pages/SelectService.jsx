@@ -20,6 +20,14 @@ export default function SelectService() {
   const [genderOpen, setGenderOpen] = useState(false);
   const [gender, setGender] = useState("all");
 
+  // ================= AI STATES =================
+  const [aiImage, setAiImage] = useState(null);
+  const [aiGender, setAiGender] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState([]);
+  const [aiServices, setAiServices] = useState([]);
+
+
   /* ================= FETCH CATEGORIES ================= */
   useEffect(() => {
     if (!salonId) return;
@@ -73,8 +81,8 @@ export default function SelectService() {
               s.genderCategory?.toLowerCase() ||
               s.gender?.toLowerCase();
 
-            if (gender === "men") return backendGender === "man";
-            if (gender === "women") return backendGender === "female";
+            if (gender === "men") return backendGender === "men";
+            if (gender === "women") return backendGender === "women";
             if (gender === "kid") return backendGender === "kid";
 
             return true;
@@ -93,6 +101,27 @@ export default function SelectService() {
 
     fetchServices();
   }, [salonId, selectedCategory, gender]);
+
+  /* ================= FETCH SERVICES FOR AI (NO GENDER FILTER) ================= */
+  useEffect(() => {
+    if (!salonId || !selectedCategory?.id) return;
+
+    const fetchAiServices = async () => {
+      try {
+        const res = await fetch(
+          `https://render-qs89.onrender.com/api/service/get-services-for-ai?salonId=${salonId}&categoryId=${selectedCategory.id}`
+        );
+        const json = await res.json();
+        setAiServices(Array.isArray(json) ? json : []);
+      } catch (err) {
+        console.error("AI Service Error:", err);
+        setAiServices([]);
+      }
+    };
+
+    fetchAiServices();
+  }, [salonId, selectedCategory]);
+
 
   /* ================= ADD SERVICE ================= */
   const handleAddService = async (service) => {
@@ -143,6 +172,103 @@ export default function SelectService() {
       toast.error("Cannot add service");
     }
   };
+
+  /* ================= AI SUGGEST HANDLER ================= */
+  const isHaircutCategory =
+    selectedCategory?.name?.toLowerCase().includes("haircut");
+
+  const handleAiSuggest = async () => {
+    if (!aiImage) {
+      toast.error("Please upload your photo");
+      return;
+    }
+
+    if (!aiGender) {
+      toast.error("Please select gender for AI suggestion");
+      return;
+    }
+
+    if (!Array.isArray(aiServices) || aiServices.length === 0) {
+      toast.error("No services available for AI suggestion");
+      return;
+    }
+
+    try {
+      setAiLoading(true);
+      setAiSuggestions([]);
+
+      // 1️⃣ Upload image to Cloudinary via render backend
+      const fd = new FormData();
+      fd.append("file", aiImage);
+
+      const uploadRes = await fetch(
+        "https://render-qs89.onrender.com/api/upload/image",
+        {
+          method: "POST",
+          body: fd,
+        }
+      );
+
+      if (!uploadRes.ok) {
+        toast.error("Image upload failed");
+        return;
+      }
+
+      const uploadJson = await uploadRes.json();
+
+      if (
+        !uploadJson ||
+        typeof uploadJson.imageUrl !== "string" ||
+        !uploadJson.imageUrl.startsWith("http")
+      ) {
+        toast.error("Invalid image upload response");
+        return;
+      }
+
+
+      // 2️⃣ Call Gemini API
+      const res = await fetch(
+        "http://localhost:8081/api/gemini/suggest-with-images",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageUrl: uploadJson.imageUrl,
+            gender: aiGender,
+            hairstyles: aiServices,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      if (!res.ok || data.error) {
+        toast.error(data.error || "AI could not suggest hairstyle");
+        setAiSuggestions([]);
+        return;
+      }
+
+      if (!Array.isArray(data.geminiResponse) || data.geminiResponse.length === 0) {
+        toast.error("No suitable hairstyle found");
+        setAiSuggestions([]);
+        return;
+      }
+
+      setAiSuggestions(data.geminiResponse);
+
+    } catch (err) {
+      console.error(err);
+      toast.error("AI suggestion failed");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
 
   return (
     <div className="h-screen flex flex-col bg-white">
@@ -230,10 +356,10 @@ export default function SelectService() {
               {gender === "all"
                 ? "All"
                 : gender === "men"
-                ? "Men"
-                : gender === "women"
-                ? "Women"
-                : "Kid"}
+                  ? "Men"
+                  : gender === "women"
+                    ? "Women"
+                    : "Kid"}
               {genderOpen ? <IoIosArrowUp /> : <IoIosArrowDown />}
             </button>
 
@@ -251,60 +377,114 @@ export default function SelectService() {
                     {g === "all"
                       ? "All"
                       : g === "men"
-                      ? "Men"
-                      : g === "women"
-                      ? "Women"
-                      : "Kid"}
+                        ? "Men"
+                        : g === "women"
+                          ? "Women"
+                          : "Kid"}
                   </div>
                 ))}
               </div>
             )}
           </div>
         </div>
-
         {/* SERVICES */}
         {loading ? (
           <p className="text-center">Loading services...</p>
         ) : services.length === 0 ? (
-          <p className="text-center text-gray-500">
-            No services found
-          </p>
+          <p className="text-center text-gray-500">No services found</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10">
-            {services.map((s) => (
-              <div
-                key={s._id || s.id}
-                className="bg-gray-100 rounded-3xl p-4 flex flex-col"
-              >
-                <img
-                  src={s.imageUrl}
-                  alt={s.name}
-                  className="h-44 w-full rounded-2xl object-cover"
-                />
+          <>
+            {/* SERVICES GRID */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10">
+              {services.map((s) => (
+                <div
+                  key={s._id || s.id}
+                  className="bg-gray-100 rounded-3xl p-4 flex flex-col"
+                >
+                  {s.imageUrl && (
+                    <img
+                      src={s.imageUrl}
+                      alt={s.name}
+                      className="h-36 w-full rounded-xl object-cover"
+                    />
+                  )}
 
-                <h3 className="mt-4 font-semibold text-sm">{s.name}</h3>
 
-                <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                  {s.description}
-                </p>
+                  <h3 className="mt-4 font-semibold text-sm">{s.name}</h3>
 
-                <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
-                  ⏱ {s.time} Min
+                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                    {s.description}
+                  </p>
+
+                  <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
+                    ⏱ {s.time} Min
+                  </div>
+
+                  <p className="mt-2 font-semibold text-sm">₹ {s.price}</p>
+
+                  <button
+                    className="mt-4 bg-black text-white text-xs py-2 cursor-pointer rounded-full"
+                    onClick={() => handleAddService(s)}
+                  >
+                    Add Service
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* ================= AI SUGGESTION SECTION ================= */}
+            {isHaircutCategory && (
+              <div className="mt-20 bg-gray-100 rounded-3xl p-6 sm:p-8">
+
+                <h3 className="text-lg font-semibold mb-6">
+                  Suggest Hairstyle with AI
+                </h3>
+
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setAiImage(e.target.files[0])}
+                    className="flex-1"
+                  />
+
+                  <select
+                    value={aiGender}
+                    onChange={(e) => setAiGender(e.target.value)}
+                    className="bg-white px-4 py-2 rounded-full"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="men">Men</option>
+                    <option value="women">Women</option>
+                    <option value="kid">Kid</option>
+                  </select>
+
+                  <button
+                    onClick={handleAiSuggest}
+                    className="bg-black text-white px-6 py-2 rounded-full"
+                  >
+                    {aiLoading ? "Analyzing..." : "Suggest with AI"}
+                  </button>
                 </div>
 
-                <p className="mt-2 font-semibold text-sm">
-                  ₹ {s.price}
-                </p>
-
-                <button
-                  className="mt-4 bg-black text-white text-xs py-2 cursor-pointer rounded-full"
-                  onClick={() => handleAddService(s)}
-                >
-                  Add Service
-                </button>
+                {aiSuggestions.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {aiSuggestions.map((s, i) => (
+                      <div key={i} className="bg-white p-4 rounded-2xl">
+                        <img
+                          src={s.imageUrl}
+                          alt={s.name}
+                          className="h-36 w-full rounded-xl object-cover"
+                        />
+                        <h4 className="mt-2 font-semibold text-sm">{s.name}</h4>
+                        <p className="text-xs text-gray-500">{s.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+              )}
+          </>
         )}
       </div>
     </div>
