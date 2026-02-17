@@ -4,6 +4,7 @@ import { IoArrowBack } from "react-icons/io5";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { FiBell, FiUser } from "react-icons/fi";
 import toast from "react-hot-toast";
+import { FaShoppingCart } from "react-icons/fa";
 
 export default function SelectService() {
   const { salonId } = useParams();
@@ -29,6 +30,8 @@ export default function SelectService() {
   const [aiServices, setAiServices] = useState([]);
   // AI Modal
   const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+
 
 
 
@@ -178,6 +181,27 @@ export default function SelectService() {
       toast.error("Cannot add service");
     }
   };
+
+  useEffect(() => {
+  const loadCartCount = () => {
+    const user = JSON.parse(localStorage.getItem("user")) || {};
+    const userId = user.userId;
+
+    const cartData = JSON.parse(localStorage.getItem("cartData")) || { items: [] };
+
+    const userItems = cartData.items.filter(
+      (item) => item.userId === userId && item.salonId === salonId
+    );
+
+    setCartCount(userItems.length);
+  };
+
+  loadCartCount();
+
+  window.addEventListener("focus", loadCartCount);
+
+  return () => window.removeEventListener("focus", loadCartCount);
+}, [salonId]);
 
   /* ================= AI SUGGEST HANDLER ================= */
   const isHaircutCategory =
@@ -515,6 +539,23 @@ export default function SelectService() {
           </div>
         </div>
       )}
+      {cartCount > 0 && (
+  <div
+    onClick={() => navigate(`/add-services/${salonId}`)}
+    className="fixed bottom-8 right-8 cursor-pointer"
+  >
+    <div className="relative">
+      <div className="w-15 h-15 bg-white border-2 border-black rounded-full flex items-center justify-center shadow-lg text-3xl">
+        <FaShoppingCart />
+      </div>
+
+      <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">
+        {cartCount}
+      </div>
+    </div>
+  </div>
+)}
+
 
     </div>
   );
