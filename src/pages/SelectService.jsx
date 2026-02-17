@@ -257,6 +257,10 @@ export default function SelectService() {
 
 
       // 2️⃣ Call Gemini API
+      const filteredHairstyles = aiServices.filter(s =>
+        s.genderCategory?.toLowerCase() === aiGender.toLowerCase()
+      );
+
       const res = await fetch(
         "https://gemini-cuj7.onrender.com/api/gemini/suggest-with-images",
         {
@@ -265,7 +269,7 @@ export default function SelectService() {
           body: JSON.stringify({
             imageUrl: uploadJson.imageUrl,
             gender: aiGender,
-            hairstyles: aiServices,
+            hairstyles: filteredHairstyles,
           }),
         }
       );
