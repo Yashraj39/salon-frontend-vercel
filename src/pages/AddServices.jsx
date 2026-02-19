@@ -266,11 +266,17 @@ useEffect(() => {
           </button>
 
           <button
-            onClick={() => navigate("/checkout")}
-            className="bg-[#0B132B] text-white px-10 cursor-pointer  py-3 rounded-lg "
+            onClick={() =>
+              navigate(`/confirm-booking/${salonId}`, {
+                state: { customerName, bookedBy }
+              })
+            }
+            className="bg-[#0B132B] text-white px-10 py-3 rounded-lg"
           >
             Check Out
           </button>
+
+
         </div>
       </div>
     </div>
