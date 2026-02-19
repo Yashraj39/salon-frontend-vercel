@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { FiBell, FiUser } from "react-icons/fi";
+import { FaShoppingCart } from "react-icons/fa";
+import { IoArrowBack } from "react-icons/io5";
+
 
 export default function Checkout() {
     const navigate = useNavigate();
@@ -22,6 +26,11 @@ export default function Checkout() {
     const [selectedCustomerName, setSelectedCustomerName] = useState(
         stateCustomerName || user?.name || ""
     );
+
+
+     const [totalPending, setTotalPending] = useState(0);
+  const [navbarCart, setNavbarCart] = useState([]);
+
 
     /* 1️⃣ Get Cart */
     useEffect(() => {
@@ -53,6 +62,37 @@ export default function Checkout() {
         };
         fetchBarbers();
     }, [salonId]);
+
+
+     const fetchNavbarCart = async () => {
+    try {
+      if (!userId) return;
+
+      const res = await fetch(
+        `https://render-qs89.onrender.com/api/cart/navbar-cart?userId=${userId}`
+      );
+
+      if (!res.ok) return;
+
+      const cartData = await res.json();
+
+      setNavbarCart(cartData);
+
+      const total = cartData.reduce(
+        (sum, item) => sum + (item.pendingCount || 0),
+        0
+      );
+
+      setTotalPending(total);
+    } catch (error) {
+      console.error("Navbar cart error:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNavbarCart();
+  }, [userId]);
+
 
     /* 3️⃣ Get Available Slots */
     useEffect(() => {
@@ -137,28 +177,105 @@ export default function Checkout() {
     return (
         <div className="min-h-screen bg-gray-100">
 
-            {/* NAVBAR */}
-            <div className="fixed top-0 left-0 w-full bg-white border-b z-50 px-6 md:px-14">
-                <div className="flex items-center justify-between py-4">
-                    <div
-                        onClick={() => navigate("/success")}
-                        className="flex items-center gap-2 font-semibold cursor-pointer"
-                    >
-                        <div className="h-7 w-7 bg-black rounded-md" />
-                        Glow & Shine
-                    </div>
+             {/* NAVBAR */}
+      <div className=" top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
+        <div className="flex items-center justify-between py-4">
+          <div
+            onClick={() => navigate("/success")}
+            className="flex items-center gap-2 font-semibold cursor-pointer"
+          >
+            <div className="h-7 w-7 bg-black rounded-md" />
+            Glow & Shine
+          </div>
 
-                    <div className="hidden md:flex gap-8 text-sm cursor-pointer">
-                        <span onClick={() => navigate("/success")}>Home</span>
-                        <span onClick={() => navigate("/bookings")}>
-                            My Bookings
-                        </span>
+          <div className="hidden md:flex gap-8 text-sm cursor-pointer">
+            <span onClick={() => navigate("/success")}>Home</span>
+            <span
+              onClick={() => navigate("/bookings")}
+              className="border-b-2 border-black cursor-pointer"
+            >
+              My Bookings
+            </span>
+          </div>
+
+          <div className="flex gap-5 relative">
+            <FiBell className="text-xl cursor-pointer" />
+            <FiUser
+              className="text-xl cursor-pointer"
+              onClick={() => navigate("/profile")}
+            />
+
+            <div className="relative group">
+              <div className="relative cursor-pointer">
+                <FaShoppingCart className="text-xl" />
+
+                {totalPending > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
+                    {totalPending}
+                  </div>
+                )}
+              </div>
+
+              <div className="
+                absolute right-0 top-10 w-80 
+                bg-white shadow-2xl rounded-2xl p-5 z-50
+                opacity-0 invisible translate-y-3
+                transition-all duration-300 ease-in-out
+                group-hover:opacity-100 
+                group-hover:visible 
+                group-hover:translate-y-0
+              ">
+                <h3 className="font-semibold text-lg mb-4">
+                  Pending Bookings
+                </h3>
+
+                {navbarCart.length === 0 ? (
+                  <p className="text-gray-500 text-sm">
+                    No Pending Services
+                  </p>
+                ) : (
+                  navbarCart.map((item) => (
+                    <div
+                      key={item.salonId}
+                      className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition"
+                    >
+                      <div>
+                        <p className="font-medium">
+                          {item.salonName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {item.pendingCount} Pending Service
+                        </p>
+                      </div>
+
+                      <div className="bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center">
+                        {item.pendingCount}
+                      </div>
                     </div>
-                </div>
+                  ))
+                )}
+              </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+        {/* BACK BUTTON SECTION */}
+<div className="px-6 md:px-14 mt-6">
+  <button
+    onClick={() => navigate(-1)}
+    className="w-10 h-10 border rounded-full flex items-center justify-center bg-white shadow hover:bg-gray-100 transition"
+  >
+    <IoArrowBack size={18} />
+  </button>
+</div>
+            
 
             {/* MAIN CONTENT */}
-            <div className="pt-28 px-6 md:px-14 pb-32 grid md:grid-cols-2 gap-10">
+            <div className="px-6 md:px-14 pb-15 mt-6 grid md:grid-cols-2 gap-10">
+
+        
+
 
                 {/* LEFT SIDE - CART */}
                 <div className="bg-white rounded-3xl p-8 shadow">
@@ -258,7 +375,7 @@ export default function Checkout() {
             </div>
 
             {/* BOTTOM CONFIRM BUTTON */}
-            <div className="fixed bottom-0 left-0 w-full bg-white px-6 md:px-14 pb-6">
+            <div className="  left-0 w-full bg-white px-6 md:px-14  pb-6">
                 <button
                     onClick={confirmBooking}
                     className="w-full bg-[#0B132B] text-white py-4 rounded-xl font-semibold text-lg"

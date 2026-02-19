@@ -18,10 +18,9 @@ export default function AddServices() {
   const bookedBy = location.state?.bookedBy || user?.name || "";
 
   const [totalPending, setTotalPending] = useState(0);
-   const [navbarCart, setNavbarCart] = useState([]);
-const [navbarOpen, setNavbarOpen] = useState(false);
+  const [navbarCart, setNavbarCart] = useState([]);
 
-  /* FETCH CART */
+  /* ================= FETCH CART ================= */
   useEffect(() => {
     const fetchCart = async () => {
       if (!userId) return;
@@ -30,11 +29,11 @@ const [navbarOpen, setNavbarOpen] = useState(false);
         const url = new URL("https://render-qs89.onrender.com/api/cart/get");
         url.searchParams.append("userId", userId);
         url.searchParams.append("salonId", salonId);
-        url.searchParams.append("customerName", customerName); // ✅ add this
+        url.searchParams.append("customerName", customerName);
 
         const res = await fetch(url.toString());
-
         const data = await res.json();
+
         if (data?.items) {
           setItems(data.items);
           localStorage.setItem("cartData", JSON.stringify(data));
@@ -44,28 +43,12 @@ const [navbarOpen, setNavbarOpen] = useState(false);
         if (raw) setItems(JSON.parse(raw).items || []);
       }
     };
+
     fetchCart();
   }, [userId, salonId]);
 
-  /* CLEAR CART */
-  const handleCancelBooking = async () => {
-    try {
-      const url = new URL("https://render-qs89.onrender.com/api/cart/clear");
-      url.searchParams.append("userId", userId);
-      url.searchParams.append("salonId", salonId);
-      url.searchParams.append("customerName", customerName);
-
-      await fetch(url.toString(), { method: "DELETE" });
-
-      setItems([]);
-      localStorage.removeItem("cartData");
-      toast.success("All services removed");
-    } catch {
-      toast.error("Cannot cancel booking");
-    }
-  };
-
- const fetchNavbarCart = async () => {
+  /* ================= NAVBAR CART ================= */
+  const fetchNavbarCart = async () => {
     try {
       if (!userId) return;
 
@@ -94,10 +77,32 @@ const [navbarOpen, setNavbarOpen] = useState(false);
     fetchNavbarCart();
   }, [userId]);
 
+  /* ================= CLEAR CART ================= */
+  const handleCancelBooking = async () => {
+    try {
+      const url = new URL("https://render-qs89.onrender.com/api/cart/clear");
+      url.searchParams.append("userId", userId);
+      url.searchParams.append("salonId", salonId);
+      url.searchParams.append("customerName", customerName);
+
+      await fetch(url.toString(), { method: "DELETE" });
+
+      setItems([]);
+      localStorage.removeItem("cartData");
+
+      // 🔥 THIS MAKES IT AUTO UPDATE (NO REFRESH NEEDED)
+      fetchNavbarCart();
+
+      toast.success("All services removed");
+    } catch {
+      toast.error("Cannot cancel booking");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
-       {/* NAVBAR */}
+
+      {/* NAVBAR */}
       <div className="fixed top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
         <div className="flex items-center justify-between py-4">
           <div
@@ -119,85 +124,81 @@ const [navbarOpen, setNavbarOpen] = useState(false);
           </div>
 
           <div className="flex gap-5 relative">
-  <FiBell className="text-xl cursor-pointer" />
-  <FiUser
-    className="text-xl cursor-pointer"
-    onClick={() => navigate("/profile")}
-  />
+            <FiBell className="text-xl cursor-pointer" />
+            <FiUser
+              className="text-xl cursor-pointer"
+              onClick={() => navigate("/profile")}
+            />
 
+            <div className="relative group">
+              <div className="relative cursor-pointer">
+                <FaShoppingCart className="text-xl" />
 
-  <div className="relative group">
+                {totalPending > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
+                    {totalPending}
+                  </div>
+                )}
+              </div>
 
-   {/* CART ICON */}
-  <div className="relative cursor-pointer">
-    <FaShoppingCart className="text-xl" />
+              <div className="
+                absolute right-0 top-10 w-80 
+                bg-white shadow-2xl rounded-2xl p-5 z-50
+                opacity-0 invisible translate-y-3
+                transition-all duration-300 ease-in-out
+                group-hover:opacity-100 
+                group-hover:visible 
+                group-hover:translate-y-0
+              ">
+                <h3 className="font-semibold text-lg mb-4">
+                  Pending Bookings
+                </h3>
 
-    {totalPending > 0 && (
-      <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
-        {totalPending}
-      </div>
-    )}
-  </div>
+                {navbarCart.length === 0 ? (
+                  <p className="text-gray-500 text-sm">
+                    No Pending Services
+                  </p>
+                ) : (
+                  navbarCart.map((item) => (
+                    <div
+                      key={item.salonId}
+                      className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition"
+                    >
+                      <div>
+                        <p className="font-medium">
+                          {item.salonName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {item.pendingCount} Pending Service
+                        </p>
+                      </div>
 
-  {/* DROPDOWN */}
-  <div className="
-    absolute right-0 top-10 w-80 
-    bg-white shadow-2xl rounded-2xl p-5 z-50
-    opacity-0 invisible translate-y-3
-    transition-all duration-300 ease-in-out
-    group-hover:opacity-100 
-    group-hover:visible 
-    group-hover:translate-y-0
-  ">
-    
-    <h3 className="font-semibold text-lg mb-4">
-      Pending Bookings
-    </h3>
-
-    {navbarCart.length === 0 ? (
-      <p className="text-gray-500 text-sm">
-        No Pending Services
-      </p>
-    ) : (
-      navbarCart.map((item) => (
-        <div
-          key={item.salonId}
-          className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition"
-        >
-          <div>
-            <p className="font-medium">
-              {item.salonName}
-            </p>
-            <p className="text-sm text-gray-500">
-              {item.pendingCount} Pending Service
-            </p>
+                      <div className="bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center">
+                        {item.pendingCount}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
-
-          <div className="bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center">
-            {item.pendingCount}
-          </div>
-        </div>
-        ))
-      )}
-    </div>
-  </div>
-</div>
-
         </div>
       </div>
 
       {/* CONTENT */}
       <div className="px-4 sm:px-6 md:px-14 pt-32 pb-40 space-y-6">
-        {/* TOP BAR */}
+
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(-1)}
-              className="w-10 h-10 border rounded-full flex cursor-pointer items-center justify-center"
+              className="w-10 h-10 border rounded-full flex items-center justify-center"
             >
               <IoArrowBack />
             </button>
-            <h2 className="text-lg font-semibold lowercase">add services</h2>
+            <h2 className="text-lg font-semibold lowercase">
+              add services
+            </h2>
           </div>
 
           <button
@@ -208,7 +209,6 @@ const [navbarOpen, setNavbarOpen] = useState(false);
           </button>
         </div>
 
-        {/* SERVICES */}
         {items.length ? (
           items.map((item, idx) => (
             <div
@@ -236,8 +236,7 @@ const [navbarOpen, setNavbarOpen] = useState(false);
           <p className="text-gray-500">No services added</p>
         )}
       </div>
-
-      {/* BOTTOM BUTTONS – SAME AS BEFORE */}
+       {/* BOTTOM BUTTONS – SAME AS BEFORE */}
       <div className="fixed bottom-0 left-0 w-full bg-white px-4 sm:px-6 md:px-14 pb-8">
         <div className="flex justify-between gap-6">
           <button
