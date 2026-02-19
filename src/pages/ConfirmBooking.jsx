@@ -32,7 +32,7 @@ export default function Checkout() {
 
 
     const fetchCart = async () => {
-        const url = new URL("http://localhost:8080/api/cart/get");
+        const url = new URL("https://render-qs89.onrender.com/api/cart/get");
         url.searchParams.append("userId", userId);
         url.searchParams.append("salonId", salonId);
         url.searchParams.append("customerName", selectedCustomerName);
@@ -46,7 +46,7 @@ export default function Checkout() {
     useEffect(() => {
         const fetchBarbers = async () => {
             const res = await fetch(
-                `http://localhost:8080/api/barber/salon/${salonId}`
+                `https://render-qs89.onrender.com/api/barber/salon/${salonId}`
             );
             const data = await res.json();
             setBarbers(data);
@@ -60,7 +60,7 @@ export default function Checkout() {
 
         const fetchSlots = async () => {
             const url = new URL(
-                "http://localhost:8080/api/booking/available-slots"
+                "https://render-qs89.onrender.com/api/booking/available-slots"
             );
             url.searchParams.append("userId", userId);
             url.searchParams.append("salonId", salonId);
@@ -105,7 +105,7 @@ export default function Checkout() {
         }
 
         const res = await fetch(
-            "http://localhost:8080/api/booking/confirm",
+            "https://render-qs89.onrender.com/api/booking/confirm",
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

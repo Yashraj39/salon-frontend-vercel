@@ -198,51 +198,33 @@ const [totalPending, setTotalPending] = useState(0);
   };
 
   const fetchNavbarCart = async () => {
-  try {
-    const userData = JSON.parse(localStorage.getItem("user"));
-    const salonData = JSON.parse(localStorage.getItem("salon"));
+    try {
+      if (!userId) return;
 
-    if (!userData?.userId) return;
+      const res = await fetch(
+        `https://render-qs89.onrender.com/api/cart/navbar-cart?userId=${userId}`
+      );
 
-    const userId = userData.userId;
+      if (!res.ok) return;
 
-    const res = await fetch(
-      `https://render-qs89.onrender.com/api/cart/navbar-cart?userId=${userId}`
-    );
+      const cartData = await res.json();
 
-    if (!res.ok) return;
+      setNavbarCart(cartData);
 
-    const cartData = await res.json();
+      const total = cartData.reduce(
+        (sum, item) => sum + (item.pendingCount || 0),
+        0
+      );
 
-    // 🔥 Salon name localStorage mathi attach karo
-    const updatedData = cartData.map((item) => ({
-      ...item,
-      salonName:
-        salonData?.salonId === item.salonId
-          ? salonData?.salonName
-          : "Salon",
-    }));
+      setTotalPending(total);
+    } catch (error) {
+      console.error("Navbar cart error:", error);
+    }
+  };
 
-    setNavbarCart(updatedData);
-
-      console.log("Navbar Cart Data:", updatedData);  
-
-    const total = updatedData.reduce(
-      (sum, item) => sum + (item.pendingCount || 0),
-      0
-    );
-
-    setTotalPending(total);
-
-  } catch (error) {
-    console.error("Navbar cart error:", error);
-    
-  }
-};
-
-useEffect(() => {
-  fetchNavbarCart();
-}, [salonId]);
+  useEffect(() => {
+    fetchNavbarCart();
+  }, [userId]);
 
 
 
@@ -444,7 +426,7 @@ useEffect(() => {
         >
           <div>
             <p className="font-medium">
-              {item.salonName}
+               {item.salonName || "Salon"}
             </p>
             <p className="text-sm text-gray-500">
               {item.pendingCount} Pending Service

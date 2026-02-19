@@ -5,6 +5,7 @@ import { MdEmail } from "react-icons/md";
 import { IoArrowBack } from "react-icons/io5";
 import { FiBell, FiUser } from "react-icons/fi";
 import toast from "react-hot-toast";
+import Navbar from "../componenets/Navbar";
 
 export default function SalonDetails() {
   const { id } = useParams();
@@ -78,39 +79,7 @@ export default function SalonDetails() {
   return (
     <div className="min-h-screen flex flex-col bg-white relative">
       {/* ================= NAVBAR ================= */}
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-4 flex items-center justify-between">
-          <div
-            onClick={() => navigate("/")}
-            className="flex items-center font-bold text-base sm:text-lg cursor-pointer"
-          >
-            <div className="h-7 w-7 sm:h-8 sm:w-8 mr-2 rounded-md bg-slate-900" />
-            <span>Glow & Shine</span>
-          </div>
-
-          {!isLoggedIn ? (
-            <div className="flex items-center gap-4">
-              <Link to="/login" className="text-gray-700 hover:text-black">
-                Log in
-              </Link>
-              <Link
-                to="/register"
-                className="bg-black text-white px-4 py-2 rounded-lg"
-              >
-                Sign up
-              </Link>
-            </div>
-          ) : (
-            <div className="flex items-center gap-5">
-              <FiBell className="text-xl cursor-pointer" />
-              <FiUser
-                className="text-xl cursor-pointer"
-                onClick={() => navigate("/profile")}
-              />
-            </div>
-          )}
-        </div>
-      </header>
+     <Navbar/>
 
       {/* ================= CONTENT ================= */}
       <main
