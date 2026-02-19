@@ -172,7 +172,7 @@ export default function Home() {
             filteredSalons.map((salon) => (
               <div
                 key={salon.salonId}
-                className="bg-white rounded-lg shadow-sm overflow-hidden h-[19rem] flex flex-col"
+                className="bg-white rounded-lg shadow-sm overflow-hidden h-76 flex flex-col"
               >
                 <img
                   src={salon.imageUrl}

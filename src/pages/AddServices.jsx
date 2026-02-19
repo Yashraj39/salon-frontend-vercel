@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { IoArrowBack, IoTimeOutline } from "react-icons/io5";
 import { FiBell, FiUser } from "react-icons/fi";
 import toast from "react-hot-toast";
+import { FaShoppingCart } from "react-icons/fa";
 
 export default function AddServices() {
   const navigate = useNavigate();
@@ -15,6 +16,10 @@ export default function AddServices() {
   const location = useLocation();
   const customerName = location.state?.customerName || user?.name || "";
   const bookedBy = location.state?.bookedBy || user?.name || "";
+
+  const [totalPending, setTotalPending] = useState(0);
+   const [navbarCart, setNavbarCart] = useState([]);
+const [navbarOpen, setNavbarOpen] = useState(false);
 
   /* FETCH CART */
   useEffect(() => {
@@ -60,9 +65,57 @@ export default function AddServices() {
     }
   };
 
+  const fetchNavbarCart = async () => {
+  try {
+    const userData = JSON.parse(localStorage.getItem("user"));
+    const salonData = JSON.parse(localStorage.getItem("salon"));
+
+    if (!userData?.userId) return;
+
+    const userId = userData.userId;
+
+    const res = await fetch(
+      `https://render-qs89.onrender.com/api/cart/navbar-cart?userId=${userId}`
+    );
+
+    if (!res.ok) return;
+
+    const cartData = await res.json();
+
+    // 🔥 Salon name localStorage mathi attach karo
+    const updatedData = cartData.map((item) => ({
+      ...item,
+      salonName:
+        salonData?.salonId === item.salonId
+          ? salonData?.salonName
+          : "Salon",
+    }));
+
+    setNavbarCart(updatedData);
+
+      console.log("Navbar Cart Data:", updatedData);  
+
+    const total = updatedData.reduce(
+      (sum, item) => sum + (item.pendingCount || 0),
+      0
+    );
+
+    setTotalPending(total);
+
+  } catch (error) {
+    console.error("Navbar cart error:", error);
+    
+  }
+};
+
+useEffect(() => {
+  fetchNavbarCart();
+}, [salonId]);
+
+
   return (
     <div className="min-h-screen bg-white">
-      {/* NAVBAR */}
+       {/* NAVBAR */}
       <div className="fixed top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
         <div className="flex items-center justify-between py-4">
           <div
@@ -83,13 +136,71 @@ export default function AddServices() {
             </span>
           </div>
 
-          <div className="flex gap-5">
-            <FiBell className="text-xl cursor-pointer" />
-            <FiUser
-              className="text-xl cursor-pointer"
-              onClick={() => navigate("/profile")}
-            />
+          <div className="flex gap-5 relative">
+  <FiBell className="text-xl cursor-pointer" />
+  <FiUser
+    className="text-xl cursor-pointer"
+    onClick={() => navigate("/profile")}
+  />
+
+
+  <div className="relative group">
+
+   {/* CART ICON */}
+  <div className="relative cursor-pointer">
+    <FaShoppingCart className="text-xl" />
+
+    {totalPending > 0 && (
+      <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
+        {totalPending}
+      </div>
+    )}
+  </div>
+
+  {/* DROPDOWN */}
+  <div className="
+    absolute right-0 top-10 w-80 
+    bg-white shadow-2xl rounded-2xl p-5 z-50
+    opacity-0 invisible translate-y-3
+    transition-all duration-300 ease-in-out
+    group-hover:opacity-100 
+    group-hover:visible 
+    group-hover:translate-y-0
+  ">
+    
+    <h3 className="font-semibold text-lg mb-4">
+      Pending Bookings
+    </h3>
+
+    {navbarCart.length === 0 ? (
+      <p className="text-gray-500 text-sm">
+        No Pending Services
+      </p>
+    ) : (
+      navbarCart.map((item) => (
+        <div
+          key={item.salonId}
+          className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition"
+        >
+          <div>
+            <p className="font-medium">
+              {item.salonName}
+            </p>
+            <p className="text-sm text-gray-500">
+              {item.pendingCount} Pending Service
+            </p>
           </div>
+
+          <div className="bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center">
+            {item.pendingCount}
+          </div>
+        </div>
+        ))
+      )}
+    </div>
+  </div>
+</div>
+
         </div>
       </div>
 
