@@ -99,25 +99,29 @@ export default function Home() {
             className="flex justify-between font-semibold cursor-pointer"
           >
             <span>Search by City</span>
-            {openCity ? <IoIosArrowDown /> : <IoIosArrowUp />}
+            <IoIosArrowDown
+              className={`transition-transform duration-700 ${openCity ? "rotate-180" : "rotate-0"
+                }`}
+            />
           </div>
 
-          {openCity && (
-            <div className="mt-3 text-sm max-h-[5rem] md:max-h-[10rem] overflow-y-auto">
-              {["Surat", "Ahmedabad", "Rajkot", "Vadodara"].map((city) => (
-                <label key={city} className="flex gap-2 px-2 py-1">
-                  <input
-                    type="checkbox"
-                    checked={selectedCity === city}
-                    onChange={() =>
-                      setSelectedCity((p) => (p === city ? "" : city))
-                    }
-                  />
-                  {city}
-                </label>
-              ))}
-            </div>
-          )}
+          <div
+            className={`mt-3 text-sm overflow-hidden transition-all duration-700 ease-in-out
+            ${openCity ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}
+          >
+            {["Surat", "Ahmedabad", "Rajkot", "Vadodara"].map((city) => (
+              <label key={city} className="flex gap-2 px-2 py-1">
+                <input
+                  type="checkbox"
+                  checked={selectedCity === city}
+                  onChange={() =>
+                    setSelectedCity((p) => (p === city ? "" : city))
+                  }
+                />
+                {city}
+              </label>
+            ))}
+          </div>
 
           <hr className="my-5" />
 
@@ -126,29 +130,34 @@ export default function Home() {
             className="flex justify-between font-semibold cursor-pointer"
           >
             <span>Search by Service</span>
-            {openService ? <IoIosArrowDown /> : <IoIosArrowUp />}
+            <IoIosArrowDown
+              className={`transition-transform duration-700 ${openService ? "rotate-180" : "rotate-0"
+                }`}
+            />
+
           </div>
 
-          {openService && (
-            <div className="mt-3 text-sm max-h-[5rem] md:max-h-[10rem] overflow-y-auto">
-              {["Haircut", "Hair Coloring", "Pedicure", "Facial", "Massage"].map(
-                (service) => (
-                  <label key={service} className="flex gap-2 px-2 py-1">
-                    <input
-                      type="checkbox"
-                      checked={selectedService === service}
-                      onChange={() =>
-                        setSelectedService((p) =>
-                          p === service ? "" : service
-                        )
-                      }
-                    />
-                    {service}
-                  </label>
-                )
-              )}
-            </div>
-          )}
+          <div
+            className={`mt-3 text-sm overflow-hidden transition-all duration-700 ease-in-out
+            ${openService ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}
+          >
+            {["Haircut", "Hair Coloring", "Pedicure", "Facial", "Massage"].map(
+              (service) => (
+                <label key={service} className="flex gap-2 px-2 py-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedService === service}
+                    onChange={() =>
+                      setSelectedService((p) =>
+                        p === service ? "" : service
+                      )
+                    }
+                  />
+                  {service}
+                </label>
+              )
+            )}
+          </div>
         </div>
 
         {/* CARDS */}

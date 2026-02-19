@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { IoArrowBack } from "react-icons/io5";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { FiBell, FiUser } from "react-icons/fi";
@@ -9,6 +9,20 @@ import { FaShoppingCart } from "react-icons/fa";
 export default function SelectService() {
   const { salonId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const userId = user.userId;
+  const bookingFor = location.state?.bookingFor || "myself";
+  const guestName = location.state?.guestName || "";
+
+  const bookedBy = user?.name || "";
+  const customerName =
+    bookingFor === "myself"
+      ? user?.name || ""
+      : guestName || "";
+
+
 
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -135,9 +149,6 @@ export default function SelectService() {
   /* ================= ADD SERVICE ================= */
   const handleAddService = async (service) => {
     try {
-      const user = JSON.parse(localStorage.getItem("user")) || {};
-      const userId = user.userId;
-
       if (!userId) {
         toast.error("User not logged in!");
         navigate("/login");
@@ -145,63 +156,67 @@ export default function SelectService() {
       }
 
       const serviceId = service._id || service.id;
-      const categoryId = selectedCategory.id;
 
-      let cartData = JSON.parse(localStorage.getItem("cartData")) || {
-        items: [],
-      };
+      // Send request as query params
+      const params = new URLSearchParams({
+        userId,
+        salonId,
+        serviceId,
+        customerName
+      });
 
-      const categoryAlreadyAdded = cartData.items.some(
-        (item) =>
-          item.userId === userId &&
-          item.salonId === salonId &&
-          item.categoryId === categoryId
+      const res = await fetch(
+        `https://render-qs89.onrender.com/api/cart/add?${params.toString()}`,
+        {
+          method: "POST",
+        }
       );
 
-      if (categoryAlreadyAdded) {
-        toast.error("Service from this category already added");
+      if (!res.ok) {
+        toast.error("Cannot add service");
         return;
       }
 
-      cartData.items.push({
-        serviceId,
-        salonId,
-        userId,
-        categoryId,
-        serviceName: service.name,
-        price: service.price,
-        time: service.time,
-        imageUrl: service.imageUrl,
+      toast.success("Service added!");
+      fetchCartCount();
+
+      // ✅ Navigate to add-services page immediately after adding
+      navigate(`/add-services/${salonId}`, {
+        state: { customerName, bookedBy },
       });
 
-      localStorage.setItem("cartData", JSON.stringify(cartData));
-      toast.success("Service added!");
-      navigate(`/add-services/${salonId}`);
     } catch (err) {
-      toast.error("Cannot add service");
+      console.error(err);
+      toast.error("Server error");
+    }
+  };
+
+
+  const fetchCartCount = async () => {
+    try {
+      if (!userId) return;
+
+      const res = await fetch(
+        `https://render-qs89.onrender.com/api/cart/cart-count?userId=${userId}&salonId=${salonId}&customerName=${customerName}`
+      );
+
+      if (!res.ok) {
+        setCartCount(0);
+        return;
+      }
+
+      const count = await res.json();
+      setCartCount(count);
+
+    } catch (err) {
+      console.error(err);
     }
   };
 
   useEffect(() => {
-  const loadCartCount = () => {
-    const user = JSON.parse(localStorage.getItem("user")) || {};
-    const userId = user.userId;
+    fetchCartCount();
+  }, [salonId, customerName]);
 
-    const cartData = JSON.parse(localStorage.getItem("cartData")) || { items: [] };
-
-    const userItems = cartData.items.filter(
-      (item) => item.userId === userId && item.salonId === salonId
-    );
-
-    setCartCount(userItems.length);
-  };
-
-  loadCartCount();
-
-  window.addEventListener("focus", loadCartCount);
-
-  return () => window.removeEventListener("focus", loadCartCount);
-}, [salonId]);
 
   /* ================= AI SUGGEST HANDLER ================= */
   const isHaircutCategory =
@@ -544,21 +559,25 @@ export default function SelectService() {
         </div>
       )}
       {cartCount > 0 && (
-  <div
-    onClick={() => navigate(`/add-services/${salonId}`)}
-    className="fixed bottom-8 right-8 cursor-pointer"
-  >
-    <div className="relative">
-      <div className="w-15 h-15 bg-white border-2 border-black rounded-full flex items-center justify-center shadow-lg text-3xl">
-        <FaShoppingCart />
-      </div>
+        <div
+          onClick={() =>
+            navigate(`/add-services/${salonId}`, {
+              state: { customerName, bookedBy }
+            })
+          }
+          className="fixed bottom-8 right-8 cursor-pointer"
+        >
+          <div className="relative">
+            <div className="w-15 h-15 bg-white border-2 border-black rounded-full flex items-center justify-center shadow-lg text-3xl">
+              <FaShoppingCart />
+            </div>
 
-      <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">
-        {cartCount}
-      </div>
-    </div>
-  </div>
-)}
+            <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">
+              {cartCount}
+            </div>
+          </div>
+        </div>
+      )}
 
 
     </div>

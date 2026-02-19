@@ -13,6 +13,11 @@ export default function SalonDetails() {
   const [salon, setSalon] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔹 Modal States
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingFor, setBookingFor] = useState("myself");
+  const [guestName, setGuestName] = useState("");
+
   const isLoggedIn =
     !!localStorage.getItem("user") || !!localStorage.getItem("token");
 
@@ -38,24 +43,43 @@ export default function SalonDetails() {
     fetchSalon();
   }, [id]);
 
-  /* ================= BOOK NOW HANDLER ================= */
+  /* ================= BOOK NOW ================= */
   const handleBookNow = () => {
     if (!isLoggedIn) {
       toast.error("Please login first");
       return;
     }
-    navigate(`/book/${salon.id}`);
+
+    setShowBookingModal(true);
+  };
+
+  /* ================= CONTINUE ================= */
+  const handleContinueBooking = () => {
+    if (bookingFor === "someone") {
+      if (!guestName) {
+        toast.error("Please fill all details");
+        return;
+      }
+    }
+
+    setShowBookingModal(false);
+
+    navigate(`/book/${salon.id}`, {
+      state: {
+        bookingFor,
+        guestName
+      },
+    });
   };
 
   if (loading) return <p className="text-center mt-10">Loading...</p>;
   if (!salon) return <p className="text-center mt-10">Salon not found</p>;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-white relative">
       {/* ================= NAVBAR ================= */}
       <header className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-4 flex items-center justify-between">
-          {/* LOGO */}
           <div
             onClick={() => navigate("/")}
             className="flex items-center font-bold text-base sm:text-lg cursor-pointer"
@@ -64,18 +88,14 @@ export default function SalonDetails() {
             <span>Glow & Shine</span>
           </div>
 
-          {/* RIGHT SIDE */}
           {!isLoggedIn ? (
             <div className="flex items-center gap-4">
-              <Link
-                to="/login"
-                className="text-gray-700 hover:text-black text-sm sm:text-base"
-              >
+              <Link to="/login" className="text-gray-700 hover:text-black">
                 Log in
               </Link>
               <Link
                 to="/register"
-                className="bg-black text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base"
+                className="bg-black text-white px-4 py-2 rounded-lg"
               >
                 Sign up
               </Link>
@@ -93,8 +113,10 @@ export default function SalonDetails() {
       </header>
 
       {/* ================= CONTENT ================= */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-6">
-        {/* BACK */}
+      <main
+        className={`flex-1 max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-6 ${showBookingModal ? "blur-sm pointer-events-none" : ""
+          }`}
+      >
         <button
           onClick={() => navigate(-1)}
           className="mb-6 w-10 h-10 border rounded-full flex items-center justify-center"
@@ -102,7 +124,6 @@ export default function SalonDetails() {
           <IoArrowBack />
         </button>
 
-        {/* TOP */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           <img
             src={salon.imageUrl}
@@ -137,14 +158,7 @@ export default function SalonDetails() {
           <h2 className="text-2xl font-bold mb-8">Available Services</h2>
 
           {salon.services.length ? (
-            <div
-              className="
-                grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6
-                max-h-[40vh] sm:max-h-none
-                overflow-y-auto pr-1
-                scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent
-              "
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {salon.services.map((service, i) => (
                 <div key={i} className="bg-gray-100 border rounded-lg p-4">
                   <h3 className="font-semibold">{service.name}</h3>
@@ -166,18 +180,94 @@ export default function SalonDetails() {
           )}
         </div>
 
-        {/* BOOK */}
+        {/* BOOK BUTTON */}
         <div className="flex justify-center mt-14">
           <button
             onClick={handleBookNow}
-            className="bg-black text-white px-8 sm:px-10 py-3 rounded-lg text-base sm:text-lg hover:bg-gray-800"
+            className="bg-black text-white px-8 py-3 rounded-lg hover:bg-gray-800"
           >
             Book Now
           </button>
         </div>
       </main>
 
-      {/* FOOTER */}
+      {/* ================= MODAL ================= */}
+      {showBookingModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 
+                bg-black/40 backdrop-blur-sm
+                transition-opacity duration-300 animate-fadeIn">
+          <div className="bg-white w-[90%] sm:w-[400px] rounded-2xl shadow-xl p-6 relative
+                transform transition-all duration-300 animate-scaleIn">
+            <button
+              onClick={() => setShowBookingModal(false)}
+              className="absolute right-4 top-4 text-gray-400 text-xl"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-xl font-semibold mb-6 text-center">
+              Who is this booking for?
+            </h2>
+
+            <div className="flex items-center gap-3 mb-4">
+              <input
+                type="radio"
+                className="accent-black w-4 h-4"
+                checked={bookingFor === "myself"}
+                onChange={() => setBookingFor("myself")}
+              />
+              <label>Myself</label>
+            </div>
+
+            <div className="flex items-center gap-3 mb-3">
+              <input
+                type="radio"
+                className="accent-black w-4 h-4"
+                checked={bookingFor === "someone"}
+                onChange={() => setBookingFor("someone")}
+              />
+              <label>Someone Else</label>
+            </div>
+
+            <div
+              className={`overflow-hidden transition-all duration-500 ease-in-out
+  ${bookingFor === "someone"
+                  ? "max-h-40 opacity-100 mt-3"
+                  : "max-h-0 opacity-0"}`}
+            >
+              <input
+                type="text"
+                placeholder="Name"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                className="w-full border rounded-lg p-2 mb-3
+               transition-all duration-500 focus:outline-none
+               focus:ring-2 focus:ring-black focus:border-black"
+              />
+            </div>
+
+
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setShowBookingModal(false)}
+                className="flex-1 border rounded-lg py-2"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleContinueBooking}
+                className="flex-1 bg-black text-white rounded-lg py-2 
+           transition-all duration-500 hover:bg-gray-800"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= FOOTER ================= */}
       <footer className="border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-6 flex flex-col md:flex-row items-center justify-between text-sm text-gray-500 gap-4">
           <div className="flex items-center gap-2">
@@ -185,10 +275,6 @@ export default function SalonDetails() {
             <span className="font-semibold text-gray-700">Glow & Shine</span>
           </div>
           <p>© 2025 Glow & Shine Inc. All rights reserved.</p>
-          <div className="flex gap-4">
-            <a href="#">Terms</a>
-            <a href="#">Privacy</a>
-          </div>
         </div>
       </footer>
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { IoArrowBack, IoTimeOutline } from "react-icons/io5";
 import { FiBell, FiUser } from "react-icons/fi";
 import toast from "react-hot-toast";
@@ -12,15 +12,23 @@ export default function AddServices() {
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const userId = user.userId;
 
+  const location = useLocation();
+  const customerName = location.state?.customerName || user?.name || "";
+  const bookedBy = location.state?.bookedBy || user?.name || "";
+
   /* FETCH CART */
   useEffect(() => {
     const fetchCart = async () => {
       if (!userId) return;
 
       try {
-        const res = await fetch(
-          `https://render-qs89.onrender.com/api/cart/get?userId=${userId}&salonId=${salonId}`
-        );
+        const url = new URL("https://render-qs89.onrender.com/api/cart/get");
+        url.searchParams.append("userId", userId);
+        url.searchParams.append("salonId", salonId);
+        url.searchParams.append("customerName", customerName); // ✅ add this
+
+        const res = await fetch(url.toString());
+
         const data = await res.json();
         if (data?.items) {
           setItems(data.items);
@@ -40,6 +48,8 @@ export default function AddServices() {
       const url = new URL("https://render-qs89.onrender.com/api/cart/clear");
       url.searchParams.append("userId", userId);
       url.searchParams.append("salonId", salonId);
+      url.searchParams.append("customerName", customerName);
+
       await fetch(url.toString(), { method: "DELETE" });
 
       setItems([]);
