@@ -28,8 +28,8 @@ export default function Checkout() {
     );
 
 
-     const [totalPending, setTotalPending] = useState(0);
-  const [navbarCart, setNavbarCart] = useState([]);
+    const [totalPending, setTotalPending] = useState(0);
+    const [navbarCart, setNavbarCart] = useState([]);
 
 
     /* 1️⃣ Get Cart */
@@ -64,34 +64,34 @@ export default function Checkout() {
     }, [salonId]);
 
 
-     const fetchNavbarCart = async () => {
-    try {
-      if (!userId) return;
+    const fetchNavbarCart = async () => {
+        try {
+            if (!userId) return;
 
-      const res = await fetch(
-        `https://render-qs89.onrender.com/api/cart/navbar-cart?userId=${userId}`
-      );
+            const res = await fetch(
+                `https://render-qs89.onrender.com/api/cart/navbar-cart?userId=${userId}`
+            );
 
-      if (!res.ok) return;
+            if (!res.ok) return;
 
-      const cartData = await res.json();
+            const cartData = await res.json();
 
-      setNavbarCart(cartData);
+            setNavbarCart(cartData);
 
-      const total = cartData.reduce(
-        (sum, item) => sum + (item.pendingCount || 0),
-        0
-      );
+            const total = cartData.reduce(
+                (sum, item) => sum + (item.pendingCount || 0),
+                0
+            );
 
-      setTotalPending(total);
-    } catch (error) {
-      console.error("Navbar cart error:", error);
-    }
-  };
+            setTotalPending(total);
+        } catch (error) {
+            console.error("Navbar cart error:", error);
+        }
+    };
 
-  useEffect(() => {
-    fetchNavbarCart();
-  }, [userId]);
+    useEffect(() => {
+        fetchNavbarCart();
+    }, [userId]);
 
 
     /* 3️⃣ Get Available Slots */
@@ -177,46 +177,46 @@ export default function Checkout() {
     return (
         <div className="min-h-screen bg-gray-100">
 
-             {/* NAVBAR */}
-      <div className=" top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
-        <div className="flex items-center justify-between py-4">
-          <div
-            onClick={() => navigate("/success")}
-            className="flex items-center gap-2 font-semibold cursor-pointer"
-          >
-            <div className="h-7 w-7 bg-black rounded-md" />
-            Glow & Shine
-          </div>
+            {/* NAVBAR */}
+            <div className=" top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
+                <div className="flex items-center justify-between py-4">
+                    <div
+                        onClick={() => navigate("/success")}
+                        className="flex items-center gap-2 font-semibold cursor-pointer"
+                    >
+                        <div className="h-7 w-7 bg-black rounded-md" />
+                        Glow & Shine
+                    </div>
 
-          <div className="hidden md:flex gap-8 text-sm cursor-pointer">
-            <span onClick={() => navigate("/success")}>Home</span>
-            <span
-              onClick={() => navigate("/bookings")}
-              className="border-b-2 border-black cursor-pointer"
-            >
-              My Bookings
-            </span>
-          </div>
+                    <div className="hidden md:flex gap-8 text-sm cursor-pointer">
+                        <span onClick={() => navigate("/success")}>Home</span>
+                        <span
+                            onClick={() => navigate("/bookings")}
+                            className="border-b-2 border-black cursor-pointer"
+                        >
+                            My Bookings
+                        </span>
+                    </div>
 
-          <div className="flex gap-5 relative">
-            <FiBell className="text-xl cursor-pointer" />
-            <FiUser
-              className="text-xl cursor-pointer"
-              onClick={() => navigate("/profile")}
-            />
+                    <div className="flex gap-5 relative">
+                        <FiBell className="text-xl cursor-pointer" />
+                        <FiUser
+                            className="text-xl cursor-pointer"
+                            onClick={() => navigate("/profile")}
+                        />
 
-            <div className="relative group">
-              <div className="relative cursor-pointer">
-                <FaShoppingCart className="text-xl" />
+                        <div className="relative group">
+                            <div className="relative cursor-pointer">
+                                <FaShoppingCart className="text-xl" />
 
-                {totalPending > 0 && (
-                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
-                    {totalPending}
-                  </div>
-                )}
-              </div>
+                                {totalPending > 0 && (
+                                    <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
+                                        {totalPending}
+                                    </div>
+                                )}
+                            </div>
 
-              <div className="
+                            <div className="
                 absolute right-0 top-10 w-80 
                 bg-white shadow-2xl rounded-2xl p-5 z-50
                 opacity-0 invisible translate-y-3
@@ -225,56 +225,56 @@ export default function Checkout() {
                 group-hover:visible 
                 group-hover:translate-y-0
               ">
-                <h3 className="font-semibold text-lg mb-4">
-                  Pending Bookings
-                </h3>
+                                <h3 className="font-semibold text-lg mb-4">
+                                    Pending Bookings
+                                </h3>
 
-                {navbarCart.length === 0 ? (
-                  <p className="text-gray-500 text-sm">
-                    No Pending Services
-                  </p>
-                ) : (
-                  navbarCart.map((item) => (
-                    <div
-                      key={item.salonId}
-                      className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition"
-                    >
-                      <div>
-                        <p className="font-medium">
-                          {item.salonName}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {item.pendingCount} Pending Service
-                        </p>
-                      </div>
+                                {navbarCart.length === 0 ? (
+                                    <p className="text-gray-500 text-sm">
+                                        No Pending Services
+                                    </p>
+                                ) : (
+                                    navbarCart.map((item) => (
+                                        <div
+                                            key={item.salonId}
+                                            className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition"
+                                        >
+                                            <div>
+                                                <p className="font-medium">
+                                                    {item.salonName}
+                                                </p>
+                                                <p className="text-sm text-gray-500">
+                                                    {item.pendingCount} Pending Service
+                                                </p>
+                                            </div>
 
-                      <div className="bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center">
-                        {item.pendingCount}
-                      </div>
+                                            <div className="bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center">
+                                                {item.pendingCount}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
                     </div>
-                  ))
-                )}
-              </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-        {/* BACK BUTTON SECTION */}
-<div className="px-6 md:px-14 mt-6">
-  <button
-    onClick={() => navigate(-1)}
-    className="w-10 h-10 border rounded-full flex items-center justify-center bg-white shadow hover:bg-gray-100 transition"
-  >
-    <IoArrowBack size={18} />
-  </button>
-</div>
-            
+            {/* BACK BUTTON SECTION */}
+            <div className="px-6 md:px-14 mt-6">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="w-10 h-10 border rounded-full flex items-center justify-center bg-white shadow hover:bg-gray-100 transition"
+                >
+                    <IoArrowBack size={18} />
+                </button>
+            </div>
+
 
             {/* MAIN CONTENT */}
             <div className="px-6 md:px-14 pb-15 mt-6 grid md:grid-cols-2 gap-10">
 
-        
+
 
 
                 {/* LEFT SIDE - CART */}
@@ -351,26 +351,44 @@ export default function Checkout() {
                             Available Time Slot
                         </label>
 
-                        {slots.map((slot, i) => {
-                            const isSelected =
-                                selectedSlot?.startTime === slot.startTime &&
-                                selectedSlot?.endTime === slot.endTime;
+                        {(() => {
+                            const filteredSlots = slots.filter(slot => {
+                                // Only filter past slots if selected date is today
+                                if (selectedDate === new Date().toISOString().split("T")[0]) {
+                                    const now = new Date();
+                                    const [hour, minute] = slot.startTime.split(":").map(Number);
+                                    const slotTime = new Date();
+                                    slotTime.setHours(hour, minute, 0, 0);
+                                    return slotTime > now; // only keep future slots
+                                }
+                                return true; // future dates, keep all slots
+                            });
 
-                            return (
-                                <button
-                                    key={i}
-                                    onClick={() => setSelectedSlot(slot)}
-                                    className={`block w-full border p-3 rounded-xl mt-2 ${isSelected
-                                        ? "bg-black text-white"
-                                        : "bg-gray-50"
-                                        }`}
-                                >
-                                    {slot.startTime} - {slot.endTime}
-                                </button>
-                            );
-                        })}
+                            if (filteredSlots.length === 0) {
+                                return <p className="text-gray-500 text-sm mt-2">No slots available</p>;
+                            }
 
+                            return filteredSlots.map((slot, i) => {
+                                const start = new Date(`1970-01-01T${slot.startTime}Z`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                const end = new Date(`1970-01-01T${slot.endTime}Z`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                                const isSelected =
+                                    selectedSlot?.startTime === slot.startTime &&
+                                    selectedSlot?.endTime === slot.endTime;
+
+                                return (
+                                    <button
+                                        key={i}
+                                        onClick={() => setSelectedSlot(slot)}
+                                        className={`block w-full border p-3 rounded-xl mt-2 ${isSelected ? "bg-black text-white" : "bg-gray-50"}`}
+                                    >
+                                        {start} - {end}
+                                    </button>
+                                );
+                            });
+                        })()}
                     </div>
+
                 </div>
             </div>
 
