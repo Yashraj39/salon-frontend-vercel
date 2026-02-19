@@ -16,7 +16,7 @@ import NewPassword from "./pages/NewPassword";
 import SelectService from "./pages/SelectService";
 // import ProtectedRoute from "./pages/ProtectedRoute";
 import Profile from "./pages/Profile";
-
+import ConfirmBooking from "./pages/ConfirmBooking";
 
 
 // Main Pages
@@ -58,10 +58,11 @@ export default function App() {
 
         {/* Pages */}
         <Route path="/home" element={<Home />} />
-       <Route path="/salon-details/:id" element={<SalonDetails />} />
-       <Route path="/salon/:id" element={<SalonDetails />} />
-       <Route path="/add-services/:salonId" element={<AddServices/>} />
-       <Route path="/book/:salonId" element={<SelectService /> }/>
+        <Route path="/salon-details/:id" element={<SalonDetails />} />
+        <Route path="/salon/:id" element={<SalonDetails />} />
+        <Route path="/add-services/:salonId" element={<AddServices />} />
+        <Route path="/book/:salonId" element={<SelectService />} />
+        <Route path="/confirm-booking/:salonId" element={<ConfirmBooking />} />
 
         {/* 404 */}
         <Route
