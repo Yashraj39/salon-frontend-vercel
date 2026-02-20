@@ -220,7 +220,7 @@ export default function Home() {
           {/* LEFT */}
           <div className="flex items-center gap-3">
             <div className="h-7 w-7 rounded-md bg-slate-900"></div>
-            <span className="font-semibold">Glow & Shine</span>
+            <span className="font-semibold">SlotMyStyle</span>
           </div>
 
           {/* CENTER */}

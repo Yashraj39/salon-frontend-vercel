@@ -138,7 +138,7 @@ export default function Profile() {
           onClick={() => navigate("/home")}
         >
           <div className="h-7 w-7 rounded-md bg-black"></div>
-          Glow & Shine
+           SlotMyStyle
         </div>
 
         {/* Desktop Menu */}
