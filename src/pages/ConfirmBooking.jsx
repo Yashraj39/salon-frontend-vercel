@@ -178,12 +178,6 @@ export default function Checkout() {
   if (!cart) return <p className="text-center mt-10">Loading...</p>;
 
 
-//   // ✅ AHI ADD KARVU
-// const totalTime =
-//   cart?.items?.reduce(
-//     (sum, item) => sum + (Number(item.time) || 0),
-//     0
-//   ) || 0;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -410,8 +404,9 @@ export default function Checkout() {
                                 >
                                     {slot.startTime} - {slot.endTime}
                                 </button>
-                            );
+                            )    
                         })}
+                       
 
                     </div>
 
