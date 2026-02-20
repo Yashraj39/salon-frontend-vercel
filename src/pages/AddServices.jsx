@@ -20,6 +20,11 @@ export default function AddServices() {
   const [totalPending, setTotalPending] = useState(0);
   const [navbarCart, setNavbarCart] = useState([]);
 
+   
+
+  
+  
+
   /* ================= FETCH CART ================= */
   useEffect(() => {
     const fetchCart = async () => {
@@ -79,25 +84,31 @@ export default function AddServices() {
 
   /* ================= CLEAR CART ================= */
   const handleCancelBooking = async () => {
-    try {
-      const url = new URL("https://render-qs89.onrender.com/api/cart/clear");
-      url.searchParams.append("userId", userId);
-      url.searchParams.append("salonId", salonId);
-      url.searchParams.append("customerName", customerName);
+  try {
+    const url = new URL("https://render-qs89.onrender.com/api/cart/clear");
+    url.searchParams.append("userId", userId);
+    url.searchParams.append("salonId", salonId);
+    url.searchParams.append("customerName", customerName);
 
-      await fetch(url.toString(), { method: "DELETE" });
+    await fetch(url.toString(), { method: "DELETE" });
 
-      setItems([]);
-      localStorage.removeItem("cartData");
+    setItems([]);
+    localStorage.removeItem("cartData");
 
-      // 🔥 THIS MAKES IT AUTO UPDATE (NO REFRESH NEEDED)
-      fetchNavbarCart();
+    // ✅ Navigate to SelectService page
+    navigate(`/book/${salonId}`, {
+      state: {
+        customerName: customerName,
+      },
+    });
 
-      toast.success("All services removed");
-    } catch {
-      toast.error("Cannot cancel booking");
-    }
-  };
+    fetchNavbarCart();
+
+    toast.success("All services removed");
+  } catch {
+    toast.error("Cannot cancel booking");
+  }
+};
 
   return (
     <div className="min-h-screen bg-white">
@@ -161,9 +172,17 @@ export default function AddServices() {
                 ) : (
                   navbarCart.map((item) => (
                     <div
-                      key={item.salonId}
-                      className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition"
-                    >
+      key={item.salonId}
+      onClick={() =>
+        navigate(`/add-services/${item.salonId}`, {
+          state: {
+            customerName: item.customerName || customerName,
+            bookedBy: bookedBy,
+          },
+        })
+      }
+      className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition cursor-pointer"
+    >
                       <div>
                         <p className="font-medium">
                           {item.salonName}

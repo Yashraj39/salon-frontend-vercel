@@ -10,6 +10,7 @@ export default function Navbar() {
   const [totalPending, setTotalPending] = useState(0);
   const [navbarCart, setNavbarCart] = useState([]);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [showCartDropdown, setShowCartDropdown] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
   const userId = user.userId;
@@ -43,6 +44,21 @@ export default function Navbar() {
     fetchNavbarCart();
   }, [userId]);
 
+  // Close dropdown when clicking outside (mobile)
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowCartDropdown(false);
+    };
+
+    if (showCartDropdown) {
+      document.addEventListener("click", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
+  }, [showCartDropdown]);
+
   return (
     <header className="w-full bg-white border-b z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-14 py-4 flex items-center justify-between">
@@ -57,13 +73,17 @@ export default function Navbar() {
         </div>
 
         {!isLoggedIn ? (
-          <div className="hidden sm:flex items-center gap-6">
-            <Link to="/login" className="text-gray-700 hover:text-black">
+          <div className="flex items-center gap-4">
+            <Link
+              to="/login"
+              className="text-gray-700 hover:text-black text-sm sm:text-base"
+            >
               Log in
             </Link>
+
             <Link
               to="/register"
-              className="bg-black text-white px-4 py-2 rounded-lg"
+              className="bg-black text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base"
             >
               Sign up
             </Link>
@@ -78,6 +98,7 @@ export default function Navbar() {
               >
                 Home
               </span>
+
               <span
                 onClick={() => navigate("/bookings")}
                 className="cursor-pointer"
@@ -91,16 +112,14 @@ export default function Navbar() {
 
               <FiBell className="text-xl cursor-pointer hidden sm:block" />
 
-              {/* CART (Desktop Hover Only) */}
-              <div className="relative group cursor-pointer">
-
+              {/* CART */}
+              <div
+                className="relative group cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <FaShoppingCart
-                  className="text-xl"
-                  onClick={() => {
-                    if (window.innerWidth < 768) {
-                      navigate("/bookings");
-                    }
-                  }}
+                  className="text-xl cursor-pointer"
+                  onClick={() => setShowCartDropdown(!showCartDropdown)}
                 />
 
                 {totalPending > 0 && (
@@ -109,9 +128,26 @@ export default function Navbar() {
                   </div>
                 )}
 
-                {/* DESKTOP DROPDOWN */}
-                <div className="hidden md:block absolute right-0 top-10 w-80 bg-white shadow-2xl rounded-2xl p-5 z-50 opacity-0 invisible translate-y-3 transition-all duration-300 ease-in-out group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
-
+                {/* DROPDOWN */}
+               <div
+  className={`
+    fixed md:absolute
+    top-20 md:top-10
+    left-1/2 md:left-auto
+    -translate-x-1/2 md:translate-x-0
+    md:right-0
+    w-[95%] max-w-sm md:w-80
+    bg-white shadow-2xl rounded-2xl p-5 z-50
+    transition-all duration-300 ease-in-out
+    ${
+      showCartDropdown
+        ? "opacity-100 visible translate-y-0"
+        : "opacity-0 invisible translate-y-3"
+    }
+    md:opacity-0 md:invisible md:translate-y-3
+    md:group-hover:opacity-100 md:group-hover:visible md:group-hover:translate-y-0
+  `}
+>
                   <h3 className="font-semibold text-lg mb-4">
                     Pending Bookings
                   </h3>
@@ -157,7 +193,6 @@ export default function Navbar() {
                 onClick={() => navigate("/profile")}
               />
 
-              {/* MOBILE MENU BUTTON */}
               <FiMenu
                 className="text-2xl md:hidden cursor-pointer"
                 onClick={() => setMobileMenu(!mobileMenu)}
@@ -176,6 +211,7 @@ export default function Navbar() {
           >
             Home
           </div>
+
           <div
             onClick={() => navigate("/bookings")}
             className="cursor-pointer"
