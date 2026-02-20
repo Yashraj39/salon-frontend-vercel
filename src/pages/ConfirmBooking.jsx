@@ -323,7 +323,7 @@ export default function Checkout() {
 
       <button
         onClick={handleCancelBooking}
-        className="bg-red-500 text-white px-6 py-2 rounded-lg w-full sm:w-auto"
+        className="bg-red-500 text-white px-6 py-2 cursor-pointer rounded-lg w-full sm:w-auto"
       >
         Cancel Booking
       </button>
@@ -487,13 +487,15 @@ export default function Checkout() {
     </div>
 
     {/* BOTTOM CONFIRM BUTTON */}
-    <div className="px-4 sm:px-6 md:px-14 mt-10 pb-12">
-      <button
-        onClick={confirmBooking}
-        className="w-full bg-[#0B132B] text-white py-4 rounded-lg shadow-lg text-lg font-semibold"
-      >
-        Confirm Booking
-      </button>
-    </div>
+    <div className="mt-10 pb-12 flex justify-center md:justify-end px-4 sm:px-6 md:px-14">
+  <div className="w-full md:w-140">
+    <button
+      onClick={confirmBooking}
+      className="w-full bg-[#0B132B] text-white cursor-pointer py-4 rounded-lg shadow-lg text-lg font-semibold"
+    >
+      Confirm Booking
+    </button>
+  </div>
+</div>
   </div>
 )}

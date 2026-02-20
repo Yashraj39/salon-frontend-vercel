@@ -225,7 +225,7 @@ export default function Home() {
 
           {/* CENTER */}
           <p className="text-sm text-gray-500 text-center">
-            © 2025 Glow & Shine Inc. All rights reserved.
+            © 2025 SlotMyStyle Inc. All rights reserved.
           </p>
 
           {/* RIGHT */}

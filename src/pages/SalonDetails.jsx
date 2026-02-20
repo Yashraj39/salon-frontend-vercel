@@ -88,7 +88,7 @@ export default function SalonDetails() {
       >
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 w-10 h-10 border rounded-full flex items-center justify-center"
+          className="mb-6 w-10 h-10 border rounded-full cursor-pointer flex items-center justify-center"
         >
           <IoArrowBack />
         </button>
@@ -243,7 +243,7 @@ export default function SalonDetails() {
             <div className="w-5 h-5 bg-black rounded" />
             <span className="font-semibold text-gray-700"> SlotMyStyle</span>
           </div>
-          <p>© 2025 Glow & Shine Inc. All rights reserved.</p>
+          <p>© 2025 SlotMyStyle Inc. All rights reserved.</p>
         </div>
       </footer>
     </div>
