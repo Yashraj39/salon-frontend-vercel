@@ -21,26 +21,29 @@ export default function Checkout() {
   const [selectedDate, setSelectedDate] = useState("");
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [selectedCustomerName, setSelectedCustomerName] = useState(
-    stateCustomerName || user?.name || ""
-  );
+  const [selectedCustomerName, setSelectedCustomerName] =
+    useState(stateCustomerName || user?.name || "");
 
   const [totalPending, setTotalPending] = useState(0);
   const [navbarCart, setNavbarCart] = useState([]);
 
   /* ================= FETCH CART ================= */
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !salonId) return;
 
     const fetchCart = async () => {
-      const url = new URL("https://render-qs89.onrender.com/api/cart/get");
-      url.searchParams.append("userId", userId);
-      url.searchParams.append("salonId", salonId);
-      url.searchParams.append("customerName", selectedCustomerName);
+      try {
+        const url = new URL("https://render-qs89.onrender.com/api/cart/get");
+        url.searchParams.append("userId", userId);
+        url.searchParams.append("salonId", salonId);
+        url.searchParams.append("customerName", selectedCustomerName);
 
-      const res = await fetch(url.toString());
-      const data = await res.json();
-      setCart(data);
+        const res = await fetch(url.toString());
+        const data = await res.json();
+        setCart(data || { items: [], totalPrice: 0 });
+      } catch (err) {
+        console.error(err);
+      }
     };
 
     fetchCart();
@@ -48,39 +51,51 @@ export default function Checkout() {
 
   /* ================= FETCH BARBERS ================= */
   useEffect(() => {
+    if (!salonId) return;
+
     const fetchBarbers = async () => {
-      const res = await fetch(
-        `https://render-qs89.onrender.com/api/barber/salon/${salonId}`
-      );
-      const data = await res.json();
-      setBarbers(data);
+      try {
+        const res = await fetch(
+          `https://render-qs89.onrender.com/api/barber/salon/${salonId}`
+        );
+        const data = await res.json();
+        setBarbers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+      }
     };
 
     fetchBarbers();
   }, [salonId]);
 
   /* ================= FETCH NAVBAR CART ================= */
-  const fetchNavbarCart = async () => {
+  useEffect(() => {
     if (!userId) return;
 
-    const res = await fetch(
-      `https://render-qs89.onrender.com/api/cart/navbar-cart?userId=${userId}`
-    );
+    const fetchNavbarCart = async () => {
+      try {
+        const res = await fetch(
+          `https://render-qs89.onrender.com/api/cart/navbar-cart?userId=${userId}`
+        );
 
-    if (!res.ok) return;
+        if (!res.ok) return;
 
-    const data = await res.json();
-    setNavbarCart(data);
+        const data = await res.json();
+        const safeData = Array.isArray(data) ? data : [];
 
-    const total = data.reduce(
-      (sum, item) => sum + (item.pendingCount || 0),
-      0
-    );
+        setNavbarCart(safeData);
 
-    setTotalPending(total);
-  };
+        const total = safeData.reduce(
+          (sum, item) => sum + (item.pendingCount || 0),
+          0
+        );
 
-  useEffect(() => {
+        setTotalPending(total);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
     fetchNavbarCart();
   }, [userId]);
 
@@ -89,75 +104,86 @@ export default function Checkout() {
     if (!selectedBarber || !selectedDate) return;
 
     const fetchSlots = async () => {
-      const url = new URL(
-        "https://render-qs89.onrender.com/api/booking/available-slots"
-      );
+      try {
+        const url = new URL(
+          "https://render-qs89.onrender.com/api/booking/available-slots"
+        );
 
-      url.searchParams.append("userId", userId);
-      url.searchParams.append("salonId", salonId);
-      url.searchParams.append("barberId", selectedBarber);
-      url.searchParams.append("customerName", selectedCustomerName);
+        const formattedDate = new Date(selectedDate)
+          .toISOString()
+          .split("T")[0];
 
-      const formattedDate = new Date(selectedDate)
-        .toISOString()
-        .split("T")[0];
+        url.searchParams.append("userId", userId);
+        url.searchParams.append("salonId", salonId);
+        url.searchParams.append("barberId", selectedBarber);
+        url.searchParams.append("customerName", selectedCustomerName);
+        url.searchParams.append("date", formattedDate);
 
-      url.searchParams.append("date", formattedDate);
+        const res = await fetch(url.toString());
+        const data = await res.json();
 
-      const res = await fetch(url.toString());
-      const data = await res.json();
-      setSlots(data);
+        setSlots(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+      }
     };
 
     fetchSlots();
-  }, [selectedBarber, selectedDate]);
+  }, [selectedBarber, selectedDate, userId, salonId, selectedCustomerName]);
+
+  /* ================= TOTAL TIME ================= */
+  const totalTime =
+    cart?.items?.reduce(
+      (sum, item) => sum + (Number(item.time) || 0),
+      0
+    ) || 0;
 
   /* ================= CONFIRM BOOKING ================= */
   const confirmBooking = async () => {
-    if (!selectedBarber) {
-      toast.error("Please select a barber");
-      return;
-    }
+    if (!selectedBarber) return toast.error("Please select a barber");
+    if (!selectedSlot) return toast.error("Please select a time slot");
+    if (!selectedDate) return toast.error("Please select a date");
 
-    if (!selectedSlot) {
-      toast.error("Please select a time slot");
-      return;
-    }
+    try {
+      const res = await fetch(
+        "https://render-qs89.onrender.com/api/booking/confirm",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            salonId,
+            barberId: selectedBarber,
+            customerName: selectedCustomerName,
+            bookingDate: selectedDate,
+            startTime: selectedSlot.startTime,
+            endTime: selectedSlot.endTime,
+          }),
+        }
+      );
 
-    const res = await fetch(
-      "https://render-qs89.onrender.com/api/booking/confirm",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          salonId,
-          barberId: selectedBarber,
-          customerName: selectedCustomerName,
-          bookingDate: selectedDate,
-          startTime: selectedSlot.startTime,
-          endTime: selectedSlot.endTime,
-        }),
+      if (res.ok) {
+        toast.success("Booking Confirmed");
+        navigate("/success");
+      } else {
+        const error = await res.text();
+        toast.error(error);
       }
-    );
-
-    if (res.ok) {
-      toast.success("Booking Confirmed");
-      navigate("/success");
-    } else {
-      const error = await res.text();
-      toast.error(error);
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong");
     }
   };
 
   if (!cart) return <p className="text-center mt-10">Loading...</p>;
 
-  // ✅ AHI ADD KARVU
-const totalTime =
-  cart?.items?.reduce(
-    (sum, item) => sum + (Number(item.time) || 0),
-    0
-  ) || 0;
+
+//   // ✅ AHI ADD KARVU
+// const totalTime =
+//   cart?.items?.reduce(
+//     (sum, item) => sum + (Number(item.time) || 0),
+//     0
+//   ) || 0;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -258,7 +284,7 @@ const totalTime =
       <div className="px-6 md:px-14 mt-6">
         <button
           onClick={() => navigate(-1)}
-          className="w-10 h-10 border rounded-full flex cursor-pointer items-center justify-center bg-white shadow"
+          className="w-10 h-10 border rounded-full flex items-center justify-center bg-white shadow"
         >
           <IoArrowBack size={18} />
         </button>
