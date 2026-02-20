@@ -121,7 +121,7 @@ export default function AddServices() {
             className="flex items-center gap-2 font-semibold cursor-pointer"
           >
             <div className="h-7 w-7 bg-black rounded-md" />
-            Glow & Shine
+             SlotMyStyle
           </div>
 
           <div className="hidden md:flex gap-8 text-sm cursor-pointer">

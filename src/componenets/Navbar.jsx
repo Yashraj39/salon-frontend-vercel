@@ -69,7 +69,7 @@ export default function Navbar() {
           className="flex items-center gap-2 font-semibold cursor-pointer"
         >
           <div className="h-7 w-7 bg-black rounded-md" />
-          Glow & Shine
+          SlotMyStyle
         </div>
 
         {!isLoggedIn ? (
