@@ -484,7 +484,7 @@ export default function Checkout() {
             <div className="flex justify-center mt-12 pb-12">
                 <button
                     onClick={confirmBooking}
-                    className="bg-[#0B132B] text-white px-16 py-4 rounded-lg shadow-lg text-lg font-semibold"
+                    className="bg-[#0B132B] cursor-pointer text-white px-16 py-4 rounded-lg shadow-lg text-lg font-semibold"
                 >
                     Confirm Booking
                 </button>

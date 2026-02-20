@@ -153,7 +153,7 @@ export default function SalonDetails() {
         <div className="flex justify-center mt-14">
           <button
             onClick={handleBookNow}
-            className="bg-black text-white px-8 py-3 rounded-lg hover:bg-gray-800"
+            className="bg-black text-white px-8 py-3  cursor-pointer rounded-lg hover:bg-gray-800"
           >
             Book Now
           </button>
@@ -219,14 +219,14 @@ export default function SalonDetails() {
             <div className="flex gap-3 mt-4">
               <button
                 onClick={() => setShowBookingModal(false)}
-                className="flex-1 border rounded-lg py-2"
+                className="flex-1 border cursor-pointer rounded-lg py-2"
               >
                 Cancel
               </button>
 
               <button
                 onClick={handleContinueBooking}
-                className="flex-1 bg-black text-white rounded-lg py-2 
+                className="flex-1 bg-black text-white cursor-pointer rounded-lg py-2 
            transition-all duration-500 hover:bg-gray-800"
               >
                 Continue

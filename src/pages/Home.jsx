@@ -83,7 +83,7 @@ export default function Home() {
           />
           <button
             onClick={() => setSearch(searchInput)}
-            className="bg-black text-white px-6 py-3 rounded-lg"
+            className="bg-black text-white px-6 py-3 cursor-pointer rounded-lg"
           >
             Search
           </button>
@@ -201,7 +201,7 @@ export default function Home() {
                     onClick={() =>
                       navigate(`/salon-details/${salon.salonId}`)
                     }
-                    className="mt-3 w-full border py-1.5 rounded-md text-xs hover:bg-gray-50"
+                    className="mt-3 w-full border py-1.5 cursor-pointer rounded-md text-xs hover:bg-gray-50"
                   >
                     View Salon
                   </button>
