@@ -414,31 +414,39 @@ const [totalPending, setTotalPending] = useState(0);
       Pending Bookings
     </h3>
 
-    {navbarCart.length === 0 ? (
-      <p className="text-gray-500 text-sm">
-        No Pending Services
-      </p>
-    ) : (
-      navbarCart.map((item) => (
-        <div
-          key={item.salonId}
-          className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition"
-        >
-          <div>
-            <p className="font-medium">
-               {item.salonName || "Salon"}
-            </p>
-            <p className="text-sm text-gray-500">
-              {item.pendingCount} Pending Service
-            </p>
-          </div>
+   {navbarCart.length === 0 ? (
+  <p className="text-gray-500 text-sm">
+    No Pending Services
+  </p>
+) : (
+  navbarCart.map((item) => (
+    <div
+      key={item.salonId}
+      onClick={() =>
+        navigate(`/add-services/${item.salonId}`, {
+          state: {
+            customerName: item.customerName || customerName,
+            bookedBy: bookedBy,
+          },
+        })
+      }
+      className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition cursor-pointer"
+    >
+      <div>
+        <p className="font-medium">
+          {item.salonName || "Salon"}
+        </p>
+        <p className="text-sm text-gray-500">
+          {item.pendingCount} Pending Service
+        </p>
+      </div>
 
-          <div className="bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center">
-            {item.pendingCount}
-          </div>
-        </div>
-        ))
-      )}
+      <div className="bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center">
+        {item.pendingCount}
+      </div>
+    </div>
+  ))
+)}
     </div>
   </div>
 </div>
@@ -536,7 +544,7 @@ const [totalPending, setTotalPending] = useState(0);
           <div className="mb-8 flex justify-center">
             <button
               onClick={() => setAiModalOpen(true)}
-              className="bg-black text-white px-6 py-2 rounded-full"
+              className="bg-black text-white px-6 py-2 cursor-pointer rounded-full"
             >
               Open AI Hairstyle Suggestion
             </button>
@@ -628,7 +636,7 @@ const [totalPending, setTotalPending] = useState(0);
 
               <button
                 onClick={handleAiSuggest}
-                className="bg-black text-white px-6 py-2 rounded-full"
+                className="bg-black text-white px-6 cursor-pointer py-2 rounded-full"
               >
                 {aiLoading ? "Analyzing..." : "Suggest with AI"}
               </button>

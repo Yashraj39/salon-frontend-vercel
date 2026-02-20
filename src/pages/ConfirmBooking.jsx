@@ -5,180 +5,166 @@ import { FiBell, FiUser } from "react-icons/fi";
 import { FaShoppingCart } from "react-icons/fa";
 import { IoArrowBack } from "react-icons/io5";
 
-
 export default function Checkout() {
-    const navigate = useNavigate();
-    const { salonId } = useParams();
+  const navigate = useNavigate();
+  const { salonId } = useParams();
 
-    const user = JSON.parse(localStorage.getItem("user")) || {};
-    const userId = user?.userId;
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const userId = user?.userId;
 
-    const location = useLocation();
-    const stateCustomerName = location.state?.customerName; // from AddServices
-    const stateBookedBy = location.state?.bookedBy;
+  const location = useLocation();
+  const stateCustomerName = location.state?.customerName;
 
-    const [cart, setCart] = useState(null);
-    const [barbers, setBarbers] = useState([]);
-    const [selectedBarber, setSelectedBarber] = useState(null);
-    const [selectedDate, setSelectedDate] = useState("");
-    const [slots, setSlots] = useState([]);
-    const [selectedSlot, setSelectedSlot] = useState(null);
-    const [selectedCustomerName, setSelectedCustomerName] = useState(
-        stateCustomerName || user?.name || ""
-    );
+  const [cart, setCart] = useState(null);
+  const [barbers, setBarbers] = useState([]);
+  const [selectedBarber, setSelectedBarber] = useState(null);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [slots, setSlots] = useState([]);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedCustomerName, setSelectedCustomerName] = useState(
+    stateCustomerName || user?.name || ""
+  );
 
-
-     const [totalPending, setTotalPending] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
   const [navbarCart, setNavbarCart] = useState([]);
 
-
-    /* 1️⃣ Get Cart */
-    useEffect(() => {
-        if (userId && salonId) {
-            fetchCart();
-        }
-    }, [userId, salonId, selectedCustomerName]);
-
+  /* ================= FETCH CART ================= */
+  useEffect(() => {
+    if (!userId) return;
 
     const fetchCart = async () => {
-        const url = new URL("https://render-qs89.onrender.com/api/cart/get");
-        url.searchParams.append("userId", userId);
-        url.searchParams.append("salonId", salonId);
-        url.searchParams.append("customerName", selectedCustomerName);
+      const url = new URL("https://render-qs89.onrender.com/api/cart/get");
+      url.searchParams.append("userId", userId);
+      url.searchParams.append("salonId", salonId);
+      url.searchParams.append("customerName", selectedCustomerName);
 
-        const res = await fetch(url);
-        const data = await res.json();
-        setCart(data);
+      const res = await fetch(url.toString());
+      const data = await res.json();
+      setCart(data);
     };
 
-    /* 2️⃣ Get Barbers */
-    useEffect(() => {
-        const fetchBarbers = async () => {
-            const res = await fetch(
-                `https://render-qs89.onrender.com/api/barber/salon/${salonId}`
-            );
-            const data = await res.json();
-            setBarbers(data);
-        };
-        fetchBarbers();
-    }, [salonId]);
+    fetchCart();
+  }, [userId, salonId, selectedCustomerName]);
 
-
-     const fetchNavbarCart = async () => {
-    try {
-      if (!userId) return;
-
+  /* ================= FETCH BARBERS ================= */
+  useEffect(() => {
+    const fetchBarbers = async () => {
       const res = await fetch(
-        `https://render-qs89.onrender.com/api/cart/navbar-cart?userId=${userId}`
+        `https://render-qs89.onrender.com/api/barber/salon/${salonId}`
       );
+      const data = await res.json();
+      setBarbers(data);
+    };
 
-      if (!res.ok) return;
+    fetchBarbers();
+  }, [salonId]);
 
-      const cartData = await res.json();
+  /* ================= FETCH NAVBAR CART ================= */
+  const fetchNavbarCart = async () => {
+    if (!userId) return;
 
-      setNavbarCart(cartData);
+    const res = await fetch(
+      `https://render-qs89.onrender.com/api/cart/navbar-cart?userId=${userId}`
+    );
 
-      const total = cartData.reduce(
-        (sum, item) => sum + (item.pendingCount || 0),
-        0
-      );
+    if (!res.ok) return;
 
-      setTotalPending(total);
-    } catch (error) {
-      console.error("Navbar cart error:", error);
-    }
+    const data = await res.json();
+    setNavbarCart(data);
+
+    const total = data.reduce(
+      (sum, item) => sum + (item.pendingCount || 0),
+      0
+    );
+
+    setTotalPending(total);
   };
 
   useEffect(() => {
     fetchNavbarCart();
   }, [userId]);
 
+  /* ================= FETCH SLOTS ================= */
+  useEffect(() => {
+    if (!selectedBarber || !selectedDate) return;
 
-    /* 3️⃣ Get Available Slots */
-    useEffect(() => {
-        if (!selectedBarber || !selectedDate || !cart?.totalTime) return;
+    const fetchSlots = async () => {
+      const url = new URL(
+        "https://render-qs89.onrender.com/api/booking/available-slots"
+      );
 
-        const fetchSlots = async () => {
-            const url = new URL(
-                "https://render-qs89.onrender.com/api/booking/available-slots"
-            );
-            url.searchParams.append("userId", userId);
-            url.searchParams.append("salonId", salonId);
-            url.searchParams.append("barberId", selectedBarber);
-            url.searchParams.append("customerName", selectedCustomerName);
-            if (selectedDate) {
-                const formattedDate = new Date(selectedDate).toISOString().split("T")[0]; // yyyy-MM-dd
-                url.searchParams.append("date", formattedDate);
-            }
+      url.searchParams.append("userId", userId);
+      url.searchParams.append("salonId", salonId);
+      url.searchParams.append("barberId", selectedBarber);
+      url.searchParams.append("customerName", selectedCustomerName);
 
+      const formattedDate = new Date(selectedDate)
+        .toISOString()
+        .split("T")[0];
 
-            const res = await fetch(url);
-            const data = await res.json();
-            setSlots(data);
-        };
+      url.searchParams.append("date", formattedDate);
 
-        fetchSlots();
-    }, [selectedBarber, selectedDate]);
-
-    // Add useEffect for selectedCustomerName change
-    useEffect(() => {
-        if (userId && salonId && selectedCustomerName) fetchCart();
-    }, [selectedCustomerName]);
-
-    useEffect(() => {
-        if (barbers.length && !selectedBarber) {
-            setSelectedBarber(barbers[0].id);
-        }
-    }, [barbers]);
-
-    /* 4️⃣ Confirm Booking */
-    const confirmBooking = async () => {
-
-        if (!selectedBarber) {
-            toast.error("Please select a barber");
-            return;
-        }
-
-        if (!selectedSlot) {
-            toast.error("Please select a time slot");
-            return;
-        }
-
-        const res = await fetch(
-            "https://render-qs89.onrender.com/api/booking/confirm",
-            {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userId,
-                    salonId,
-                    barberId: selectedBarber,
-                    customerName: selectedCustomerName,  // 🔹 add this
-                    bookingDate: selectedDate,
-                    startTime: selectedSlot.startTime,
-                    endTime: selectedSlot.endTime,
-                }),
-            }
-        );
-
-        const data = await res.text();
-
-        if (res.ok) {
-            toast.success("Booking Confirmed");
-            navigate("/success");
-        } else {
-            toast.error(data);
-        }
+      const res = await fetch(url.toString());
+      const data = await res.json();
+      setSlots(data);
     };
 
+    fetchSlots();
+  }, [selectedBarber, selectedDate]);
 
-    if (!cart) return <p>Loading...</p>;
+  /* ================= CONFIRM BOOKING ================= */
+  const confirmBooking = async () => {
+    if (!selectedBarber) {
+      toast.error("Please select a barber");
+      return;
+    }
 
-    return (
-        <div className="min-h-screen bg-gray-100">
+    if (!selectedSlot) {
+      toast.error("Please select a time slot");
+      return;
+    }
 
-             {/* NAVBAR */}
-      <div className=" top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
+    const res = await fetch(
+      "https://render-qs89.onrender.com/api/booking/confirm",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          salonId,
+          barberId: selectedBarber,
+          customerName: selectedCustomerName,
+          bookingDate: selectedDate,
+          startTime: selectedSlot.startTime,
+          endTime: selectedSlot.endTime,
+        }),
+      }
+    );
+
+    if (res.ok) {
+      toast.success("Booking Confirmed");
+      navigate("/success");
+    } else {
+      const error = await res.text();
+      toast.error(error);
+    }
+  };
+
+  if (!cart) return <p className="text-center mt-10">Loading...</p>;
+
+  // ✅ AHI ADD KARVU
+const totalTime =
+  cart?.items?.reduce(
+    (sum, item) => sum + (Number(item.time) || 0),
+    0
+  ) || 0;
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+
+      {/* NAVBAR */}
+      <div className="top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
+        
         <div className="flex items-center justify-between py-4">
           <div
             onClick={() => navigate("/success")}
@@ -236,8 +222,16 @@ export default function Checkout() {
                 ) : (
                   navbarCart.map((item) => (
                     <div
-                      key={item.salonId}
-                      className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition"
+                       key={item.salonId}
+      onClick={() =>
+        navigate(`/add-services/${item.salonId}`, {
+          state: {
+            customerName: item.customerName || "",
+            bookedBy: user?.name || "",
+          },
+        })
+      }
+                      className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 cursor-pointer transition"
                     >
                       <div>
                         <p className="font-medium">
@@ -260,43 +254,66 @@ export default function Checkout() {
         </div>
       </div>
 
-        {/* BACK BUTTON SECTION */}
-<div className="px-6 md:px-14 mt-6">
-  <button
-    onClick={() => navigate(-1)}
-    className="w-10 h-10 border rounded-full flex items-center justify-center bg-white shadow hover:bg-gray-100 transition"
-  >
-    <IoArrowBack size={18} />
-  </button>
-</div>
-            
+      {/* BACK BUTTON */}
+      <div className="px-6 md:px-14 mt-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="w-10 h-10 border rounded-full flex cursor-pointer items-center justify-center bg-white shadow"
+        >
+          <IoArrowBack size={18} />
+        </button>
+      </div>
 
-            {/* MAIN CONTENT */}
-            <div className="px-6 md:px-14 pb-15 mt-6 grid md:grid-cols-2 gap-10">
+      {/* MAIN CONTENT */}
+      <div className="px-6 md:px-14 pb-10 mt-6 grid md:grid-cols-2 gap-10">
 
-        
+        {/* LEFT SIDE - CART */}
+        <div className="bg-white rounded-3xl p-8 shadow">
+          {cart?.items?.map((item, i) => (
+            <div key={i} className="border-b py-4">
 
-
-                {/* LEFT SIDE - CART */}
-                <div className="bg-white rounded-3xl p-8 shadow">
-                    {cart.items.map((item, i) => (
-                        <div key={i} className="flex justify-between border-b py-4">
-                            <div>
-                                <p className="font-semibold">{item.serviceName}</p>
-                                <p className="text-sm text-gray-500">{item.time} Min</p>
-                            </div>
-                            <span>{item.price} ₹</span>
-                        </div>
-                    ))}
-
-                    <div className="flex justify-between mt-6 font-bold text-lg">
-                        <span>Total</span>
-                        <span>{cart.totalPrice} ₹</span>
-                    </div>
+              <div className="flex justify-between">
+                <div>
+                  <p className="font-semibold text-lg">
+                    {item.serviceName}
+                  </p>
+                  <p className="text-sm  text-gray-500">
+                    {item.time} Min
+                  </p>
                 </div>
 
-                {/* RIGHT SIDE - BOOKING DETAILS */}
-                <div className="bg-white rounded-3xl p-8 shadow space-y-6">
+                <span className="font-semibold">
+                  {item.price} ₹
+                </span>
+              </div>
+
+              {/* 🔥 IMAGE SAME AS AddServices */}
+              {item.imageUrl && (
+                <div className="mt-4">
+                  <img
+                    src={item.imageUrl}
+                    alt={item.serviceName}
+                    className="w-70  h-70  rounded-xl"
+                  />
+                </div>
+              )}
+
+            </div>
+          ))}
+
+          <div className="flex justify-between mt-3 text-gray-600">
+    <span>Total Time</span>
+    <span>{totalTime} Min</span>
+  </div>
+
+  <div className="flex justify-between font-bold text-xl">
+    <span>Total Price</span>
+    <span>{cart.totalPrice} ₹</span>
+  </div>
+        </div>
+
+        {/* RIGHT SIDE */}
+       <div className="bg-white rounded-3xl p-8 shadow space-y-6">
 
                     {/* DATE */}
                     <div>
@@ -325,7 +342,7 @@ export default function Checkout() {
                     </div>
 
 
-                    {/* BARBERS */}
+                     {/* BARBERS */}
                     <div>
                         <label className="block mb-2 font-medium">
                             Select Barber
@@ -345,7 +362,7 @@ export default function Checkout() {
                         ))}
                     </div>
 
-                    {/* SLOTS */}
+
                     <div>
                         <label className="block mb-2 font-medium">
                             Available Time Slot
@@ -371,20 +388,15 @@ export default function Checkout() {
                         })}
 
                     </div>
-                </div>
-            </div>
 
-            {/* BOTTOM CONFIRM BUTTON */}
-            <div className="  left-0 w-full bg-white px-6 md:px-14  pb-6">
-                <button
-                    onClick={confirmBooking}
-                    className="w-full bg-[#0B132B] text-white py-4 rounded-xl font-semibold text-lg"
-                >
-                    Confirm Booking
-                </button>
-            </div>
-
+          <button
+            onClick={confirmBooking}
+            className="w-full bg-[#0B132B] text-white py-4 rounded-xl cursor-pointer font-semibold text-lg"
+          >
+            Confirm Booking
+          </button>
         </div>
-    );
-
-}
+      </div>
+    </div>
+  
+  )}

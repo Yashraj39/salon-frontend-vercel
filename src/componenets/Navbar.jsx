@@ -44,7 +44,7 @@ export default function Navbar() {
   }, [userId]);
 
   return (
-    <header className=" top-0 left-0 w-full bg-white border-b z-50">
+    <header className="w-full bg-white border-b z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-14 py-4 flex items-center justify-between">
 
         {/* LOGO */}
@@ -89,11 +89,19 @@ export default function Navbar() {
             {/* RIGHT SIDE ICONS */}
             <div className="flex items-center gap-4 md:gap-6 relative">
 
-              <FiBell className="text-xl cursor-pointer" />
+              <FiBell className="text-xl cursor-pointer hidden sm:block" />
 
-              {/* CART */}
+              {/* CART (Desktop Hover Only) */}
               <div className="relative group cursor-pointer">
-                <FaShoppingCart className="text-xl" />
+
+                <FaShoppingCart
+                  className="text-xl"
+                  onClick={() => {
+                    if (window.innerWidth < 768) {
+                      navigate("/bookings");
+                    }
+                  }}
+                />
 
                 {totalPending > 0 && (
                   <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
@@ -101,8 +109,8 @@ export default function Navbar() {
                   </div>
                 )}
 
-                {/* DROPDOWN */}
-                <div className="absolute right-0 top-10 w-72 sm:w-80 bg-white shadow-2xl rounded-2xl p-5 z-50 opacity-0 invisible translate-y-3 transition-all duration-300 ease-in-out group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
+                {/* DESKTOP DROPDOWN */}
+                <div className="hidden md:block absolute right-0 top-10 w-80 bg-white shadow-2xl rounded-2xl p-5 z-50 opacity-0 invisible translate-y-3 transition-all duration-300 ease-in-out group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
 
                   <h3 className="font-semibold text-lg mb-4">
                     Pending Bookings
@@ -116,7 +124,15 @@ export default function Navbar() {
                     navbarCart.map((item) => (
                       <div
                         key={item.salonId}
-                        className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition"
+                        onClick={() =>
+                          navigate(`/add-services/${item.salonId}`, {
+                            state: {
+                              customerName: item.customerName || "",
+                              bookedBy: user?.name || "",
+                            },
+                          })
+                        }
+                        className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition cursor-pointer"
                       >
                         <div>
                           <p className="font-medium">
@@ -151,7 +167,7 @@ export default function Navbar() {
         )}
       </div>
 
-      {/* MOBILE MENU DROPDOWN */}
+      {/* MOBILE MENU */}
       {mobileMenu && isLoggedIn && (
         <div className="md:hidden bg-white border-t px-6 py-4 space-y-4">
           <div

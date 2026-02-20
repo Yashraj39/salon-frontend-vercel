@@ -192,7 +192,7 @@ export default function AddServices() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(-1)}
-              className="w-10 h-10 border rounded-full flex items-center justify-center"
+              className="w-10 h-10 border rounded-full flex cursor-pointer items-center justify-center"
             >
               <IoArrowBack />
             </button>
@@ -252,7 +252,7 @@ export default function AddServices() {
                 state: { customerName, bookedBy }
               })
             }
-            className="bg-[#0B132B] text-white px-10 py-3 rounded-lg"
+            className="bg-[#0B132B] text-white px-10 py-3 cursor-pointer rounded-lg"
           >
             Check Out
           </button>
