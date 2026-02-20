@@ -218,36 +218,95 @@ export default function Checkout() {
   <div className="min-h-screen bg-gray-100">
 
     {/* NAVBAR */}
-    <div className="w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
-      <div className="flex items-center justify-between py-4">
-
-        <div
-          onClick={() => navigate("/success")}
-          className="flex items-center gap-2 font-semibold cursor-pointer"
-        >
-          <div className="h-7 w-7 bg-black rounded-md" />
-          SlotMyStyle
-        </div>
-
-        <div className="hidden md:flex gap-8 text-sm cursor-pointer">
-          <span onClick={() => navigate("/success")}>Home</span>
-          <span
-            onClick={() => navigate("/bookings")}
-            className="border-b-2 border-black"
+      <div className=" top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
+        <div className="flex items-center justify-between py-4">
+          <div
+            onClick={() => navigate("/success")}
+            className="flex items-center gap-2 font-semibold cursor-pointer"
           >
-            My Bookings
-          </span>
-        </div>
+            <div className="h-7 w-7 bg-black rounded-md" />
+             SlotMyStyle
+          </div>
 
-        <div className="flex gap-4 sm:gap-5 relative">
-          <FiBell className="text-xl cursor-pointer hidden sm:block" />
-          <FiUser
-            className="text-xl cursor-pointer"
-            onClick={() => navigate("/profile")}
-          />
+          <div className="hidden md:flex gap-8 text-sm cursor-pointer">
+            <span onClick={() => navigate("/success")}>Home</span>
+            <span
+              onClick={() => navigate("/bookings")}
+              className="border-b-2 border-black cursor-pointer"
+            >
+              My Bookings
+            </span>
+          </div>
+
+          <div className="flex gap-5 relative">
+            <FiBell className="text-xl cursor-pointer" />
+            <FiUser
+              className="text-xl cursor-pointer"
+              onClick={() => navigate("/profile")}
+            />
+
+            <div className="relative group">
+              <div className="relative cursor-pointer">
+                <FaShoppingCart className="text-xl" />
+
+                {totalPending > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
+                    {totalPending}
+                  </div>
+                )}
+              </div>
+
+              <div className="
+                absolute right-0 top-10 w-80 
+                bg-white shadow-2xl rounded-2xl p-5 z-50
+                opacity-0 invisible translate-y-3
+                transition-all duration-300 ease-in-out
+                group-hover:opacity-100 
+                group-hover:visible 
+                group-hover:translate-y-0
+              ">
+                <h3 className="font-semibold text-lg mb-4">
+                  Pending Bookings
+                </h3>
+
+                {navbarCart.length === 0 ? (
+                  <p className="text-gray-500 text-sm">
+                    No Pending Services
+                  </p>
+                ) : (
+                  navbarCart.map((item) => (
+                    <div
+      key={item.salonId}
+      onClick={() =>
+        navigate(`/add-services/${item.salonId}`, {
+          state: {
+            customerName: item.customerName || customerName,
+            bookedBy: bookedBy,
+          },
+        })
+      }
+      className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition cursor-pointer"
+    >
+                      <div>
+                        <p className="font-medium">
+                          {item.salonName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {item.pendingCount} Pending Service
+                        </p>
+                      </div>
+
+                      <div className="bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center">
+                        {item.pendingCount}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
     {/* TOP SECTION */}
     <div className="px-4 sm:px-6 md:px-14 mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -292,7 +351,7 @@ export default function Checkout() {
 
                 <div className="flex-1">
                   <div className="flex justify-between flex-wrap gap-2">
-                    <h3 className="font-semibold text-base sm:text-lg break-words">
+                    <h3 className="font-semibold text-base sm:text-lg ">
                       {item.serviceName}
                     </h3>
                     <span className="font-semibold">
