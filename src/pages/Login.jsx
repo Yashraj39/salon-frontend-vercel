@@ -1,107 +1,111 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../api";
-import toast from "react-hot-toast";
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import api from '../api'
+import toast from 'react-hot-toast'
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const navigate = useNavigate();
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const navigate = useNavigate()
 
   const handleLogin = async () => {
     if (!email || !password) {
-      toast.error("Please fill all fields");
-      return;
+      toast.error('Please fill all fields')
+      return
     }
 
     try {
-      const res = await api.post("/login", { email, password });
+      const res = await api.post('/login', { email, password })
 
       // ✅ STORE USER IN LOCAL STORAGE
       localStorage.setItem(
-        "user",
+        'user',
         JSON.stringify({
-          userId: res.data.userId || "",
-          name: res.data.name || "",
-          email: res.data.email || "",
+          userId: res.data.userId || '',
+          name: res.data.name || '',
+          email: res.data.email || '',
           isAccountVerified: res.data.isAccountVerified || false,
         })
-      );
+      )
 
-      toast.success("Login successful!");
-      navigate("/");
+      toast.success('Login successful!')
+      navigate('/')
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Login failed!");
+      toast.error(err?.response?.data?.message || 'Login failed!')
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className='min-h-screen bg-white flex flex-col'>
       {/* TOP BRAND */}
-      <div className="px-6 sm:px-10 py-6">
-        <h1 className="text-lg font-semibold underline">Glow & Shine</h1>
+      <div className='px-6 sm:px-10 py-6'>
+        <h1 className='text-lg font-semibold underline'>Glow & Shine</h1>
       </div>
 
       {/* MAIN */}
-      <div className="flex flex-1 flex-col md:flex-row items-center justify-center px-4 md:px-32">
+      <div className='flex flex-1 flex-col md:flex-row items-center justify-center px-4 md:px-32'>
         {/* LEFT FORM */}
-        <div className="w-full md:w-1/2 flex justify-center md:justify-end mb-8 md:mb-0 md:pr-16">
-          <div className="w-full max-w-[320px]">
-            <h2 className="text-2xl font-semibold mb-2">Log in</h2>
-            <p className="text-gray-500 text-sm mb-6">
+        <div className='w-full md:w-1/2 flex justify-center md:justify-end mb-8 md:mb-0 md:pr-16'>
+          <div className='w-full max-w-[320px]'>
+            <h2 className='text-2xl font-semibold mb-2'>Log in</h2>
+            <p className='text-gray-500 text-sm mb-6'>
               Welcome back! Please login to your account.
             </p>
 
             <input
-              type="email"
-              className="w-full border px-3 py-2 rounded-md mb-3 text-sm"
-              placeholder="Email"
+              type='email'
+              className='w-full border px-3 py-2 rounded-md mb-3 text-sm'
+              placeholder='Email'
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
 
             <input
-              type="password"
-              className="w-full border px-3 py-2 rounded-md mb-4 text-sm"
-              placeholder="Password"
+              type='password'
+              className='w-full border px-3 py-2 rounded-md mb-4 text-sm'
+              placeholder='Password'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
 
             <p
-              onClick={() => navigate("/forgot-password")}
-              className="text-xs text-gray-500 underline cursor-pointer mb-5"
+              onClick={() => navigate('/forgot-password')}
+              className='text-xs text-gray-500 underline cursor-pointer mb-5'
             >
               Forgot password?
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 mb-2">
+            <div className='flex flex-col sm:flex-row gap-3 mb-2'>
               <button
                 onClick={handleLogin}
-                className="bg-black text-white px-6 py-2 cursor-pointer rounded-md text-sm flex-1"
+                className='bg-black text-white px-6 py-2 cursor-pointer rounded-md text-sm flex-1'
               >
                 Log in
               </button>
 
               <button
-                onClick={() => navigate("/register")}
-                className="border px-6 py-2 cursor-pointer rounded-md text-sm flex-1"
+                onClick={() => navigate('/register')}
+                className='border px-6 py-2 cursor-pointer rounded-md text-sm flex-1'
               >
                 Sign Up
               </button>
             </div>
 
-            <p className="text-[10px] text-gray-400 mt-2">
+            <p className='text-[10px] text-gray-400 mt-2'>
               *Keep your credentials safe
             </p>
           </div>
         </div>
 
         {/* RIGHT IMAGE - ONLY SHOW ON DESKTOP */}
-        <div className="hidden md:flex w-1/2 justify-start pl-16">
-          <img src="/Hero.png" alt="login" className="w-[320px] object-contain" />
+        <div className='hidden md:flex w-1/2 justify-start pl-16'>
+          <img
+            src='/Hero.png'
+            alt='login'
+            className='w-[320px] object-contain'
+          />
         </div>
       </div>
     </div>
-  );
+  )
 }

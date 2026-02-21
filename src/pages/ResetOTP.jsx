@@ -1,84 +1,84 @@
-import React, { useState, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import api from "../axiosConfig";
-import toast from "react-hot-toast";
+import React, { useState, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import api from '../axiosConfig'
+import toast from 'react-hot-toast'
 
 export default function ResetOTP() {
-  const [otp, setOtp] = useState(new Array(6).fill(""));
-  const inputRefs = useRef([]);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const email = location.state?.email;
+  const [otp, setOtp] = useState(new Array(6).fill(''))
+  const inputRefs = useRef([])
+  const navigate = useNavigate()
+  const location = useLocation()
+  const email = location.state?.email
 
   const handleChange = (value, index) => {
-    if (isNaN(value)) return;
+    if (isNaN(value)) return
 
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
+    const newOtp = [...otp]
+    newOtp[index] = value
+    setOtp(newOtp)
 
     if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
+      inputRefs.current[index + 1]?.focus()
     }
-  };
+  }
 
   const handleBackspace = (e, index) => {
-    if (e.key === "Backspace" && index > 0 && !otp[index]) {
-      inputRefs.current[index - 1]?.focus();
+    if (e.key === 'Backspace' && index > 0 && !otp[index]) {
+      inputRefs.current[index - 1]?.focus()
     }
-  };
+  }
 
   const verifyResetOTP = async () => {
-    const otpValue = otp.join("");
+    const otpValue = otp.join('')
     try {
-      await api.post("/verify-reset-otp", { email, otp: otpValue });
-      toast.success("OTP Verified!");
-      navigate("/new-password", { state: { email } });
+      await api.post('/verify-reset-otp', { email, otp: otpValue })
+      toast.success('OTP Verified!')
+      navigate('/new-password', { state: { email } })
     } catch (err) {
-      toast.error(err.response?.data?.message || "Invalid OTP");
+      toast.error(err.response?.data?.message || 'Invalid OTP')
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="bg-white w-full max-w-sm sm:max-w-md p-6 sm:p-8 rounded-xl shadow-lg text-center">
-        <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-800">
-          Enter Reset OTP
+    <div className='min-h-screen flex items-center justify-center bg-gray-100 px-4'>
+      <div className='bg-white w-full max-w-sm sm:max-w-md p-6 sm:p-8 rounded-xl shadow-lg text-center'>
+        <h2 className='text-xl sm:text-2xl font-bold mb-4 text-gray-800'>
+          Enter OTP
         </h2>
 
-        <div className="flex justify-between gap-2 sm:gap-3 mt-6 mb-6">
+        <div className='flex justify-between gap-2 sm:gap-3 mt-6 mb-6'>
           {otp.map((value, index) => (
             <input
               key={index}
-              type="text"
-              inputMode="numeric"
-              maxLength="1"
+              type='text'
+              inputMode='numeric'
+              maxLength='1'
               value={value}
               ref={(el) => (inputRefs.current[index] = el)}
               onChange={(e) => handleChange(e.target.value, index)}
               onKeyDown={(e) => handleBackspace(e, index)}
-              className="
+              className='
                 w-10 h-12 sm:w-12 sm:h-14
                 text-center text-lg sm:text-xl font-semibold
                 border-2 border-gray-300 rounded-lg
                 focus:border-black outline-none transition
-              "
+              '
             />
           ))}
         </div>
 
         <button
           onClick={verifyResetOTP}
-          disabled={otp.join("").length !== 6}
-          className="
+          disabled={otp.join('').length !== 6}
+          className='
             w-full py-3 rounded-lg font-bold text-white
             bg-black transition
             disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer
-          "
+          '
         >
           Verify OTP
         </button>
       </div>
     </div>
-  );
+  )
 }
