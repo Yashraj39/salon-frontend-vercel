@@ -4,6 +4,7 @@ import { IoArrowBack, IoTimeOutline } from "react-icons/io5";
 import { FiBell, FiUser } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { FaShoppingCart } from "react-icons/fa";
+import Navbar from "../componenets/Navbar";
 
 export default function AddServices() {
   const navigate = useNavigate();
@@ -113,99 +114,10 @@ export default function AddServices() {
   return (
     <div className="min-h-screen bg-white">
 
-      {/* NAVBAR */}
-      <div className="fixed top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
-        <div className="flex items-center justify-between py-4">
-          <div
-            onClick={() => navigate("/success")}
-            className="flex items-center gap-2 font-semibold cursor-pointer"
-          >
-            <div className="h-7 w-7 bg-black rounded-md" />
-             SlotMyStyle
-          </div>
-
-          <div className="hidden md:flex gap-8 text-sm cursor-pointer">
-            <span onClick={() => navigate("/success")}>Home</span>
-            <span
-              onClick={() => navigate("/bookings")}
-              className="border-b-2 border-black cursor-pointer"
-            >
-              My Bookings
-            </span>
-          </div>
-
-          <div className="flex gap-5 relative">
-            <FiBell className="text-xl cursor-pointer" />
-            <FiUser
-              className="text-xl cursor-pointer"
-              onClick={() => navigate("/profile")}
-            />
-
-            <div className="relative group">
-              <div className="relative cursor-pointer">
-                <FaShoppingCart className="text-xl" />
-
-                {totalPending > 0 && (
-                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
-                    {totalPending}
-                  </div>
-                )}
-              </div>
-
-              <div className="
-                absolute right-0 top-10 w-80 
-                bg-white shadow-2xl rounded-2xl p-5 z-50
-                opacity-0 invisible translate-y-3
-                transition-all duration-300 ease-in-out
-                group-hover:opacity-100 
-                group-hover:visible 
-                group-hover:translate-y-0
-              ">
-                <h3 className="font-semibold text-lg mb-4">
-                  Pending Bookings
-                </h3>
-
-                {navbarCart.length === 0 ? (
-                  <p className="text-gray-500 text-sm">
-                    No Pending Services
-                  </p>
-                ) : (
-                  navbarCart.map((item) => (
-                    <div
-      key={item.salonId}
-      onClick={() =>
-        navigate(`/add-services/${item.salonId}`, {
-          state: {
-            customerName: item.customerName || customerName,
-            bookedBy: bookedBy,
-          },
-        })
-      }
-      className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition cursor-pointer"
-    >
-                      <div>
-                        <p className="font-medium">
-                          {item.salonName}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {item.pendingCount} Pending Service
-                        </p>
-                      </div>
-
-                      <div className="bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center">
-                        {item.pendingCount}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <Navbar/>
+      
       {/* CONTENT */}
-      <div className="px-4 sm:px-6 md:px-14 pt-32 pb-40 space-y-6">
+      <div className="px-4 sm:px-6 md:px-14 pt-10 pb-40 space-y-6">
 
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
@@ -231,25 +143,32 @@ export default function AddServices() {
         {items.length ? (
           items.map((item, idx) => (
             <div
-              key={idx}
-              className="bg-gray-100 rounded-3xl px-6 md:px-10 py-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6"
-            >
-              <div className="flex items-center gap-6">
-                <img
-                  src={item.imageUrl}
-                  alt={item.serviceName}
-                  className="h-20 w-20 rounded-2xl object-cover"
-                />
-                <h3 className="font-semibold">{item.serviceName}</h3>
-              </div>
+  key={idx}
+  className="bg-gray-100 rounded-3xl px-6 md:px-10 py-6 grid grid-cols-1 sm:grid-cols-3 items-center gap-6"
+>
+  {/* LEFT SIDE – IMAGE + NAME */}
+  <div className="flex items-center gap-6 min-w-0">
+    <img
+      src={item.imageUrl}
+      alt={item.serviceName}
+      className="h-20 w-20 rounded-2xl object-cover shrink-0"
+    />
+    <h3 className="font-semibold truncate">
+      {item.serviceName}
+    </h3>
+  </div>
 
-              <p className="font-semibold">{item.price} Rs.</p>
+  {/* CENTER – PRICE (ALWAYS CENTERED) */}
+  <div className="text-center font-semibold">
+    ₹ {item.price}
+  </div>
 
-              <div className="flex items-center gap-2 text-gray-500">
-                <IoTimeOutline />
-                <span>{item.time} Min</span>
-              </div>
-            </div>
+  {/* RIGHT – TIME */}
+  <div className="flex items-center justify-center sm:justify-end gap-2 text-gray-500">
+    <IoTimeOutline />
+    <span>{item.time} Min</span>
+  </div>
+</div>
           ))
         ) : (
           <p className="text-gray-500">No services added</p>

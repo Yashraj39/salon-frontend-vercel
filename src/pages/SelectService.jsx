@@ -5,6 +5,7 @@ import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import { FiBell, FiUser } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { FaShoppingCart } from "react-icons/fa";
+import Navbar from "../componenets/Navbar";
 
 export default function SelectService() {
   const { salonId } = useParams();
@@ -183,7 +184,7 @@ const [totalPending, setTotalPending] = useState(0);
         return;
       }
 
-      toast.success("Service added!");
+      toast.success("Service added to cart Successfully!");
       fetchCartCount();
 
       // ✅ Navigate to add-services page immediately after adding
@@ -357,105 +358,11 @@ const [totalPending, setTotalPending] = useState(0);
 
   return (
     <div className="h-screen flex flex-col bg-white">
-      {/* NAVBAR */}
-      <div className="fixed top-0 left-0 w-full bg-white border-b z-50 px-4 sm:px-6 md:px-14">
-        <div className="flex items-center justify-between py-4">
-          <div
-            onClick={() => navigate("/success")}
-            className="flex items-center gap-2 font-semibold cursor-pointer"
-          >
-            <div className="h-7 w-7 bg-black rounded-md" />
-            SlotMyStyle
-          </div>
-
-          <div className="hidden md:flex gap-8 text-sm cursor-pointer">
-            <span onClick={() => navigate("/success")}>Home</span>
-            <span
-              onClick={() => navigate("/bookings")}
-              className="border-b-2 border-black cursor-pointer"
-            >
-              My Bookings
-            </span>
-          </div>
-
-          <div className="flex gap-5 relative">
-  <FiBell className="text-xl cursor-pointer" />
-  <FiUser
-    className="text-xl cursor-pointer"
-    onClick={() => navigate("/profile")}
-  />
-
-
-  <div className="relative group">
-
-   {/* CART ICON */}
-  <div className="relative cursor-pointer">
-    <FaShoppingCart className="text-xl" />
-
-    {totalPending > 0 && (
-      <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce">
-        {totalPending}
-      </div>
-    )}
-  </div>
-
-  {/* DROPDOWN */}
-  <div className="
-    absolute right-0 top-10 w-80 
-    bg-white shadow-2xl rounded-2xl p-5 z-50
-    opacity-0 invisible translate-y-3
-    transition-all duration-300 ease-in-out
-    group-hover:opacity-100 
-    group-hover:visible 
-    group-hover:translate-y-0
-  ">
-    
-    <h3 className="font-semibold text-lg mb-4">
-      Pending Bookings
-    </h3>
-
-   {navbarCart.length === 0 ? (
-  <p className="text-gray-500 text-sm">
-    No Pending Services
-  </p>
-) : (
-  navbarCart.map((item) => (
-    <div
-      key={item.salonId}
-      onClick={() =>
-        navigate(`/add-services/${item.salonId}`, {
-          state: {
-            customerName: item.customerName || customerName,
-            bookedBy: bookedBy,
-          },
-        })
-      }
-      className="flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition cursor-pointer"
-    >
-      <div>
-        <p className="font-medium">
-          {item.salonName || "Salon"}
-        </p>
-        <p className="text-sm text-gray-500">
-          {item.pendingCount} Pending Service
-        </p>
-      </div>
-
-      <div className="bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center">
-        {item.pendingCount}
-      </div>
-    </div>
-  ))
-)}
-    </div>
-  </div>
-</div>
-
-        </div>
-      </div>
+     
+        <Navbar/>
 
       {/* CONTENT */}
-      <div className="flex-1 overflow-y-auto px-14 pt-24 pb-28">
+      <div className="flex-1 overflow-y-auto px-14 pt-10 pb-28">
         <button
           onClick={() => navigate(-1)}
           className="mb-6 w-10 h-10 border cursor-pointer rounded-full flex items-center justify-center"
@@ -561,37 +468,37 @@ const [totalPending, setTotalPending] = useState(0);
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-10">
               {services.map((s) => (
                 <div
-                  key={s._id || s.id}
-                  className="bg-gray-100 rounded-3xl p-4 flex flex-col"
-                >
-                  {s.imageUrl && (
-                    <img
-                      src={s.imageUrl}
-                      alt={s.name}
-                      className="h-36 w-full rounded-xl object-cover"
-                    />
-                  )}
+  key={s._id || s.id}
+  className="bg-gray-100 rounded-3xl p-4 flex flex-col h-full"
+>
+  {s.imageUrl && (
+    <img
+      src={s.imageUrl}
+      alt={s.name}
+      className="h-36 w-full rounded-xl object-cover"
+    />
+  )}
 
+  <h3 className="mt-4 font-semibold text-sm">{s.name}</h3>
 
-                  <h3 className="mt-4 font-semibold text-sm">{s.name}</h3>
+  <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+    {s.description}
+  </p>
 
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                    {s.description}
-                  </p>
+  <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
+    ⏱ {s.time} Min
+  </div>
 
-                  <div className="flex items-center gap-1 text-xs text-gray-400 mt-2">
-                    ⏱ {s.time} Min
-                  </div>
+  <p className="mt-2 font-semibold mb-4 text-sm">₹ {s.price}</p>
 
-                  <p className="mt-2 font-semibold text-sm">₹ {s.price}</p>
-
-                  <button
-                    className="mt-4 bg-black text-white text-xs py-2 cursor-pointer rounded-full"
-                    onClick={() => handleAddService(s)}
-                  >
-                    Add Service
-                  </button>
-                </div>
+  {/* ✅ IMPORTANT CHANGE */}
+  <button
+    className="mt-auto bg-black text-white text-xs cursor-pointer py-2 rounded-full"
+    onClick={() => handleAddService(s)}
+  >
+    Add Service
+  </button>
+</div>
               ))}
             </div>
 

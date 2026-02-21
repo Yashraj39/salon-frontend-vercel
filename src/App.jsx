@@ -29,18 +29,19 @@ export default function App() {
   return (
     <BrowserRouter>
       {/* Toast */}
-      <Toaster
-        position="top-center"
-        reverseOrder={false}
-        toastOptions={{
-          style: {
-            padding: "16px",
-            color: "black",
-            fontWeight: "bold",
-            borderRadius: "8px",
-          },
-        }}
-      />
+    <Toaster
+  position="top-center"
+  reverseOrder={false}
+  toastOptions={{
+    duration: 3000, // 3 seconds for all toasts
+    style: {
+      padding: "16px",
+      color: "black",
+      fontWeight: "bold",
+      borderRadius: "8px",
+    },
+  }}
+/>
 
       <Routes>
         {/* 🌟 DEFAULT HOME PAGE (Login પહેલા) */}
