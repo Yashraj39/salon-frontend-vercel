@@ -2,11 +2,37 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { FiBell, FiUser, FiMenu } from 'react-icons/fi'
 import { FaShoppingCart } from 'react-icons/fa'
 import React, { useEffect, useState, useRef } from 'react'
+import toast, { Toaster } from 'react-hot-toast'
+
+const BASE_URL = 'https://render-qs89.onrender.com'
+
+// Utility functions for per-user storage
+const saveOwnerApplication = (userId, data) => {
+  const allApps = JSON.parse(localStorage.getItem('allOwnerApplications')) || {}
+  allApps[userId] = data
+  localStorage.setItem('allOwnerApplications', JSON.stringify(allApps))
+}
+
+const getOwnerApplication = (userId) => {
+  const allApps = JSON.parse(localStorage.getItem('allOwnerApplications')) || {}
+  return allApps[userId] || null
+}
+
+const removeOwnerApplication = (userId) => {
+  const allApps = JSON.parse(localStorage.getItem('allOwnerApplications')) || {}
+  delete allApps[userId]
+  localStorage.setItem('allOwnerApplications', JSON.stringify(allApps))
+}
 
 export default function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
   const isLoggedIn = !!localStorage.getItem('user')
+
+  const user = JSON.parse(localStorage.getItem('user')) || {}
+  const userId = user.userId
+
+  const [currentUserId, setCurrentUserId] = useState(userId || null)
 
   const [totalPending, setTotalPending] = useState(0)
   const [navbarCart, setNavbarCart] = useState([])
@@ -16,172 +42,202 @@ export default function Navbar() {
   const [showOwnerModal, setShowOwnerModal] = useState(false)
   const [agreed, setAgreed] = useState(false)
 
-  const user = JSON.parse(localStorage.getItem('user')) || {}
-  const userId = user.userId
-
   const [showOwnerForm, setShowOwnerForm] = useState(false)
-
-  const [uploadedUrl, setUploadedUrl] = useState(null)
-
   const [aadharFile, setAadharFile] = useState(null)
-  const [loading, setLoading] = useState(false)
   const fileInputRef = useRef(null)
+  const [loading, setLoading] = useState(false)
 
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
 
   const [showModal, setShowModal] = useState(false)
-
   const [ownerStatus, setOwnerStatus] = useState(null)
 
-   const fetchNavbarCart = async () => {
-     try {
-       if (!userId) return
-
-       const res = await fetch(
-         `https://render-qs89.onrender.com/api/cart/navbar-cart?userId=${userId}`
-       )
-
-       if (!res.ok) return
-
-       const cartData = await res.json()
-
-       setNavbarCart(cartData)
-
-       const total = cartData.reduce(
-         (sum, item) => sum + (item.pendingCount || 0),
-         0
-       )
-
-       setTotalPending(total)
-     } catch (error) {
-       console.error('Navbar cart error:', error)
-     }
-   }
-
-   useEffect(() => {
-     fetchNavbarCart()
-   }, [userId])
-
+  // -------------------------
+  // Pre-fill owner data for current user
+  // -------------------------
   useEffect(() => {
-  const interval = setInterval(async () => {
-    if (!userId) return
+    if (!currentUserId) return
+    const currentUserApp = getOwnerApplication(currentUserId)
+    if (currentUserApp) {
+      setOwnerStatus(currentUserApp.status || null)
+      setPhone(currentUserApp.phone || '')
+      setEmail(currentUserApp.email || '')
+      setAadharFile(currentUserApp.aadhaarUrl || null)
+    } else {
+      setOwnerStatus(null)
+      setPhone('')
+      setEmail('')
+      setAadharFile(null)
+    }
+  }, [currentUserId])
 
+  // -------------------------
+  // Fetch Navbar cart
+  // -------------------------
+  const fetchNavbarCart = async () => {
+    if (!userId) return
     try {
       const res = await fetch(
-        `https://render-qs89.onrender.com/api/owner/application?userId=${userId}`
+        `${BASE_URL}/api/cart/navbar-cart?userId=${userId}`
       )
       if (!res.ok) return
-      const data = await res.json()
-      if (data?.status && data.status !== ownerStatus) {
-        setOwnerStatus(data.status)
-      }
+      const cartData = await res.json()
+      setNavbarCart(cartData)
+      const total = cartData.reduce(
+        (sum, item) => sum + (item.pendingCount || 0),
+        0
+      )
+      setTotalPending(total)
     } catch (e) {
-      console.error(e)
+      console.error('Navbar cart error:', e)
     }
-  }, 5000) // every 5 seconds
-
-  return () => clearInterval(interval)
-}, [userId, ownerStatus])
-
-   // Close dropdown when clicking outside (mobile)
-   useEffect(() => {
-     const handleClickOutside = () => {
-       setShowCartDropdown(false)
-     }
-
-     if (showCartDropdown) {
-       document.addEventListener('click', handleClickOutside)
-     }
-
-     return () => {
-       document.removeEventListener('click', handleClickOutside)
-     }
-   }, [showCartDropdown])
-
-const BASE_URL = 'https://render-qs89.onrender.com'
-  
-const handleOwnerApply = async () => {
-  const storedUser = JSON.parse(localStorage.getItem('user'))
-  const userId = storedUser?.userId // 👈 proper way
-
-  if (!userId) {
-    alert('User not logged in')
-    return
   }
 
-  if (!phone || !email || !aadharFile) {
-    alert('Please fill all fields')
-    return
-  }
+  useEffect(() => {
+    fetchNavbarCart()
+  }, [userId])
 
-  try {
-    setLoading(true)
+  // -------------------------
+  // Auto-refresh owner status every 5s
+  // -------------------------
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!currentUserId) return
 
-    // 1️⃣ Upload Image
-    const formData = new FormData()
-    formData.append('file', aadharFile)
+      try {
+        const res = await fetch(
+          `${BASE_URL}/api/owner/application?userId=${currentUserId}`
+        )
 
-    const uploadRes = await fetch(`${BASE_URL}/api/upload/image`, {
-      method: 'POST',
-      body: formData,
-    })
+        // ✅ If deleted/not found -> clear cached data + reset UI
+        if (!res.ok) {
+          console.log('Application not found / forbidden → clearing cache')
 
-    if (!uploadRes.ok) {
-      const err = await uploadRes.text()
-      console.log('Upload Error:', err)
-      alert('Image upload failed')
+          removeOwnerApplication(currentUserId)
+
+          setOwnerStatus(null)
+
+          return
+        }
+
+        const data = await res.json()
+
+        saveOwnerApplication(currentUserId, data)
+
+        if (data?.status && data.status !== ownerStatus) {
+          setOwnerStatus(data.status)
+          toast.success(
+            data.status === 'APPROVED'
+              ? 'Your owner application has been approved!'
+              : 'Your application is pending.'
+          )
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [currentUserId, ownerStatus])
+
+  // -------------------------
+  // Close cart dropdown when clicking outside
+  // -------------------------
+  useEffect(() => {
+    const handleClickOutside = () => setShowCartDropdown(false)
+    if (showCartDropdown) document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [showCartDropdown])
+
+  // -------------------------
+  // Handle Owner Application Submit
+  // -------------------------
+  const handleOwnerApply = async () => {
+    if (!currentUserId) {
+      toast.error('User not logged in')
+      return
+    }
+    if (!phone || !email || !aadharFile) {
+      toast.error('Please fill all fields')
       return
     }
 
-    const uploadData = await uploadRes.json()
-    const imageUrl = uploadData.imageUrl
+    try {
+      setLoading(true)
+      const formData = new FormData()
+      formData.append('file', aadharFile)
 
-    // 2️⃣ Apply Owner
-    const applyRes = await fetch(`${BASE_URL}/api/owner/apply`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId,
-        phone,
-        email,
-        aadhaarUrl: imageUrl,
-        termsAccepted: true,
-      }),
-    })
+      // Upload Aadhaar
+      const uploadRes = await fetch(`${BASE_URL}/api/upload/image`, {
+        method: 'POST',
+        body: formData,
+      })
+      if (!uploadRes.ok) throw new Error('Image upload failed')
+      const uploadData = await uploadRes.json()
+      const imageUrl = uploadData.imageUrl
 
-    if (!applyRes.ok) {
-      const err = await applyRes.text()
-      console.log('Apply API Error:', err)
-      alert('Application failed')
-      return
+      // Apply Owner
+      const applyRes = await fetch(`${BASE_URL}/api/owner/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUserId,
+          phone,
+          email,
+          aadhaarUrl: imageUrl,
+          termsAccepted: true,
+        }),
+      })
+      if (!applyRes.ok) throw new Error('Application failed')
+      const applyData = await applyRes.json()
+
+      // Save per-user
+      saveOwnerApplication(currentUserId, applyData)
+      setOwnerStatus(applyData.status)
+
+      toast.success('Application submitted successfully!')
+      setShowOwnerForm(false)
+      setShowModal(true)
+    } catch (err) {
+      console.error(err)
+      toast.error(err.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
     }
-
-    const applyData = await applyRes.json()
-    console.log('Success:', applyData)
-
-  alert('Application submitted successfully!')
-
-    // Reset form
-    setShowOwnerForm(false)
-    setShowModal(true)  
-    setPhone('')
-    setEmail('')
-    setAadharFile(null)
-  } catch (error) {
-    console.error('Unexpected Error:', error)
-    alert('Something went wrong')
-  } finally {
-    setLoading(false)
   }
-}
+
+  // -------------------------
+  // Logout
+  // -------------------------
+  const handleLogout = () => {
+    localStorage.removeItem('user')
+    localStorage.removeItem('allOwnerApplications')
+    setCurrentUserId(null)
+    navigate('/login')
+  }
+
+  // -------------------------
+  // JSX Return
+  // -------------------------
   return (
     <>
-      <header className='w-full bg-white border-b  top-0 z-50'>
+      <Toaster
+        position='top-center'
+        reverseOrder={false}
+        toastOptions={{
+          style: {
+            padding: '16px',
+            color: 'black',
+            fontWeight: 'bold',
+            borderRadius: '8px',
+          },
+        }}
+      />
+
+      <header className='w-full bg-white border-b top-0 z-50'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 md:px-14 py-4 flex items-center justify-between'>
-          {/* LOGO */}
+          {/* Logo */}
           <div
             onClick={() => navigate('/success')}
             className='flex items-center gap-2 font-semibold cursor-pointer'
@@ -198,7 +254,6 @@ const handleOwnerApply = async () => {
               >
                 Log in
               </Link>
-
               <Link
                 to='/register'
                 className='bg-black text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base'
@@ -208,7 +263,7 @@ const handleOwnerApply = async () => {
             </div>
           ) : (
             <>
-              {/* DESKTOP MENU */}
+              {/* Desktop Menu */}
               <div className='hidden md:flex items-center gap-8 text-sm'>
                 <span
                   onClick={() => navigate('/success')}
@@ -216,7 +271,6 @@ const handleOwnerApply = async () => {
                 >
                   Home
                 </span>
-
                 <span
                   onClick={() => navigate('/bookings')}
                   className='cursor-pointer'
@@ -225,11 +279,11 @@ const handleOwnerApply = async () => {
                 </span>
               </div>
 
-              {/* RIGHT SIDE ICONS */}
+              {/* Right Icons */}
               <div className='flex items-center gap-4 md:gap-6 relative'>
                 <FiBell className='text-xl cursor-pointer hidden sm:block' />
 
-                {/* CART */}
+                {/* Cart */}
                 <div
                   className='relative group cursor-pointer'
                   onClick={(e) => e.stopPropagation()}
@@ -238,43 +292,36 @@ const handleOwnerApply = async () => {
                     className='text-xl cursor-pointer'
                     onClick={() => setShowCartDropdown(!showCartDropdown)}
                   />
-
                   {totalPending > 0 && (
                     <div className='absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-bounce'>
                       {totalPending}
                     </div>
                   )}
 
-                  {/* DROPDOWN */}
+                  {/* Dropdown */}
                   <div
                     className={`
-    fixed md:absolute
-    top-20 md:top-10
-    left-1/2 md:left-auto
-    -translate-x-1/2 md:translate-x-0
-    md:right-0
-    w-[95%] max-w-sm md:w-80
-    bg-white shadow-2xl rounded-2xl p-5 z-50
-    transition-all duration-300 ease-in-out
-    ${
-      showCartDropdown
-        ? 'opacity-100 visible translate-y-0'
-        : 'opacity-0 invisible translate-y-3'
-    }
-    md:opacity-0 md:invisible md:translate-y-3
-    md:group-hover:opacity-100 md:group-hover:visible md:group-hover:translate-y-0
-  `}
+                    fixed md:absolute top-20 md:top-10 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 md:right-0
+                    w-[95%] max-w-sm md:w-80 bg-white shadow-2xl rounded-2xl p-5 z-50
+                    transition-all duration-300 ease-in-out
+                    ${
+                      showCartDropdown
+                        ? 'opacity-100 visible translate-y-0'
+                        : 'opacity-0 invisible translate-y-3'
+                    }
+                    md:opacity-0 md:invisible md:translate-y-3
+                    md:group-hover:opacity-100 md:group-hover:visible md:group-hover:translate-y-0
+                  `}
                   >
                     <h3 className='font-semibold text-lg mb-4'>
                       Pending Bookings
                     </h3>
-
                     {navbarCart.length === 0 ? (
                       <p className='text-gray-500 text-sm'>
                         No Pending Services
                       </p>
                     ) : (
-                      navbarCart.map((item, idx) => (
+                      navbarCart.map((item) => (
                         <div
                           key={`${item.salonId}-${item.customerName}`}
                           onClick={() =>
@@ -288,15 +335,13 @@ const handleOwnerApply = async () => {
                           className='flex justify-between items-center py-3 border-b hover:bg-gray-50 rounded-lg px-2 transition cursor-pointer'
                         >
                           <div>
-                            <p className='text-lg font-medium '>
+                            <p className='text-lg font-medium'>
                               {item.customerName}
                             </p>
-
                             <p className='text-xs text-gray-500'>
                               {item.salonName}
                             </p>
                           </div>
-
                           <div className='bg-red-500 text-white text-xs w-7 h-7 rounded-full flex items-center justify-center'>
                             {item.pendingCount}
                           </div>
@@ -311,77 +356,82 @@ const handleOwnerApply = async () => {
                   onClick={() => navigate('/profile')}
                 />
 
-                {/* Become Owner Button + Hover Popup */}
-                <div className='relative group hidden md:block'>
+                {/* Owner Button */}
+                {/* Owner Button + Hover Popup */}
+                <div className='relative hidden md:block'>
                   {ownerStatus === 'PENDING' ? (
                     <button className='border px-4 py-1.5 rounded-lg text-sm font-medium bg-gray-200 text-red-600 cursor-not-allowed'>
                       Owner Pending
                     </button>
-                  ) : (
+                  ) : ownerStatus === 'APPROVED' ? (
                     <button
-                      onClick={() => setShowOwnerModal(true)}
-                      className='border px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-100 transition'
+                      onClick={() => navigate('/owner-dashboard')}
+                      className='border px-4 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white'
                     >
-                      Become an Owner!
+                      Owner
                     </button>
-                  )}
+                  ) : (
+                    // Only wrap Become Owner button in a "group"
+                    <div className='group relative inline-block'>
+                      <button
+                        onClick={() => setShowOwnerModal(true)}
+                        className='border px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-gray-100 transition'
+                      >
+                        Become an Owner!
+                      </button>
 
-                  {/* HOVER POPUP (SAME AS BEFORE) */}
-                  <div
-                    className='
-                      absolute right-0 mt-3 w-80
-                      bg-white shadow-2xl rounded-2xl p-5 border
-                      opacity-0 invisible translate-y-3
-                      transition-all duration-300 ease-in-out
-                      group-hover:opacity-100
-                      group-hover:visible
-                      group-hover:translate-y-0
-                      z-50
-                    '
-                  >
-                    <div className='flex items-start gap-3'>
-                      <img
-                        src='/lamp.png'
-                        alt='Lamp'
-                        className='w-20 h-20 object-contain'
-                      />
+                      {/* Hover Popup */}
+                      <div
+                        className='
+          absolute right-0 mt-3 w-80
+          bg-white shadow-2xl rounded-2xl p-5 border
+          opacity-0 invisible translate-y-3
+          transition-all duration-300 ease-in-out
+          group-hover:opacity-100
+          group-hover:visible
+          group-hover:translate-y-0
+          z-50
+        '
+                      >
+                        <div className='flex items-start gap-3'>
+                          <img
+                            src='/lamp.png'
+                            alt='Lamp'
+                            className='w-20 h-20 object-contain'
+                          />
 
-                      <div>
-                        <h3 className='font-semibold text-lg'>
-                          Become an Owner!
-                        </h3>
+                          <div>
+                            <h3 className='font-semibold text-lg'>
+                              Become an Owner!
+                            </h3>
+                            <p className='text-sm text-gray-500 mt-1'>
+                              Own a salon? Switch to an owner account to manage
+                              your salon easily!
+                            </p>
 
-                        <p className='text-sm text-gray-500 mt-1'>
-                          Own a salon? Switch to an owner account to manage your
-                          salon easily!
-                        </p>
+                            <button
+                              onClick={() => setShowOwnerModal(true)}
+                              className='mt-4 w-full bg-[#0B132B] text-white py-2 rounded-lg font-medium hover:opacity-90 transition'
+                            >
+                              Become an Owner
+                            </button>
 
-                        <button
-                          onClick={() => setShowOwnerModal(true)}
-                          className='mt-4 w-full bg-[#0B132B] text-white py-2 rounded-lg font-medium hover:opacity-90 transition'
-                        >
-                          Become an Owner
-                        </button>
-
-                        <button
-                          type='button'
-                          onClick={() => {
-                            setShowOwnerModal(false)
-                            setAgreed(false) // checkbox reset karva mate (optional but better)
-                          }}
-                          className='text-center text-sm text-gray-500 mt-3  cursor-pointer hover:underline'
-                        >
-                          Maybe later
-                        </button>
+                            {/* <button
+                              type='button'
+                              onClick={() => {
+                                setShowOwnerModal(false)
+                                setAgreed(false)
+                              }}
+                              className='text-center text-sm text-gray-500 mt-3 cursor-pointer hover:underline'
+                            >
+                              Maybe later
+                            </button> */}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-
-                <FiMenu
-                  className='text-2xl md:hidden cursor-pointer'
-                  onClick={() => setMobileMenu(!mobileMenu)}
-                />
 
                 <FiMenu
                   className='text-2xl md:hidden cursor-pointer'
@@ -392,7 +442,7 @@ const handleOwnerApply = async () => {
           )}
         </div>
 
-        {/* MOBILE MENU */}
+        {/* Mobile Menu */}
         {mobileMenu && isLoggedIn && (
           <div className='md:hidden bg-white border-t px-6 py-4 space-y-4'>
             <div
@@ -411,7 +461,7 @@ const handleOwnerApply = async () => {
         )}
       </header>
 
-      {/* OWNER CONFIRMATION MODAL */}
+      {/* Owner Modals */}
       {showOwnerModal && (
         <div className='fixed inset-0 bg-black/30 backdrop-blur-[1px] flex items-center justify-center z-100 px-4'>
           <div className='bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative'>
@@ -424,103 +474,75 @@ const handleOwnerApply = async () => {
             >
               ✕
             </button>
-
             <h2 className='text-2xl font-semibold text-center'>
               Become an Owner
             </h2>
-
             <p className='text-center text-gray-600 mt-2'>
               Please read and agree to the rules before applying.
             </p>
-
             <div className='mt-5 h-72 overflow-y-auto border rounded-lg p-4 text-sm text-gray-700 space-y-3'>
+              {/* 15 Rules as in your previous code */}
               <p>
                 <strong>1. Eligibility:</strong> You must be the legal owner or
-                authorized representative of the salon/business you are
-                registering.
+                authorized representative.
               </p>
-
               <p>
-                <strong>2. Business Verification:</strong> You agree to provide
-                valid government-issued ID proof and business registration
-                documents for verification purposes.
+                <strong>2. Business Verification:</strong> Provide valid ID and
+                business documents.
               </p>
-
               <p>
-                <strong>3. Accurate Information:</strong> All information
-                submitted including salon name, address, contact details, and
-                services must be accurate and up to date.
+                <strong>3. Accurate Information:</strong> Information must be
+                correct and up-to-date.
               </p>
-
               <p>
-                <strong>4. Document Authenticity:</strong> Any fake, misleading,
-                or altered documents may result in permanent account suspension.
+                <strong>4. Document Authenticity:</strong> Fake or misleading
+                docs may lead to suspension.
               </p>
-
               <p>
-                <strong>5. Service Responsibility:</strong> You are solely
-                responsible for the services, pricing, staff behavior, and
-                customer experience provided at your salon.
+                <strong>5. Service Responsibility:</strong> You are responsible
+                for services and staff.
               </p>
-
               <p>
-                <strong>6. Booking Management:</strong> You agree to manage
-                bookings responsibly and avoid unnecessary cancellations.
+                <strong>6. Booking Management:</strong> Manage bookings
+                responsibly.
               </p>
-
               <p>
-                <strong>7. Payment Compliance:</strong> Any commissions or
-                platform charges (if applicable) must be honored as per platform
-                policy.
+                <strong>7. Payment Compliance:</strong> Honor any platform
+                charges.
               </p>
-
               <p>
                 <strong>8. Privacy Protection:</strong> Customer data must be
-                handled securely and must not be misused or shared without
-                consent.
+                handled securely.
               </p>
-
               <p>
-                <strong>9. Content Guidelines:</strong> Uploaded salon images,
-                descriptions, and promotions must not contain inappropriate,
-                offensive, or misleading content.
+                <strong>9. Content Guidelines:</strong> Uploaded content must be
+                appropriate.
               </p>
-
               <p>
-                <strong>10. Approval Timeline:</strong> Verification may take up
-                to 24–72 hours. During this period, your account may remain
-                under review.
+                <strong>10. Approval Timeline:</strong> Verification may take
+                24–72 hours.
               </p>
-
               <p>
-                <strong>11. Account Security:</strong> You are responsible for
-                maintaining the confidentiality of your login credentials.
+                <strong>11. Account Security:</strong> Maintain login
+                confidentiality.
               </p>
-
               <p>
-                <strong>12. Platform Rights:</strong> The platform reserves the
-                right to suspend or terminate accounts violating policies.
+                <strong>12. Platform Rights:</strong> Platform may suspend
+                accounts violating policies.
               </p>
-
               <p>
-                <strong>13. Refund & Dispute Policy:</strong> Any disputes with
-                customers must be handled professionally and in accordance with
-                platform guidelines.
+                <strong>13. Refund & Dispute Policy:</strong> Handle disputes
+                professionally.
               </p>
-
               <p>
-                <strong>14. Compliance with Laws:</strong> You agree to operate
-                your business in compliance with local, state, and national
-                regulations.
+                <strong>14. Compliance with Laws:</strong> Operate in compliance
+                with regulations.
               </p>
-
               <p>
-                <strong>15. Updates to Terms:</strong> The platform may update
-                these terms periodically. Continued use implies acceptance of
-                updated policies.
+                <strong>15. Updates to Terms:</strong> Continued use implies
+                acceptance of updates.
               </p>
             </div>
-
             <div className='flex items-center gap-2 mt-4'>
               <input
                 type='checkbox'
@@ -532,14 +554,13 @@ const handleOwnerApply = async () => {
                 I have read and agree to the rules
               </label>
             </div>
-
             <div className='flex justify-between mt-6 gap-4'>
               <button
                 disabled={!agreed}
                 onClick={() => {
                   if (agreed) {
-                    setShowOwnerModal(false) // close terms
-                    setShowOwnerForm(true) // open owner form
+                    setShowOwnerModal(false)
+                    setShowOwnerForm(true)
                     setAgreed(false)
                   }
                 }}
@@ -551,7 +572,6 @@ const handleOwnerApply = async () => {
               >
                 Continue
               </button>
-
               <button
                 onClick={() => {
                   setShowOwnerModal(false)

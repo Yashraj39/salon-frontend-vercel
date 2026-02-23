@@ -13,6 +13,7 @@ import SelectService from './pages/SelectService'
 // import ProtectedRoute from "./pages/ProtectedRoute";
 import Profile from './pages/Profile'
 import ConfirmBooking from './pages/ConfirmBooking'
+import OwnerDashboard from './OwnerDashboard'
 
 // Main Pages
 import Home from './pages/Home'
@@ -58,6 +59,8 @@ export default function App() {
         <Route path='/add-services/:salonId' element={<AddServices />} />
         <Route path='/book/:salonId' element={<SelectService />} />
         <Route path='/confirm-booking/:salonId' element={<ConfirmBooking />} />
+
+        <Route path='/owner-dashboard' element={<OwnerDashboard />} />
 
         {/* 404 */}
         <Route
