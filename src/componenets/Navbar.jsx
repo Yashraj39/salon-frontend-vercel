@@ -3,6 +3,7 @@ import { FiBell, FiUser, FiMenu } from 'react-icons/fi'
 import { FaShoppingCart } from 'react-icons/fa'
 import React, { useEffect, useState, useRef } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
+const isOwnerPage = location.pathname.startsWith('/owner')
 
 const BASE_URL = 'https://render-qs89.onrender.com'
 
@@ -27,6 +28,7 @@ const removeOwnerApplication = (userId) => {
 export default function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const isOwnerPanel = location.pathname.startsWith('/owner')
   const isLoggedIn = !!localStorage.getItem('user')
 
   const user = JSON.parse(localStorage.getItem('user')) || {}
@@ -270,20 +272,20 @@ export default function Navbar() {
           ) : (
             <>
               {/* Desktop Menu */}
-              <div className='hidden md:flex items-center gap-8 text-sm'>
-                <span
-                  onClick={() => navigate('/success')}
-                  className='border-b-2 border-black cursor-pointer'
-                >
-                  Home
-                </span>
-                <span
-                  onClick={() => navigate('/bookings')}
-                  className='cursor-pointer'
-                >
-                  My Bookings
-                </span>
-              </div>
+              {/* Desktop Menu (hide on owner pages) */}
+              {!isOwnerPanel && (
+                <div className='hidden md:flex items-center gap-8 text-sm'>
+                  <span
+                    onClick={() => navigate('/success')}
+                    className='border-b-2 border-black cursor-pointer'
+                  >
+                    Home
+                  </span>
+                  <span onClick={() => navigate('/bookings')} className='cursor-pointer'>
+                    My Bookings
+                  </span>
+                </div>
+              )}
 
               {/* Right Icons */}
               <div className='flex items-center gap-4 md:gap-6 relative'>
@@ -310,11 +312,10 @@ export default function Navbar() {
                     fixed md:absolute top-20 md:top-10 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 md:right-0
                     w-[95%] max-w-sm md:w-80 bg-white shadow-2xl rounded-2xl p-5 z-50
                     transition-all duration-300 ease-in-out
-                    ${
-                      showCartDropdown
+                    ${showCartDropdown
                         ? 'opacity-100 visible translate-y-0'
                         : 'opacity-0 invisible translate-y-3'
-                    }
+                      }
                     md:opacity-0 md:invisible md:translate-y-3
                     md:group-hover:opacity-100 md:group-hover:visible md:group-hover:translate-y-0
                   `}
@@ -370,12 +371,21 @@ export default function Navbar() {
                       Owner Pending
                     </button>
                   ) : ownerStatus === 'APPROVED' ? (
-                    <button
-                      onClick={() => navigate('/owner-dashboard')}
-                      className='border px-4 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white'
-                    >
-                      Owner
-                    </button>
+                    isOwnerPanel ? (
+                      <button
+                        onClick={() => navigate('/success')}
+                        className='bg-black text-white px-4 py-2 rounded-lg text-sm font-medium'
+                      >
+                        Switch to User
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => navigate('/owner-dashboard')}
+                        className='border px-4 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white'
+                      >
+                        Switch to Owner
+                      </button>
+                    )
                   ) : (
                     // Only wrap Become Owner button in a "group"
                     <div className='group relative inline-block'>
@@ -570,11 +580,10 @@ export default function Navbar() {
                     setAgreed(false)
                   }
                 }}
-                className={`w-full py-3 rounded-lg font-medium transition ${
-                  agreed
-                    ? 'bg-black text-white'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+                className={`w-full py-3 rounded-lg font-medium transition ${agreed
+                  ? 'bg-black text-white'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
               >
                 Continue
               </button>
