@@ -35,7 +35,10 @@ export default function OwnerDashboard() {
 
         {/* Empty State */}
         <div className='flex-1 flex flex-col items-center justify-center'>
-          <button className='border px-6 py-3 rounded-lg mb-6'>
+          <button
+            onClick={() => navigate('/add-salon')}
+            className='border px-6 py-3 rounded-lg mb-6'
+          >
             + Add salon
           </button>
 

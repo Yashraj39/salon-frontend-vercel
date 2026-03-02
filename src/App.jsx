@@ -19,6 +19,7 @@ import OwnerDashboard from './OwnerDashboard'
 import Home from './pages/Home'
 import SalonDetails from './pages/SalonDetails'
 import AddServices from './pages/AddServices'
+import AddSalon from './pages/AddSalon'
 
 export default function App() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
         <Route path='/confirm-booking/:salonId' element={<ConfirmBooking />} />
 
         <Route path='/owner-dashboard' element={<OwnerDashboard />} />
+        <Route path='/add-salon' element={<AddSalon />} />
 
         {/* 404 */}
         <Route

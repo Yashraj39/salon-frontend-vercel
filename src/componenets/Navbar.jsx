@@ -125,8 +125,14 @@ export default function Navbar() {
 
         saveOwnerApplication(currentUserId, data)
 
+        // SAVE OWNER ID
+        if (data?.id) {
+          localStorage.setItem('ownerId', data.id)
+        }
+
         if (data?.status && data.status !== ownerStatus) {
           setOwnerStatus(data.status)
+
           toast.success(
             data.status === 'APPROVED'
               ? 'Your owner application has been approved!'
