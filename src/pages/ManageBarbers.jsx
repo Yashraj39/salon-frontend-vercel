@@ -14,7 +14,7 @@ const weekDays = [
 ]
 
 export default function ManageBarbers() {
-  const salonId = '69a670e8ce7c264014a7b456'
+  const salonId = localStorage.getItem('salonId')
 
   const [barbers, setBarbers] = useState([])
   const [selectedBarber, setSelectedBarber] = useState(null)
@@ -22,18 +22,23 @@ export default function ManageBarbers() {
   const [showPopup, setShowPopup] = useState(false)
 
   // ================= LOAD BARBERS =================
-  useEffect(() => {
-    fetch(`${BASE_URL}/api/barber/salon/${salonId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setBarbers(data)
-        if (data.length > 0) {
-          setSelectedBarber(data[0])
-          setForm(data[0])
-        }
-      })
-      .catch(() => toast.error('Failed to load barbers'))
-  }, [])
+ useEffect(() => {
+   if (!salonId) {
+     toast.error('Salon not found')
+     return
+   }
+
+   fetch(`${BASE_URL}/api/barber/salon/${salonId}`)
+     .then((res) => res.json())
+     .then((data) => {
+       setBarbers(data)
+       if (data.length > 0) {
+         setSelectedBarber(data[0])
+         setForm(data[0])
+       }
+     })
+     .catch(() => toast.error('Failed to load barbers'))
+ }, [salonId])
 
   // ================= SELECT BARBER =================
   const handleSelect = (barber) => {
@@ -115,7 +120,10 @@ export default function ManageBarbers() {
   return (
     <div className='min-h-screen bg-gray-100 p-6 flex flex-col lg:flex-row gap-6'>
       {/* LEFT PANEL */}
+      
+
       <div className='lg:w-1/3 bg-white rounded-xl shadow p-5'>
+
         <h2 className='text-lg font-semibold mb-4'>Barber List</h2>
 
         <button

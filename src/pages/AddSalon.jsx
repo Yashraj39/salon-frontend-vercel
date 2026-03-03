@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import Navbar from '../componenets/Navbar'
 // import Navbar from './componenets/Navbar'
+import { Navigate, NavigationType, useNavigate } from 'react-router-dom'
+import OwnerDashboard from '../OwnerDashboard'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
 
@@ -78,20 +80,33 @@ export default function AddSalon() {
 
   return (
     <div className='min-h-screen bg-gray-100 flex flex-col'>
-      <Navbar />
+      {/* <Navbar /> */}
 
-      <div className='flex flex-1'>
+      <div className='flex '>
         {/* Sidebar */}
         <div className='w-64 bg-gradient-to-b from-[#0B132B] to-[#1C2541] text-white px-6 py-6 min-h-screen'>
           <h2 className='text-xl font-semibold mb-8'>SlotMyStyle</h2>
 
           <ul className='space-y-6'>
-            <li className='cursor-pointer'>Dashboard</li>
-            <li className='cursor-pointer font-medium'>Add Salon</li>
-            <li className='cursor-pointer'>Barbers</li>
-            <li className='cursor-pointer'>Services</li>
-            <li className='cursor-pointer'>Settings</li>
-            <li className='cursor-pointer'>Reviews</li>
+            <li className='cursor-pointer font-medium'>Dashboard</li>
+
+            {/* 🔥 IMPORTANT CHANGE HERE */}
+            <li
+              onClick={() => navigate('/add-salon')}
+              className='cursor-pointer hover:text-gray-300'
+            >
+              Add Salon
+            </li>
+
+            <li
+              onClick={() => navigate('/manage-barbers')}
+              className='cursor-pointer hover:text-gray-300'
+            >
+              Barbers
+            </li>
+            <li className='cursor-pointer hover:text-gray-300'>Services</li>
+            <li className='cursor-pointer hover:text-gray-300'>Settings</li>
+            <li className='cursor-pointer hover:text-gray-300'>Reviews</li>
           </ul>
         </div>
 

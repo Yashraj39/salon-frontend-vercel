@@ -1,14 +1,35 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Navbar from './componenets/Navbar'
+import toast from 'react-hot-toast'
+
+const BASE_URL = 'https://render-qs89.onrender.com'
 
 export default function OwnerDashboard() {
   const navigate = useNavigate()
 
+  // 🔥 FETCH SALON & STORE IN LOCAL STORAGE
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'))
+    const ownerId = user?.userId
+
+    if (!ownerId) {
+      toast.error('Owner not found')
+      return
+    }
+
+    fetch(`${BASE_URL}/api/salon/get-salon-by-owner/${ownerId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.length > 0) {
+          localStorage.setItem('salon', JSON.stringify(data[0]))
+          localStorage.setItem('salonId', data[0]._id)
+        }
+      })
+      .catch(() => toast.error('Failed to load salon'))
+  }, [])
+
   return (
     <div className='min-h-screen bg-gray-100 flex flex-col'>
-      <Navbar />
-
       <div className='flex flex-1'>
         {/* Sidebar */}
         <div className='w-64 bg-gradient-to-b from-[#0B132B] to-[#1C2541] text-white px-6 py-6 min-h-screen'>
@@ -17,7 +38,6 @@ export default function OwnerDashboard() {
           <ul className='space-y-6'>
             <li className='cursor-pointer font-medium'>Dashboard</li>
 
-            {/* 🔥 IMPORTANT CHANGE HERE */}
             <li
               onClick={() => navigate('/add-salon')}
               className='cursor-pointer hover:text-gray-300'
@@ -31,6 +51,7 @@ export default function OwnerDashboard() {
             >
               Barbers
             </li>
+
             <li className='cursor-pointer hover:text-gray-300'>Services</li>
             <li className='cursor-pointer hover:text-gray-300'>Settings</li>
             <li className='cursor-pointer hover:text-gray-300'>Reviews</li>
@@ -39,7 +60,6 @@ export default function OwnerDashboard() {
 
         {/* Main Content */}
         <div className='flex-1 flex flex-col items-center justify-center'>
-          {/* 🔥 SAME CHANGE HERE */}
           <button
             onClick={() => navigate('/add-salon')}
             className='border px-6 py-3 rounded-lg mb-6 bg-white shadow'
