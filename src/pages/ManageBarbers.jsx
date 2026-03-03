@@ -168,12 +168,32 @@ export default function ManageBarbers() {
 
           {/* Status */}
           <div className='mb-6'>
-            <label className='font-medium mr-4'>Status</label>
-            <input
-              type='checkbox'
-              checked={form.active}
-              onChange={(e) => setForm({ ...form, active: e.target.checked })}
-            />
+           
+            <div className='flex items-center gap-4 mb-6'>
+              <label className='font-medium text-lg'>Status</label>
+
+              <button
+                type='button'
+                onClick={() => setForm({ ...form, active: !form.active })}
+                className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors duration-300 ${
+                  form.active ? 'bg-green-500' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+                    form.active ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+
+              <span
+                className={`font-medium ${
+                  form.active ? 'text-green-600' : 'text-gray-500'
+                }`}
+              >
+                {form.active ? 'Active' : 'Inactive'}
+              </span>
+            </div>
           </div>
 
           {/* Working Hours */}
