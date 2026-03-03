@@ -25,7 +25,12 @@ export default function OwnerDashboard() {
               Add Salon
             </li>
 
-            <li className='cursor-pointer hover:text-gray-300'>Barbers</li>
+            <li
+              onClick={() => navigate('/manage-barbers')}
+              className='cursor-pointer hover:text-gray-300'
+            >
+              Barbers
+            </li>
             <li className='cursor-pointer hover:text-gray-300'>Services</li>
             <li className='cursor-pointer hover:text-gray-300'>Settings</li>
             <li className='cursor-pointer hover:text-gray-300'>Reviews</li>

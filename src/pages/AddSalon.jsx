@@ -54,9 +54,23 @@ export default function AddSalon() {
         body: formData,
       })
 
-      if (!response.ok) throw new Error('Salon add failed')
+     if (!response.ok) throw new Error('Salon add failed')
 
-      alert('Salon Added Successfully ✅')
+     const data = await response.json()
+
+     console.log('Full Response:', data)
+
+     // 🔥 MongoDB ObjectId extract karo
+     const salonId = data?._id?.$oid
+
+     if (salonId) {
+       localStorage.setItem('salonId', salonId)
+       console.log('Salon ID Stored:', salonId)
+     } else {
+       console.log('Salon ID not found in response')
+     }
+
+     alert('Salon Added Successfully ✅')
     } catch (error) {
       alert('Something went wrong')
     }
