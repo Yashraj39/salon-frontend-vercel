@@ -23,22 +23,18 @@ export default function AddSalon() {
     e.preventDefault()
 
     try {
-      const ownerId = localStorage.getItem('ownerId')
-
       const user = JSON.parse(localStorage.getItem('user'))
-
-      const userId = user?.userId
+      const ownerId = user?.userId  // ✅ this is the UUID (same as salonOwnerId)
 
       console.log('OwnerId:', ownerId)
-      console.log('UserId:', userId)
 
       const formatTime = (time) => (time.length === 5 ? time + ':00' : time)
 
       const formData = new FormData()
 
       // IDs
-      formData.append('id', ownerId)
-      formData.append('salonOwnerId', userId)
+      // IDs (backend expects ONLY ownerId)
+      formData.append('ownerId', ownerId)
 
       // Basic Info
       formData.append('name', name)
@@ -65,18 +61,12 @@ export default function AddSalon() {
         body: formData,
       })
 
-      let data = null
-
-      try {
-        data = await response.json()
-      } catch {
-        data = null
-      }
-
-      console.log('Response:', data)
+      const text = await response.text()
+      console.log('Status:', response.status)
+      console.log('Response:', text)
 
       if (!response.ok) {
-        throw new Error('Salon add failed')
+        throw new Error(text || 'Salon add failed')
       }
 
       alert('Salon Added Successfully ✅')

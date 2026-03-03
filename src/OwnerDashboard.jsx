@@ -26,15 +26,16 @@ export default function OwnerDashboard() {
 
         {/* Main Content */}
         <div className='flex-1 flex flex-col items-center justify-center'>
-<<<<<<< HEAD
+
           <button
             onClick={() => navigate('/add-salon')}
             className='border px-6 py-3 rounded-lg mb-6'
           >
-=======
+
           <button onClick={() => navigate('/owner/add-salon')} className='border px-6 py-3 rounded-lg mb-6 bg-white'>
->>>>>>> ff1714f81ed0fc6f7450a55d98e33f959c6e33dc
+
             + Add salon
+          </button>
           </button>
 
           <h1 className='text-3xl font-semibold'>Add your first salon!!</h1>
@@ -42,5 +43,6 @@ export default function OwnerDashboard() {
         </div>
       </div>
     </div>
+    
   )
 }
