@@ -16,33 +16,35 @@ export default function OwnerDashboard() {
 
           <ul className='space-y-6'>
             <li className='cursor-pointer font-medium'>Dashboard</li>
-            <li onClick={() => navigate('/owner/add-salon')} className='cursor-pointer'>Add Salon</li>
-            <li className='cursor-pointer'>Barbers</li>
-            <li className='cursor-pointer'>Services</li>
-            <li className='cursor-pointer'>Settings</li>
-            <li className='cursor-pointer'>Reviews</li>
+
+            {/* 🔥 IMPORTANT CHANGE HERE */}
+            <li
+              onClick={() => navigate('/add-salon')}
+              className='cursor-pointer hover:text-gray-300'
+            >
+              Add Salon
+            </li>
+
+            <li className='cursor-pointer hover:text-gray-300'>Barbers</li>
+            <li className='cursor-pointer hover:text-gray-300'>Services</li>
+            <li className='cursor-pointer hover:text-gray-300'>Settings</li>
+            <li className='cursor-pointer hover:text-gray-300'>Reviews</li>
           </ul>
         </div>
 
         {/* Main Content */}
         <div className='flex-1 flex flex-col items-center justify-center'>
-
+          {/* 🔥 SAME CHANGE HERE */}
           <button
             onClick={() => navigate('/add-salon')}
-            className='border px-6 py-3 rounded-lg mb-6'
+            className='border px-6 py-3 rounded-lg mb-6 bg-white shadow'
           >
-
-          <button onClick={() => navigate('/owner/add-salon')} className='border px-6 py-3 rounded-lg mb-6 bg-white'>
-
-            + Add salon
-          </button>
+            + Add Salon
           </button>
 
           <h1 className='text-3xl font-semibold'>Add your first salon!!</h1>
- 
         </div>
       </div>
     </div>
-    
   )
 }
