@@ -7,8 +7,14 @@ import OwnerLayout from '../componenets/OwnerLayout'
 const BASE_URL = 'https://render-qs89.onrender.com'
 
 export default function ServicesPage() {
-  const salonData = JSON.parse(localStorage.getItem('salon'))
-  const salonId = salonData?.id
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const ownerId = user?.userid || user?.userId || ''
+
+  const [salons, setSalons] = useState([])
+  const savedSalonId = localStorage.getItem('salonId')
+  const [selectedSalonId, setSelectedSalonId] = useState(
+    savedSalonId && savedSalonId !== 'undefined' ? savedSalonId : ''
+  )
 
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
@@ -34,23 +40,77 @@ export default function ServicesPage() {
     image: null,
   })
 
+  // ================= LOAD SALONS =================
+  useEffect(() => {
+    if (!ownerId) {
+      toast.error('Owner not found, please login again')
+      setSalons([])
+      setSelectedSalonId('')
+      localStorage.removeItem('salonId')
+      return
+    }
+
+    fetch(`${BASE_URL}/api/salon/get-salon-by-owner/${ownerId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch salons')
+        return res.json()
+      })
+      .then((data) => {
+        const raw = Array.isArray(data) ? data : []
+
+        const normalized = raw
+          .map((s) => {
+            const sid = s?.id || s?._id?.$oid || s?._id || s?.salonId
+            return sid ? { ...s, sid } : null
+          })
+          .filter(Boolean)
+
+        const unique = Array.from(
+          new Map(normalized.map((s) => [s.sid, s])).values()
+        )
+
+        setSalons(unique)
+
+        if (unique.length === 0) {
+          toast.error('No salons found')
+          setSelectedSalonId('')
+          localStorage.removeItem('salonId')
+          return
+        }
+
+        const stored = localStorage.getItem('salonId')
+        const storedValid =
+          stored && stored !== 'undefined' && unique.some((s) => s.sid === stored)
+
+        const initialSalonId = storedValid ? stored : unique[0].sid
+        setSelectedSalonId(initialSalonId)
+        localStorage.setItem('salonId', initialSalonId)
+      })
+      .catch(() => {
+        toast.error('Failed to load salons')
+        setSalons([])
+        setSelectedSalonId('')
+        localStorage.removeItem('salonId')
+      })
+  }, [ownerId])
+
   // ================= LOAD CATEGORIES =================
   useEffect(() => {
-    if (salonId) fetchCategories()
-  }, [salonId])
+    if (selectedSalonId) fetchCategories(selectedSalonId)
+  }, [selectedSalonId])
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (sid) => {
     try {
       setLoading(true)
       const res = await axios.get(
-        `${BASE_URL}/api/service-category/get-service-categories/${salonId}`
+        `${BASE_URL}/api/service-category/get-service-categories/${sid}`
       )
       const data = Array.isArray(res.data) ? res.data : []
       setCategories(data)
 
       if (data.length > 0) {
         setSelectedCategory(data[0])
-        fetchServices(data[0].id)
+        fetchServices(sid, data[0].id)
       } else {
         setSelectedCategory(null)
         setServices([])
@@ -64,11 +124,11 @@ export default function ServicesPage() {
   }
 
   // ================= LOAD SERVICES =================
-  const fetchServices = async (categoryId) => {
+  const fetchServices = async (sid, categoryId) => {
     try {
       setLoading(true)
       const res = await axios.get(`${BASE_URL}/api/service/get-services`, {
-        params: { salonId, categoryId },
+        params: { salonId: sid, categoryId },
       })
       setServices(Array.isArray(res.data) ? res.data : [])
     } catch (err) {
@@ -93,7 +153,7 @@ export default function ServicesPage() {
         toast.success('Category updated successfully') // <-- SUCCESS TOAST
       } else {
         await axios.post(
-          `${BASE_URL}/api/service-category/add-service-category/${salonId}`,
+          `${BASE_URL}/api/service-category/add-service-category/${selectedSalonId}`,
           {
             name: formData.name,
             description: formData.description,
@@ -105,7 +165,7 @@ export default function ServicesPage() {
       setShowCategoryModal(false)
       setEditingCategory(null)
       setFormData({ name: '', description: '' })
-      fetchCategories()
+      fetchCategories(selectedSalonId)
     } catch (err) {
       console.error(err)
       toast.error('Failed to save category') // <-- ERROR TOAST
@@ -148,7 +208,7 @@ export default function ServicesPage() {
         image: null,
       })
 
-      fetchServices(selectedCategory.id)
+      fetchServices(selectedSalonId, selectedCategory.id)
     } catch (err) {
       console.error(err)
       toast.error('Failed to save service') // <-- ERROR TOAST
@@ -160,10 +220,10 @@ export default function ServicesPage() {
     try {
       if (deleteType === 'category') {
         await axios.delete(
-          `${BASE_URL}/api/service-category/delete-service-category/${salonId}/${deleteId}`
+          `${BASE_URL}/api/service-category/delete-service-category/${selectedSalonId}/${deleteId}`
         )
         toast.success('Category deleted successfully') // <-- SUCCESS TOAST
-        fetchCategories()
+        fetchCategories(selectedSalonId)
       }
 
       if (deleteType === 'service') {
@@ -171,7 +231,7 @@ export default function ServicesPage() {
           `${BASE_URL}/api/service/delete-service/${selectedCategory.id}/${deleteId}`
         )
         toast.success('Service deleted successfully') // <-- SUCCESS TOAST
-        fetchServices(selectedCategory.id)
+        fetchServices(selectedSalonId, selectedCategory.id)
       }
 
       setShowDeleteModal(false)
@@ -185,10 +245,42 @@ export default function ServicesPage() {
 
   return (
     <OwnerLayout>
+
       <div className='flex gap-6'>
         {/* LEFT PANEL */}
         <div className='w-1/3 bg-white p-6 rounded-xl shadow'>
+
+          {/* SALON DROPDOWN (LEFT PANEL) */}
+          <div className='mb-4'>
+            <label className='block text-sm font-medium mb-2'>Select Salon</label>
+
+            <select
+              value={selectedSalonId || ''}
+              onChange={(e) => {
+                const sid = e.target.value
+                setSelectedSalonId(sid)
+                localStorage.setItem('salonId', sid)
+
+                // reset UI when salon changes
+                setCategories([])
+                setSelectedCategory(null)
+                setServices([])
+              }}
+              className='w-full border p-3 rounded-lg bg-white'
+            >
+              {salons.length === 0 ? (
+                <option value=''>No salons found</option>
+              ) : (
+                salons.map((s) => (
+                  <option key={s.sid} value={s.sid}>
+                    {s.name}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
           <div className='flex justify-between items-center mb-4'>
+
             <h2 className='text-xl font-semibold'>Service Categories</h2>
             <button
               onClick={() => {
@@ -207,13 +299,12 @@ export default function ServicesPage() {
               key={cat.id}
               onClick={() => {
                 setSelectedCategory(cat)
-                fetchServices(cat.id)
+                fetchServices(selectedSalonId, cat.id)
               }}
-              className={`p-3 rounded-lg flex justify-between items-center mb-3 cursor-pointer ${
-                selectedCategory?.id === cat.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100'
-              }`}
+              className={`p-3 rounded-lg flex justify-between items-center mb-3 cursor-pointer ${selectedCategory?.id === cat.id
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100'
+                }`}
             >
               <span>{cat.name}</span>
               <div className='flex gap-2'>
