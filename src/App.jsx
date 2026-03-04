@@ -22,6 +22,7 @@ import AddServices from './pages/AddServices'
 import AddSalon from './pages/AddSalon'
 import ManageBarbers from './pages/ManageBarbers'
 import OwnerLayout from './componenets/OwnerLayout'
+import ServicesPage from './pages/ServicesPage'
 
 export default function App() {
   return (
@@ -66,7 +67,8 @@ export default function App() {
         <Route path='/owner-dashboard' element={<OwnerDashboard />} />
         <Route path='/add-salon' element={<AddSalon />} />
         <Route path='/manage-barbers' element={<ManageBarbers />} />
-        <Route path='/owner' element={<OwnerLayout />}/>
+        <Route path='/owner' element={<OwnerLayout />} />
+        <Route path='/services' element={<ServicesPage />} />
         {/* 404 */}
         <Route
           path='*'

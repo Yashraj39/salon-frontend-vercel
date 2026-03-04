@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import OwnerLayout from '../componenets/OwnerLayout'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
 
@@ -14,7 +15,8 @@ const weekDays = [
 ]
 
 export default function ManageBarbers() {
-  const salonId = localStorage.getItem('salonId')
+  const salonData = JSON.parse(localStorage.getItem('salon'))
+  const salonId = salonData?.id
 
   const [barbers, setBarbers] = useState([])
   const [selectedBarber, setSelectedBarber] = useState(null)
@@ -83,41 +85,62 @@ export default function ManageBarbers() {
   }
 
   // ================= ADD BARBER =================
- const handleAddBarber = async () => {
-   if (!form.name || !form.workingStartTime || !form.workingEndTime) {
-     toast.error('Please fill required fields')
-     return
-   }
+const handleAddBarber = async () => {
+  if (!salonId) {
+    toast.error('Salon not found')
+    return
+  }
 
-   if (form.workingStartTime >= form.workingEndTime) {
-     toast.error('Start time must be before end time')
-     return
-   }
+  if (!form.name || !form.workingStartTime || !form.workingEndTime) {
+    toast.error('Please fill required fields')
+    return
+  }
 
-   try {
-     const res = await fetch(`${BASE_URL}/api/barber/add/${salonId}`, {
-       method: 'POST',
-       headers: { 'Content-Type': 'application/json' },
-       body: JSON.stringify(form),
-     })
+  if (form.workingStartTime >= form.workingEndTime) {
+    toast.error('Start time must be before end time')
+    return
+  }
 
-     if (!res.ok) throw new Error()
+  try {
+    const body = {
+      name: form.name,
+      active: form.active,
+      workingStartTime: form.workingStartTime,
+      workingEndTime: form.workingEndTime,
+      lunchStart: form.lunchStart,
+      lunchEnd: form.lunchEnd,
+      weeklyOffDays: form.weeklyOffDays || [],
+      leaves: form.leaves || [],
+    }
 
-     const newBarber = await res.json()
+    const res = await fetch(`${BASE_URL}/api/barber/add/${salonId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
 
-     setBarbers([...barbers, newBarber])
-     setSelectedBarber(newBarber)
-     setForm(newBarber)
-     setShowPopup(false)
+    if (!res.ok) throw new Error()
 
-     toast.success('Barber created successfully')
-   } catch {
-     toast.error('Failed to create barber')
-   }
- }
+    const newBarber = await res.json()
+
+    // 🔥 API response base par state update
+    setBarbers((prev) => [...prev, newBarber])
+    setSelectedBarber(newBarber)
+    setForm(newBarber)
+    setShowPopup(false)
+
+    toast.success('Barber created successfully')
+  } catch (error) {
+    toast.error('Failed to create barber')
+  }
+}
 
   // ================= UI =================
   return (
+    <OwnerLayout>
+      <h1 className="text-2xl font-bold mb-6">Manage Barbers</h1>
     <div className='min-h-screen bg-gray-100 p-6 flex flex-col lg:flex-row gap-6'>
       {/* LEFT PANEL */}
       
@@ -140,7 +163,7 @@ export default function ManageBarbers() {
             })
             setShowPopup(true)
           }}
-          className='w-full bg-blue-600 text-white py-2 rounded-lg mb-4'
+          className='w-full bg-black text-white py-2 rounded-lg mb-4'
         >
           + Add Barber
         </button>
@@ -488,7 +511,7 @@ export default function ManageBarbers() {
                 </button>
                 <button
                   onClick={handleAddBarber}
-                  className='px-6 py-2 bg-blue-600 text-white rounded-lg'
+                  className='px-6 py-2 bg-black text-white rounded-lg'
                 >
                   Create Barber
                 </button>
@@ -498,5 +521,6 @@ export default function ManageBarbers() {
         </div>
       )}
     </div>
+    </OwnerLayout>
   )
 }
