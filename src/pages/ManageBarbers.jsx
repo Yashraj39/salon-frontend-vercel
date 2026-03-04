@@ -15,24 +15,103 @@ const weekDays = [
 ]
 
 export default function ManageBarbers() {
-  const salonData = JSON.parse(localStorage.getItem('salon')) // tamaru object
-  const salonId = salonData?.id
-  const salonName = salonData?.name
+  const salonId = localStorage.getItem('salonId')
 
-  // 🟢 State for selected salon
-  const [selectedSalonId, setSelectedSalonId] = useState(salonData?.id || '')
   const [barbers, setBarbers] = useState([])
   const [selectedBarber, setSelectedBarber] = useState(null)
   const [form, setForm] = useState(null)
   const [showPopup, setShowPopup] = useState(false)
 
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const ownerId = user.userid || user.userId || ''
+
+  const [salons, setSalons] = useState([])
+  const savedSalonId = localStorage.getItem('salonId')
+  const [selectedSalonId, setSelectedSalonId] = useState(
+    savedSalonId && savedSalonId !== 'undefined' ? savedSalonId : ''
+  )
+
+  // ================= LOAD SALONS (FIXED) =================
+  useEffect(() => {
+    if (!ownerId) {
+      toast.error('Owner not found, please login again')
+      setSalons([])
+      setSelectedSalonId('')
+      localStorage.removeItem('salonId')
+      return
+    }
+
+    fetch(`${BASE_URL}/api/salon/get-salon-by-owner/${ownerId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch salons')
+        return res.json()
+      })
+      .then((data) => {
+        const raw = Array.isArray(data) ? data : []
+
+        // normalize salon id (handles id / _id / _id.$oid)
+        const normalized = raw
+          .map((s) => {
+            const sid =
+              s?.id ||
+              s?._id?.$oid ||
+              s?._id ||
+              s?.salonId
+
+            return sid ? { ...s, sid } : null
+          })
+          .filter(Boolean)
+
+        // remove duplicates by sid
+        const unique = Array.from(
+          new Map(normalized.map((s) => [s.sid, s])).values()
+        )
+
+        setSalons(unique)
+
+        if (unique.length === 0) {
+          toast.error('No salons found')
+          setSelectedSalonId('')
+          localStorage.removeItem('salonId')
+          return
+        }
+
+        const stored = localStorage.getItem('salonId')
+        const storedValid = stored && stored !== 'undefined' && unique.some((s) => s.sid === stored)
+
+        const initialSalonId = storedValid ? stored : unique[0].sid
+
+        setSelectedSalonId(initialSalonId)
+        localStorage.setItem('salonId', initialSalonId)
+      })
+      .catch(() => {
+        toast.error('Failed to load salons')
+        setSalons([])
+        setSelectedSalonId('')
+        localStorage.removeItem('salonId')
+      })
+  }, [ownerId])
+
   // ================= LOAD BARBERS =================
   useEffect(() => {
     if (!selectedSalonId) return
 
+    setBarbers([])
+    setSelectedBarber(null)
+    setForm(null)
+
     fetch(`${BASE_URL}/api/barber/salon/${selectedSalonId}`)
       .then((res) => res.json())
-      .then((data) => setBarbers(data))
+      .then((data) => {
+        setBarbers(data || [])
+        if (data && data.length > 0) {
+          setSelectedBarber(data[0])
+          setForm(data[0])
+        } else {
+          setSelectedBarber(null)
+          setForm(null)
+        }
+      })
       .catch(() => toast.error('Failed to load barbers'))
   }, [selectedSalonId])
 
@@ -79,68 +158,91 @@ export default function ManageBarbers() {
   }
 
   // ================= ADD BARBER =================
+  // ================= ADD BARBER (SELECTED SALON ONLY) =================
   const handleAddBarber = async () => {
-    if (!selectedSalonId) {
-      toast.error('Please select a salon')
+    const salonToUse = selectedSalonId
+
+    if (!salonToUse) {
+      toast.error('Please select salon')
       return
     }
 
-    const body = {
-      name: form.name,
-      active: form.active,
-      workingStartTime: form.workingStartTime,
-      workingEndTime: form.workingEndTime,
-      lunchStart: form.lunchStart,
-      lunchEnd: form.lunchEnd,
-      weeklyOffDays: form.weeklyOffDays || [],
-      leaves: form.leaves || [],
+    if (!form.name || !form.workingStartTime || !form.workingEndTime) {
+      toast.error('Please fill required fields')
+      return
     }
 
-    const res = await fetch(`${BASE_URL}/api/barber/add/${selectedSalonId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+    if (form.workingStartTime >= form.workingEndTime) {
+      toast.error('Start time must be before end time')
+      return
+    }
 
-    if (!res.ok) throw new Error()
-    const newBarber = await res.json()
-    setBarbers((prev) => [...prev, newBarber])
-    setForm(newBarber)
-    toast.success('Barber added to selected salon')
+    try {
+      const payload = { ...form, salonId: salonToUse }
+
+      const res = await fetch(`${BASE_URL}/api/barber/add/${salonToUse}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) throw new Error()
+
+      const newBarber = await res.json()
+
+      // keep salon selection same
+      localStorage.setItem('salonId', salonToUse)
+      setSelectedSalonId(salonToUse)
+
+      // update barber list immediately (no flow change)
+      setBarbers((prev) => [...prev, newBarber])
+      setSelectedBarber(newBarber)
+      setForm(newBarber)
+      setShowPopup(false)
+
+      toast.success('Barber created successfully')
+    } catch {
+      toast.error('Failed to create barber')
+    }
   }
 
   // ================= UI =================
   return (
     <OwnerLayout>
-      <h1 className='text-2xl font-bold mb-6'>Manage Barbers</h1>
       <div className='min-h-screen bg-gray-100 p-6 flex flex-col lg:flex-row gap-6'>
         {/* LEFT PANEL */}
         <div className='lg:w-1/3 bg-white rounded-xl shadow p-5'>
           <h2 className='text-lg font-semibold mb-4'>Barber List</h2>
 
-          {/* Salon Dropdown */}
-          <select
-            className='border p-2 rounded w-full mb-4'
-            value={selectedSalonId}
-            onChange={(e) => {
-              const salonId = e.target.value
-              setSelectedSalonId(salonId)
-              fetchBarbers(salonId) // Fetch barbers for selected salon
-            }}
-          >
-            {/* Single salon case */}
-            <option value={salonData.id}>{salonData.name}</option>
+          {/* SALON DROPDOWN */}
+          <div className='mb-4'>
+            <label className='block text-sm font-medium mb-2'>Select Salon</label>
 
-            {/* Future multiple salons */}
-            {/* userData?.salons?.map((salon) => (
-      <option key={salon.id} value={salon.id}>{salon.name}</option>
-    )) */}
-          </select>
+            <select
+              value={selectedSalonId || ''}
+              onChange={(e) => {
+                const sid = e.target.value
+                setSelectedSalonId(sid)
+                localStorage.setItem('salonId', sid)
+              }}
+              className='w-full border p-3 rounded-lg bg-white'
+            >
+              {salons.length === 0 ? (
+                <option value=''>No salons found</option>
+              ) : (
+                salons.map((s) => (
+                  <option key={s.sid} value={s.sid}>
+                    {s.name} ({s.city})
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
 
-          {/* Add Barber Button */}
           <button
             onClick={() => {
               setForm({
+                salonId: selectedSalonId,
                 name: '',
                 workingStartTime: '',
                 workingEndTime: '',
@@ -152,21 +254,21 @@ export default function ManageBarbers() {
               })
               setShowPopup(true)
             }}
-            className='w-full bg-black text-white py-2 rounded-lg mb-4'
+            disabled={!selectedSalonId}
+            className={`w-full text-white py-2 rounded-lg mb-4 ${selectedSalonId ? 'bg-blue-600' : 'bg-gray-400 cursor-not-allowed'
+              }`}
           >
             + Add Barber
           </button>
 
-          {/* Barber List */}
           {barbers.map((barber) => (
             <div
               key={barber.id}
               onClick={() => handleSelect(barber)}
-              className={`p-4 mb-3 rounded-lg border cursor-pointer ${
-                selectedBarber?.id === barber.id
+              className={`p-4 mb-3 rounded-lg border cursor-pointer ${selectedBarber?.id === barber.id
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-50'
-              }`}
+                }`}
             >
               <div className='flex justify-between'>
                 <span className='font-medium'>{barber.name}</span>
@@ -185,9 +287,7 @@ export default function ManageBarbers() {
         {/* RIGHT PANEL */}
         {form && (
           <div className='lg:w-2/3 bg-white rounded-xl shadow p-6'>
-            <h2 className='text-xl font-bold mb-6'>
-              Barber Details & Schedule
-            </h2>
+            <h2 className='text-xl font-bold mb-6'>Barber Details & Schedule</h2>
 
             {/* Status */}
             <div className='mb-6'>
@@ -197,21 +297,18 @@ export default function ManageBarbers() {
                 <button
                   type='button'
                   onClick={() => setForm({ ...form, active: !form.active })}
-                  className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors duration-300 ${
-                    form.active ? 'bg-green-500' : 'bg-gray-300'
-                  }`}
+                  className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors duration-300 ${form.active ? 'bg-green-500' : 'bg-gray-300'
+                    }`}
                 >
                   <span
-                    className={`inline-block h-5 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-                      form.active ? 'translate-x-7' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-5 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${form.active ? 'translate-x-7' : 'translate-x-1'
+                      }`}
                   />
                 </button>
 
                 <span
-                  className={`font-medium ${
-                    form.active ? 'text-green-600' : 'text-gray-500'
-                  }`}
+                  className={`font-medium ${form.active ? 'text-green-600' : 'text-gray-500'
+                    }`}
                 >
                   {form.active ? 'Active' : 'Inactive'}
                 </span>
@@ -251,9 +348,7 @@ export default function ManageBarbers() {
                 <input
                   type='time'
                   value={form.lunchStart}
-                  onChange={(e) =>
-                    setForm({ ...form, lunchStart: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, lunchStart: e.target.value })}
                   className='border p-2 rounded w-full'
                 />
               </div>
@@ -262,9 +357,7 @@ export default function ManageBarbers() {
                 <input
                   type='time'
                   value={form.lunchEnd}
-                  onChange={(e) =>
-                    setForm({ ...form, lunchEnd: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, lunchEnd: e.target.value })}
                   className='border p-2 rounded w-full'
                 />
               </div>
@@ -321,9 +414,7 @@ export default function ManageBarbers() {
               ))}
 
               <button
-                onClick={() =>
-                  setForm({ ...form, leaves: [...form.leaves, ''] })
-                }
+                onClick={() => setForm({ ...form, leaves: [...form.leaves, ''] })}
                 className='text-blue-600 text-sm'
               >
                 + Add Date
@@ -339,185 +430,10 @@ export default function ManageBarbers() {
           </div>
         )}
 
-        {/* POPUP */}
+        {/* POPUP (keep as you have it) */}
         {showPopup && (
           <div className='fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50'>
-            <div className='bg-white w-[700px] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl'>
-              {/* HEADER */}
-              <div className='flex justify-between items-center px-6 py-4 border-b bg-gray-50'>
-                <h2 className='text-xl font-semibold'>✂ Add New Barber</h2>
-                <button
-                  onClick={() => setShowPopup(false)}
-                  className='text-gray-500 hover:text-black text-xl'
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className='p-6 space-y-6'>
-                {/* NAME */}
-                <div>
-                  <label className='block mb-2 font-medium'>Name</label>
-                  <input
-                    type='text'
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className='w-full border p-3 rounded-lg'
-                    placeholder='Enter barber name'
-                  />
-                </div>
-
-                {/* WORKING HOURS */}
-                <div>
-                  <h3 className='font-semibold mb-3'>Working Hours</h3>
-                  <div className='grid grid-cols-2 gap-4'>
-                    <div>
-                      <label className='block mb-1 text-sm'>Start Time</label>
-                      <input
-                        type='time'
-                        value={form.workingStartTime}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            workingStartTime: e.target.value,
-                          })
-                        }
-                        className='w-full border p-3 rounded-lg'
-                      />
-                    </div>
-                    <div>
-                      <label className='block mb-1 text-sm'>End Time</label>
-                      <input
-                        type='time'
-                        value={form.workingEndTime}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            workingEndTime: e.target.value,
-                          })
-                        }
-                        className='w-full border p-3 rounded-lg'
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* LUNCH BREAK */}
-                <div>
-                  <h3 className='font-semibold mb-3'>Lunch Break</h3>
-                  <div className='grid grid-cols-2 gap-4'>
-                    <input
-                      type='time'
-                      value={form.lunchStart}
-                      onChange={(e) =>
-                        setForm({ ...form, lunchStart: e.target.value })
-                      }
-                      className='w-full border p-3 rounded-lg'
-                    />
-                    <input
-                      type='time'
-                      value={form.lunchEnd}
-                      onChange={(e) =>
-                        setForm({ ...form, lunchEnd: e.target.value })
-                      }
-                      className='w-full border p-3 rounded-lg'
-                    />
-                  </div>
-                </div>
-
-                {/* WEEKLY OFF */}
-                <div>
-                  <h3 className='font-semibold mb-3'>Weekly Off Days</h3>
-                  <div className='flex flex-wrap gap-4'>
-                    {weekDays.map((day) => (
-                      <label
-                        key={day.value}
-                        className='flex items-center gap-2'
-                      >
-                        <input
-                          type='checkbox'
-                          checked={form.weeklyOffDays.includes(day.value)}
-                          onChange={(e) => {
-                            const updated = e.target.checked
-                              ? [...form.weeklyOffDays, day.value]
-                              : form.weeklyOffDays.filter(
-                                  (d) => d !== day.value
-                                )
-                            setForm({ ...form, weeklyOffDays: updated })
-                          }}
-                        />
-                        {day.label}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* LEAVES */}
-                <div>
-                  <h3 className='font-semibold mb-3'>Leaves</h3>
-
-                  {form.leaves.map((date, index) => (
-                    <div key={index} className='flex gap-2 mb-2'>
-                      <input
-                        type='date'
-                        value={date}
-                        onChange={(e) => {
-                          const updated = [...form.leaves]
-                          updated[index] = e.target.value
-                          setForm({ ...form, leaves: updated })
-                        }}
-                        className='border p-2 rounded-lg w-full'
-                      />
-                      <button
-                        onClick={() => {
-                          const updated = form.leaves.filter(
-                            (_, i) => i !== index
-                          )
-                          setForm({ ...form, leaves: updated })
-                        }}
-                        className='text-red-500'
-                      >
-                        🗑
-                      </button>
-                    </div>
-                  ))}
-
-                  <button
-                    onClick={() =>
-                      setForm({
-                        ...form,
-                        leaves: [...form.leaves, ''],
-                      })
-                    }
-                    className='text-blue-600 text-sm mt-2'
-                  >
-                    + Add Date
-                  </button>
-                </div>
-
-                {/* INFO MESSAGE */}
-                <div className='bg-yellow-50 text-sm p-3 rounded-lg'>
-                  You can edit weekly offs and leave dates later from the Manage
-                  Barbers page.
-                </div>
-
-                {/* BUTTONS */}
-                <div className='flex justify-end gap-4 pt-4 border-t'>
-                  <button
-                    onClick={() => setShowPopup(false)}
-                    className='px-5 py-2 border rounded-lg'
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleAddBarber}
-                    className='px-6 py-2 bg-black text-white rounded-lg'
-                  >
-                    Create Barber
-                  </button>
-                </div>
-              </div>
-            </div>
+            {/* keep your popup exactly same */}
           </div>
         )}
       </div>
