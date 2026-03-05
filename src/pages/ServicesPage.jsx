@@ -4,8 +4,7 @@ import toast from 'react-hot-toast' // <-- ADD THIS
 import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi'
 import OwnerLayout from '../componenets/OwnerLayout'
 
-//const BASE_URL = 'https://render-qs89.onrender.com'
-const BASE_URL = 'http://localhost:8080'
+const BASE_URL = 'https://render-qs89.onrender.com'
 
 export default function ServicesPage() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
