@@ -357,7 +357,7 @@ export default function Checkout() {
         </div>
 
         {/* RIGHT SECTION */}
-        <div className='bg-white rounded-3xl p-4 sm:p-6 md:p-8 shadow space-y-6'>
+        <div className='bg-white rounded-3xl p-4 sm:p-6 md:p-8 shadow space-y-6 sticky top-6 h-fit'>
           {/* DATE */}
           <div>
             <label className='block mb-2 font-medium'>Select Date</label>
@@ -398,71 +398,124 @@ export default function Checkout() {
 
           {/* SLOTS */}
           <div>
-            <label className='block mb-2 font-medium'>
-              Available Time Slot
-            </label>
+            <div className='flex items-center justify-between mb-2'>
+              <label className='font-medium'>Available Time Slot</label>
 
-            {slots.length === 0 ? (
-              <p className='text-gray-500 text-sm mt-2'>No slots available</p>
-            ) : (
-              slots.map((slot, i) => {
-                const isSelected =
-                  selectedSlot?.startTime === slot.startTime &&
-                  selectedSlot?.endTime === slot.endTime
+              {!!selectedSlot && (
+                <span className='text-xs px-3 py-1 rounded-full bg-black text-white'>
+                  Selected
+                </span>
+              )}
+            </div>
 
-                const start = new Date(
-                  `1970-01-01T${slot.startTime}Z`
-                ).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true,
-                })
+            {/* fixed height scroll box */}
+            <div className='border rounded-2xl bg-gray-50 p-3'>
+              {slots.length === 0 ? (
+                <div className='py-6 text-center'>
+                  <p className='text-gray-500 text-sm'>No slots available</p>
+                  <p className='text-gray-400 text-xs mt-1'>
+                    Try another date or barber
+                  </p>
+                </div>
+              ) : (
+                <div className='max-h-64 overflow-auto pr-1'>
+                  <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
+                    {slots.map((slot, i) => {
+                      const isSelected =
+                        selectedSlot?.startTime === slot.startTime &&
+                        selectedSlot?.endTime === slot.endTime
 
-                const end = new Date(
-                  `1970-01-01T${slot.endTime}Z`
-                ).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true,
-                })
+                      const formatTime = (t) => {
+                        const [hh, mm] = t.split(':').map(Number)
+                        const ampm = hh >= 12 ? 'PM' : 'AM'
+                        const h12 = hh % 12 || 12
+                        return `${h12}:${String(mm).padStart(2, '0')} ${ampm}`
+                      }
 
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedSlot(slot)}
-                    className={`block w-full border p-3 rounded-xl mt-2 ${isSelected ? 'bg-black text-white' : 'bg-gray-50'
-                      }`}
-                  >
-                    {start} - {end}
-                  </button>
-                )
-              })
+                      const start = formatTime(slot.startTime)
+                      const end = formatTime(slot.endTime)
+
+                      return (
+                        <button
+                          key={i}
+                          type='button'
+                          onClick={() => setSelectedSlot(slot)}
+                          className={`px-3 py-2 rounded-xl text-sm border transition
+                  ${isSelected
+                              ? 'bg-[#0B132B] text-white border-[#0B132B]'
+                              : 'bg-white hover:bg-gray-100'
+                            }`}
+                        >
+                          <div className='font-semibold'>{start}</div>
+                          <div className={`${isSelected ? 'text-white/80' : 'text-gray-500'} text-xs`}>
+                            to {end}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {!!selectedSlot && (
+              <p className='text-xs text-gray-500 mt-2'>
+                You selected:{' '}
+                <b>
+                  {(() => {
+                    const formatTime = (t) => {
+                      const [hh, mm] = t.split(':').map(Number)
+                      const ampm = hh >= 12 ? 'PM' : 'AM'
+                      const h12 = hh % 12 || 12
+                      return `${h12}:${String(mm).padStart(2, '0')} ${ampm}`
+                    }
+                    return `${formatTime(selectedSlot.startTime)} - ${formatTime(selectedSlot.endTime)}`
+                  })()}
+                </b>
+              </p>
             )}
           </div>
-          {/* PAYMENT PREVIEW */}
-          <div className='bg-gray-50 border rounded-2xl p-4'>
-            <div className='flex items-center justify-between'>
-              <p className='font-semibold'>Payment</p>
+
+          {/* PAYMENT SUMMARY */}
+          <div className='border rounded-2xl p-4 bg-white shadow-sm'>
+            <div className='flex items-start justify-between'>
+              <div>
+                <p className='font-semibold text-base'>Payment Summary</p>
+                <p className='text-xs text-gray-500 mt-1'>
+                  Razorpay checkout opens after you proceed
+                </p>
+              </div>
+
               <span className='text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full'>
                 Secure • Razorpay
               </span>
             </div>
 
-            <div className='mt-3 flex items-center justify-between text-sm text-gray-700'>
-              <span>Amount</span>
-              <span className='font-semibold'>₹ {cart?.totalPrice || 0}</span>
-            </div>
+            <div className='mt-4 space-y-2 text-sm'>
+              <div className='flex items-center justify-between text-gray-600'>
+                <span>Services Total</span>
+                <span>₹ {cart?.totalPrice || 0}</span>
+              </div>
 
-            <p className='mt-2 text-xs text-gray-500'>
-              After clicking <b>Proceed to Payment</b>, Razorpay checkout will open.
-            </p>
+              <div className='flex items-center justify-between text-gray-600'>
+                <span>Duration</span>
+                <span>{totalTime} min</span>
+              </div>
+
+              <div className='border-t pt-3 flex items-center justify-between'>
+                <span className='font-semibold'>Payable Amount</span>
+                <span className='font-semibold text-lg'>₹ {cart?.totalPrice || 0}</span>
+              </div>
+            </div>
 
             <div className='mt-3 flex gap-2 text-xs flex-wrap'>
-              <span className='px-3 py-1 rounded-full bg-white border'>UPI</span>
-              <span className='px-3 py-1 rounded-full bg-white border'>Netbanking</span>
-              <span className='px-3 py-1 rounded-full bg-white border'>Wallet</span>
+              <span className='px-3 py-1 rounded-full bg-gray-50 border'>UPI</span>
+              <span className='px-3 py-1 rounded-full bg-gray-50 border'>Netbanking</span>
+              <span className='px-3 py-1 rounded-full bg-gray-50 border'>Wallet</span>
+              <span className='px-3 py-1 rounded-full bg-gray-50 border'>Card</span>
             </div>
           </div>
+
         </div>
       </div>
 
@@ -480,12 +533,12 @@ export default function Checkout() {
             }
             onClick={confirmBooking}
             className={`w-full py-4 rounded-xl shadow-lg text-lg font-semibold transition ${payLoading ||
-                !selectedDate ||
-                !selectedBarber ||
-                !selectedSlot ||
-                !(cart?.totalPrice > 0)
-                ? 'bg-gray-400 text-white cursor-not-allowed'
-                : 'bg-[#0B132B] text-white cursor-pointer hover:opacity-95'
+              !selectedDate ||
+              !selectedBarber ||
+              !selectedSlot ||
+              !(cart?.totalPrice > 0)
+              ? 'bg-gray-400 text-white cursor-not-allowed'
+              : 'bg-[#0B132B] text-white cursor-pointer hover:opacity-95'
               }`}
           >
             {payLoading
