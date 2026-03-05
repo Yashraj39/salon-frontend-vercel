@@ -4,7 +4,8 @@ import toast from 'react-hot-toast' // <-- ADD THIS
 import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi'
 import OwnerLayout from '../componenets/OwnerLayout'
 
-const BASE_URL = 'https://render-qs89.onrender.com'
+//const BASE_URL = 'https://render-qs89.onrender.com'
+const BASE_URL = 'http://localhost:8080'
 
 export default function ServicesPage() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
@@ -30,6 +31,9 @@ export default function ServicesPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteType, setDeleteType] = useState(null) // 'category' or 'service'
   const [deleteId, setDeleteId] = useState(null)
+
+  const [masterCategories, setMasterCategories] = useState([])
+  const [selectedMasterCategoryId, setSelectedMasterCategoryId] = useState('')
 
   const [formData, setFormData] = useState({
     name: '',
@@ -142,33 +146,21 @@ export default function ServicesPage() {
   // ================= CATEGORY SUBMIT =================
   const handleCategorySubmit = async () => {
     try {
-      if (editingCategory) {
-        await axios.patch(
-          `${BASE_URL}/api/service-category/update-service-category/${editingCategory.id}`,
-          {
-            name: formData.name,
-            description: formData.description,
-          }
-        )
-        toast.success('Category updated successfully') // <-- SUCCESS TOAST
-      } else {
-        await axios.post(
-          `${BASE_URL}/api/service-category/add-service-category/${selectedSalonId}`,
-          {
-            name: formData.name,
-            description: formData.description,
-          }
-        )
-        toast.success('Category added successfully') // <-- SUCCESS TOAST
+      if (!selectedMasterCategoryId) {
+        toast.error('Please select a category')
+        return
       }
 
+      await axios.post(
+        `${BASE_URL}/api/service-category/add-service-category/${selectedSalonId}/${selectedMasterCategoryId}`
+      )
+
+      toast.success('Category added to salon')
       setShowCategoryModal(false)
-      setEditingCategory(null)
-      setFormData({ name: '', description: '' })
       fetchCategories(selectedSalonId)
     } catch (err) {
       console.error(err)
-      toast.error('Failed to save category') // <-- ERROR TOAST
+      toast.error('Failed to add category')
     }
   }
 
@@ -191,8 +183,9 @@ export default function ServicesPage() {
         toast.success('Service updated successfully') // <-- SUCCESS TOAST
       } else {
         await axios.post(
-          `${BASE_URL}/api/service/add-service/${selectedCategory.id}`,
-          data
+          `${BASE_URL}/api/service/add-service/${selectedCategory.id}?salonId=${selectedSalonId}`,
+          data,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
         )
         toast.success('Service added successfully') // <-- SUCCESS TOAST
       }
@@ -243,6 +236,13 @@ export default function ServicesPage() {
     }
   }
 
+  const fetchMasterCategories = async () => {
+    const res = await axios.get(`${BASE_URL}/api/service-category/get-all-master-categories`)
+    const data = Array.isArray(res.data) ? res.data : []
+    setMasterCategories(data)
+    setSelectedMasterCategoryId(data[0]?.id || '')
+  }
+
   return (
     <OwnerLayout>
 
@@ -283,10 +283,13 @@ export default function ServicesPage() {
 
             <h2 className='text-xl font-semibold'>Service Categories</h2>
             <button
-              onClick={() => {
-                setEditingCategory(null)
-                setFormData({ name: '', description: '' })
-                setShowCategoryModal(true)
+              onClick={async () => {
+                try {
+                  await fetchMasterCategories()
+                  setShowCategoryModal(true)
+                } catch (e) {
+                  toast.error('Failed to load master categories')
+                }
               }}
               className='bg-blue-600 text-white px-3 py-2 rounded flex items-center gap-2'
             >
@@ -308,17 +311,6 @@ export default function ServicesPage() {
             >
               <span>{cat.name}</span>
               <div className='flex gap-2'>
-                <FiEdit
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setEditingCategory(cat)
-                    setFormData({
-                      name: cat.name,
-                      description: cat.description,
-                    })
-                    setShowCategoryModal(true)
-                  }}
-                />
                 <FiTrash2
                   onClick={(e) => {
                     e.stopPropagation()
@@ -422,20 +414,22 @@ export default function ServicesPage() {
       {/* ================= CATEGORY MODAL ================= */}
       {showCategoryModal && (
         <Modal
-          title={editingCategory ? 'Edit Category' : 'Add Category'}
+          title='Add Category to Salon'
           onClose={() => setShowCategoryModal(false)}
           onSubmit={handleCategorySubmit}
         >
-          <Input
-            label='Name'
-            value={formData.name}
-            onChange={(v) => setFormData({ ...formData, name: v })}
-          />
-          <Input
-            label='Description'
-            value={formData.description}
-            onChange={(v) => setFormData({ ...formData, description: v })}
-          />
+          <label className='block mb-1'>Select Category</label>
+          <select
+            className='w-full border p-2 rounded'
+            value={selectedMasterCategoryId}
+            onChange={(e) => setSelectedMasterCategoryId(e.target.value)}
+          >
+            {masterCategories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
         </Modal>
       )}
 
@@ -486,6 +480,8 @@ export default function ServicesPage() {
           />
         </Modal>
       )}
+
+
 
       {showDeleteModal && (
         <div className='fixed inset-0 z-50 flex items-center justify-center'>
