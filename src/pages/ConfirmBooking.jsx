@@ -28,6 +28,7 @@ export default function Checkout() {
 
   const [totalPending, setTotalPending] = useState(0)
   const [navbarCart, setNavbarCart] = useState([])
+  const [payLoading, setPayLoading] = useState(false)
 
   /* ================= FETCH CART ================= */
   useEffect(() => {
@@ -136,13 +137,15 @@ export default function Checkout() {
     cart?.items?.reduce((sum, item) => sum + (Number(item.time) || 0), 0) || 0
 
   /* ================= CONFIRM BOOKING ================= */
+  /* ================= CONFIRM BOOKING ================= */
   const confirmBooking = async () => {
     if (!selectedBarber) return toast.error('Please select a barber')
     if (!selectedSlot) return toast.error('Please select a time slot')
     if (!selectedDate) return toast.error('Please select a date')
 
     try {
-      // 1) create order from backend (amount from cart)
+      setPayLoading(true)
+
       const orderRes = await fetch(
         'https://render-qs89.onrender.com/api/payment/create-order',
         {
@@ -158,12 +161,12 @@ export default function Checkout() {
 
       if (!orderRes.ok) {
         const t = await orderRes.text()
+        setPayLoading(false)
         return toast.error(t || 'Cannot create payment order')
       }
 
       const orderData = await orderRes.json()
 
-      // 2) open razorpay checkout
       const options = {
         key: orderData.key,
         amount: orderData.amount,
@@ -171,9 +174,9 @@ export default function Checkout() {
         name: 'SlotMyStyle',
         description: 'Salon Booking Payment',
         order_id: orderData.orderId,
+
         handler: async function (response) {
           try {
-            // 3) verify payment + confirm booking in backend
             const verifyRes = await fetch(
               'https://render-qs89.onrender.com/api/payment/verify-and-confirm',
               {
@@ -187,7 +190,6 @@ export default function Checkout() {
                   bookingDate: selectedDate,
                   startTime: selectedSlot.startTime,
                   endTime: selectedSlot.endTime,
-
                   razorpayOrderId: response.razorpay_order_id,
                   razorpayPaymentId: response.razorpay_payment_id,
                   razorpaySignature: response.razorpay_signature,
@@ -197,30 +199,43 @@ export default function Checkout() {
 
             if (!verifyRes.ok) {
               const err = await verifyRes.text()
+              setPayLoading(false)
               return toast.error(err || 'Payment verified but booking failed')
             }
 
+            setPayLoading(false)
             toast.success('Payment Successful & Booking Confirmed')
             navigate('/success')
           } catch (e) {
             console.error(e)
+            setPayLoading(false)
             toast.error('Payment done but confirm failed')
           }
         },
+
         prefill: {
           name: user?.name || '',
           email: user?.email || '',
         },
+
         theme: { color: '#0B132B' },
+
+        modal: {
+          ondismiss: function () {
+            setPayLoading(false)
+          },
+        },
       }
 
       const rzp = new window.Razorpay(options)
       rzp.on('payment.failed', function () {
+        setPayLoading(false)
         toast.error('Payment Failed')
       })
       rzp.open()
     } catch (err) {
       console.error(err)
+      setPayLoading(false)
       toast.error('Something went wrong')
     }
   }
@@ -280,7 +295,7 @@ export default function Checkout() {
           >
             <IoArrowBack />
           </button>
-          <h2 className='text-xl font-semibold mb-6'>Select Details</h2>
+          <h2 className='text-xl font-semibold mb-6'>Confirm Details & Pay</h2>
         </div>
 
         <button
@@ -424,18 +439,63 @@ export default function Checkout() {
               })
             )}
           </div>
+          {/* PAYMENT PREVIEW */}
+          <div className='bg-gray-50 border rounded-2xl p-4'>
+            <div className='flex items-center justify-between'>
+              <p className='font-semibold'>Payment</p>
+              <span className='text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full'>
+                Secure • Razorpay
+              </span>
+            </div>
+
+            <div className='mt-3 flex items-center justify-between text-sm text-gray-700'>
+              <span>Amount</span>
+              <span className='font-semibold'>₹ {cart?.totalPrice || 0}</span>
+            </div>
+
+            <p className='mt-2 text-xs text-gray-500'>
+              After clicking <b>Proceed to Payment</b>, Razorpay checkout will open.
+            </p>
+
+            <div className='mt-3 flex gap-2 text-xs flex-wrap'>
+              <span className='px-3 py-1 rounded-full bg-white border'>UPI</span>
+              <span className='px-3 py-1 rounded-full bg-white border'>Netbanking</span>
+              <span className='px-3 py-1 rounded-full bg-white border'>Wallet</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* BOTTOM CONFIRM BUTTON */}
+      {/* BOTTOM PAYMENT BUTTON */}
       <div className='mt-10 pb-12 flex justify-center md:justify-end px-4 sm:px-6 md:px-14'>
         <div className='w-full md:w-140'>
           <button
+            type='button'
+            disabled={
+              payLoading ||
+              !selectedDate ||
+              !selectedBarber ||
+              !selectedSlot ||
+              !(cart?.totalPrice > 0)
+            }
             onClick={confirmBooking}
-            className='w-full bg-[#0B132B] text-white cursor-pointer py-4 rounded-lg shadow-lg text-lg font-semibold'
+            className={`w-full py-4 rounded-xl shadow-lg text-lg font-semibold transition ${payLoading ||
+                !selectedDate ||
+                !selectedBarber ||
+                !selectedSlot ||
+                !(cart?.totalPrice > 0)
+                ? 'bg-gray-400 text-white cursor-not-allowed'
+                : 'bg-[#0B132B] text-white cursor-pointer hover:opacity-95'
+              }`}
           >
-            Confirm Booking
+            {payLoading
+              ? 'Opening Payment...'
+              : `Proceed to Payment • ₹ ${cart?.totalPrice || 0}`}
           </button>
+
+          <p className='text-xs text-gray-500 mt-2 text-center md:text-right'>
+            Secure checkout powered by Razorpay. You can pay via UPI / Netbanking / Wallet.
+          </p>
         </div>
       </div>
     </div>
