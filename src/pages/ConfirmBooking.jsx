@@ -475,47 +475,7 @@ export default function Checkout() {
               </p>
             )}
           </div>
-
-          {/* PAYMENT SUMMARY */}
-          <div className='border rounded-2xl p-4 bg-white shadow-sm'>
-            <div className='flex items-start justify-between'>
-              <div>
-                <p className='font-semibold text-base'>Payment Summary</p>
-                <p className='text-xs text-gray-500 mt-1'>
-                  Razorpay checkout opens after you proceed
-                </p>
-              </div>
-
-              <span className='text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full'>
-                Secure • Razorpay
-              </span>
-            </div>
-
-            <div className='mt-4 space-y-2 text-sm'>
-              <div className='flex items-center justify-between text-gray-600'>
-                <span>Services Total</span>
-                <span>₹ {cart?.totalPrice || 0}</span>
-              </div>
-
-              <div className='flex items-center justify-between text-gray-600'>
-                <span>Duration</span>
-                <span>{totalTime} min</span>
-              </div>
-
-              <div className='border-t pt-3 flex items-center justify-between'>
-                <span className='font-semibold'>Payable Amount</span>
-                <span className='font-semibold text-lg'>₹ {cart?.totalPrice || 0}</span>
-              </div>
-            </div>
-
-            <div className='mt-3 flex gap-2 text-xs flex-wrap'>
-              <span className='px-3 py-1 rounded-full bg-gray-50 border'>UPI</span>
-              <span className='px-3 py-1 rounded-full bg-gray-50 border'>Netbanking</span>
-              <span className='px-3 py-1 rounded-full bg-gray-50 border'>Wallet</span>
-              <span className='px-3 py-1 rounded-full bg-gray-50 border'>Card</span>
-            </div>
-          </div>
-
+          
         </div>
       </div>
 
