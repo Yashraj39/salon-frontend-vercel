@@ -142,30 +142,83 @@ export default function Checkout() {
     if (!selectedDate) return toast.error('Please select a date')
 
     try {
-      const res = await fetch(
-        'https://render-qs89.onrender.com/api/booking/confirm',
+      // 1) create order from backend (amount from cart)
+      const orderRes = await fetch(
+        'https://render-qs89.onrender.com/api/payment/create-order',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId,
             salonId,
-            barberId: selectedBarber,
             customerName: selectedCustomerName,
-            bookingDate: selectedDate,
-            startTime: selectedSlot.startTime,
-            endTime: selectedSlot.endTime,
           }),
         }
       )
 
-      if (res.ok) {
-        toast.success('Booking Confirmed')
-        navigate('/success')
-      } else {
-        const error = await res.text()
-        toast.error(error)
+      if (!orderRes.ok) {
+        const t = await orderRes.text()
+        return toast.error(t || 'Cannot create payment order')
       }
+
+      const orderData = await orderRes.json()
+
+      // 2) open razorpay checkout
+      const options = {
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'SlotMyStyle',
+        description: 'Salon Booking Payment',
+        order_id: orderData.orderId,
+        handler: async function (response) {
+          try {
+            // 3) verify payment + confirm booking in backend
+            const verifyRes = await fetch(
+              'https://render-qs89.onrender.com/api/payment/verify-and-confirm',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId,
+                  salonId,
+                  barberId: selectedBarber,
+                  customerName: selectedCustomerName,
+                  bookingDate: selectedDate,
+                  startTime: selectedSlot.startTime,
+                  endTime: selectedSlot.endTime,
+
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                }),
+              }
+            )
+
+            if (!verifyRes.ok) {
+              const err = await verifyRes.text()
+              return toast.error(err || 'Payment verified but booking failed')
+            }
+
+            toast.success('Payment Successful & Booking Confirmed')
+            navigate('/success')
+          } catch (e) {
+            console.error(e)
+            toast.error('Payment done but confirm failed')
+          }
+        },
+        prefill: {
+          name: user?.name || '',
+          email: user?.email || '',
+        },
+        theme: { color: '#0B132B' },
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', function () {
+        toast.error('Payment Failed')
+      })
+      rzp.open()
     } catch (err) {
       console.error(err)
       toast.error('Something went wrong')
@@ -320,9 +373,8 @@ export default function Checkout() {
               <button
                 key={b.id}
                 onClick={() => setSelectedBarber(b.id)}
-                className={`block w-full border p-3 rounded-xl mt-2 text-left ${
-                  selectedBarber === b.id ? 'bg-black text-white' : 'bg-gray-50'
-                }`}
+                className={`block w-full border p-3 rounded-xl mt-2 text-left ${selectedBarber === b.id ? 'bg-black text-white' : 'bg-gray-50'
+                  }`}
               >
                 {b.name}
               </button>
@@ -363,9 +415,8 @@ export default function Checkout() {
                   <button
                     key={i}
                     onClick={() => setSelectedSlot(slot)}
-                    className={`block w-full border p-3 rounded-xl mt-2 ${
-                      isSelected ? 'bg-black text-white' : 'bg-gray-50'
-                    }`}
+                    className={`block w-full border p-3 rounded-xl mt-2 ${isSelected ? 'bg-black text-white' : 'bg-gray-50'
+                      }`}
                   >
                     {start} - {end}
                   </button>
