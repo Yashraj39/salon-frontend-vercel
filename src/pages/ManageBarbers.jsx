@@ -216,7 +216,9 @@ export default function ManageBarbers() {
 
           {/* SALON DROPDOWN */}
           <div className='mb-4'>
-            <label className='block text-sm font-medium mb-2'>Select Salon</label>
+            <label className='block text-sm font-medium mb-2'>
+              Select Salon
+            </label>
 
             <select
               value={selectedSalonId || ''}
@@ -255,8 +257,9 @@ export default function ManageBarbers() {
               setShowPopup(true)
             }}
             disabled={!selectedSalonId}
-            className={`w-full text-white py-2 rounded-lg mb-4 ${selectedSalonId ? 'bg-blue-600' : 'bg-gray-400 cursor-not-allowed'
-              }`}
+            className={`w-full text-white py-2 rounded-lg mb-4 ${
+              selectedSalonId ? 'bg-blue-600' : 'bg-gray-400 cursor-not-allowed'
+            }`}
           >
             + Add Barber
           </button>
@@ -265,10 +268,11 @@ export default function ManageBarbers() {
             <div
               key={barber.id}
               onClick={() => handleSelect(barber)}
-              className={`p-4 mb-3 rounded-lg border cursor-pointer ${selectedBarber?.id === barber.id
+              className={`p-4 mb-3 rounded-lg border cursor-pointer ${
+                selectedBarber?.id === barber.id
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-50'
-                }`}
+              }`}
             >
               <div className='flex justify-between'>
                 <span className='font-medium'>{barber.name}</span>
@@ -287,7 +291,9 @@ export default function ManageBarbers() {
         {/* RIGHT PANEL */}
         {form && (
           <div className='lg:w-2/3 bg-white rounded-xl shadow p-6'>
-            <h2 className='text-xl font-bold mb-6'>Barber Details & Schedule</h2>
+            <h2 className='text-xl font-bold mb-6'>
+              Barber Details & Schedule
+            </h2>
 
             {/* Status */}
             <div className='mb-6'>
@@ -297,18 +303,21 @@ export default function ManageBarbers() {
                 <button
                   type='button'
                   onClick={() => setForm({ ...form, active: !form.active })}
-                  className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors duration-300 ${form.active ? 'bg-green-500' : 'bg-gray-300'
-                    }`}
+                  className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors duration-300 ${
+                    form.active ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
                 >
                   <span
-                    className={`inline-block h-5 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${form.active ? 'translate-x-7' : 'translate-x-1'
-                      }`}
+                    className={`inline-block h-5 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+                      form.active ? 'translate-x-7' : 'translate-x-1'
+                    }`}
                   />
                 </button>
 
                 <span
-                  className={`font-medium ${form.active ? 'text-green-600' : 'text-gray-500'
-                    }`}
+                  className={`font-medium ${
+                    form.active ? 'text-green-600' : 'text-gray-500'
+                  }`}
                 >
                   {form.active ? 'Active' : 'Inactive'}
                 </span>
@@ -348,7 +357,9 @@ export default function ManageBarbers() {
                 <input
                   type='time'
                   value={form.lunchStart}
-                  onChange={(e) => setForm({ ...form, lunchStart: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, lunchStart: e.target.value })
+                  }
                   className='border p-2 rounded w-full'
                 />
               </div>
@@ -357,7 +368,9 @@ export default function ManageBarbers() {
                 <input
                   type='time'
                   value={form.lunchEnd}
-                  onChange={(e) => setForm({ ...form, lunchEnd: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, lunchEnd: e.target.value })
+                  }
                   className='border p-2 rounded w-full'
                 />
               </div>
@@ -414,7 +427,9 @@ export default function ManageBarbers() {
               ))}
 
               <button
-                onClick={() => setForm({ ...form, leaves: [...form.leaves, ''] })}
+                onClick={() =>
+                  setForm({ ...form, leaves: [...form.leaves, ''] })
+                }
                 className='text-blue-600 text-sm'
               >
                 + Add Date
@@ -433,7 +448,155 @@ export default function ManageBarbers() {
         {/* POPUP (keep as you have it) */}
         {showPopup && (
           <div className='fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50'>
-            {/* keep your popup exactly same */}
+            <div className='bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 relative'>
+              <h2 className='text-2xl font-bold mb-6'>Add New Barber</h2>
+
+              {/* Name */}
+              <div className='mb-4'>
+                <label className='block mb-1 font-medium'>Barber Name *</label>
+                <input
+                  type='text'
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className='w-full border p-3 rounded-lg'
+                  placeholder='Enter barber name'
+                />
+              </div>
+
+              {/* Working Hours */}
+              <div className='grid grid-cols-2 gap-4 mb-4'>
+                <div>
+                  <label className='block mb-1'>Start Time *</label>
+                  <input
+                    type='time'
+                    value={form.workingStartTime}
+                    onChange={(e) =>
+                      setForm({ ...form, workingStartTime: e.target.value })
+                    }
+                    className='w-full border p-3 rounded-lg'
+                  />
+                </div>
+                <div>
+                  <label className='block mb-1'>End Time *</label>
+                  <input
+                    type='time'
+                    value={form.workingEndTime}
+                    onChange={(e) =>
+                      setForm({ ...form, workingEndTime: e.target.value })
+                    }
+                    className='w-full border p-3 rounded-lg'
+                  />
+                </div>
+              </div>
+
+              {/* Lunch Time */}
+              <div className='grid grid-cols-2 gap-4 mb-4'>
+                <div>
+                  <label className='block mb-1'>Lunch Start</label>
+                  <input
+                    type='time'
+                    value={form.lunchStart}
+                    onChange={(e) =>
+                      setForm({ ...form, lunchStart: e.target.value })
+                    }
+                    className='w-full border p-3 rounded-lg'
+                  />
+                </div>
+                <div>
+                  <label className='block mb-1'>Lunch End</label>
+                  <input
+                    type='time'
+                    value={form.lunchEnd}
+                    onChange={(e) =>
+                      setForm({ ...form, lunchEnd: e.target.value })
+                    }
+                    className='w-full border p-3 rounded-lg'
+                  />
+                </div>
+              </div>
+
+              {/* Weekly Off */}
+              <div className='mb-4'>
+                <label className='block mb-2 font-medium'>
+                  Weekly Off Days
+                </label>
+                <div className='flex gap-4 flex-wrap'>
+                  {weekDays.map((day) => (
+                    <label key={day.value} className='flex items-center gap-1'>
+                      <input
+                        type='checkbox'
+                        checked={form.weeklyOffDays?.includes(day.value)}
+                        onChange={(e) => {
+                          const updated = e.target.checked
+                            ? [...form.weeklyOffDays, day.value]
+                            : form.weeklyOffDays.filter((d) => d !== day.value)
+
+                          setForm({ ...form, weeklyOffDays: updated })
+                        }}
+                      />
+                      {day.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Leaves */}
+              <div className='mb-6'>
+                <label className='block mb-2 font-medium'>Leave Dates</label>
+
+                {form.leaves?.map((date, index) => (
+                  <div key={index} className='flex gap-2 mb-2'>
+                    <input
+                      type='date'
+                      value={date}
+                      onChange={(e) => {
+                        const updated = [...form.leaves]
+                        updated[index] = e.target.value
+                        setForm({ ...form, leaves: updated })
+                      }}
+                      className='border p-2 rounded w-full'
+                    />
+                    <button
+                      onClick={() => {
+                        const updated = form.leaves.filter(
+                          (_, i) => i !== index
+                        )
+                        setForm({ ...form, leaves: updated })
+                      }}
+                      className='text-red-500'
+                    >
+                      🗑
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  onClick={() =>
+                    setForm({ ...form, leaves: [...form.leaves, ''] })
+                  }
+                  className='text-blue-600 text-sm'
+                >
+                  + Add Date
+                </button>
+              </div>
+
+              {/* Buttons */}
+              <div className='flex justify-end gap-3'>
+                <button
+                  onClick={() => setShowPopup(false)}
+                  className='px-5 py-2 border rounded-lg'
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleAddBarber}
+                  className='px-5 py-2 bg-blue-600 text-white rounded-lg'
+                >
+                  Create Barber
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
