@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import OwnerLayout from '../componenets/OwnerLayout'
+import { Trash2 } from "lucide-react"
 
 const BASE_URL = 'https://render-qs89.onrender.com'
 
@@ -320,13 +321,13 @@ export default function ManageSalons() {
                   </div>
 
                   <button
-                    className='bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm shrink-0'
                     onClick={(e) => {
                       e.stopPropagation()
                       handleDeleteClick(salon)
                     }}
+                    className="p-2 rounded-md hover:bg-red-50 text-red-500 hover:text-red-600 transition shrink-0"
                   >
-                    Delete
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </div>

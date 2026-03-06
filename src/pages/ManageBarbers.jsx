@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import OwnerLayout from '../componenets/OwnerLayout'
+import { Trash2 } from 'lucide-react'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
 
@@ -25,11 +26,18 @@ export default function ManageBarbers() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const ownerId = user.userid || user.userId || ''
 
+  const [originalForm, setOriginalForm] = useState(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   const [salons, setSalons] = useState([])
   const savedSalonId = localStorage.getItem('salonId')
   const [selectedSalonId, setSelectedSalonId] = useState(
     savedSalonId && savedSalonId !== 'undefined' ? savedSalonId : ''
   )
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [barberToDelete, setBarberToDelete] = useState(null)
 
   // ================= LOAD SALONS (FIXED) =================
   useEffect(() => {
@@ -107,9 +115,11 @@ export default function ManageBarbers() {
         if (data && data.length > 0) {
           setSelectedBarber(data[0])
           setForm(data[0])
+          setOriginalForm(data[0])
         } else {
           setSelectedBarber(null)
           setForm(null)
+          setOriginalForm(null)
         }
       })
       .catch(() => toast.error('Failed to load barbers'))
@@ -119,10 +129,30 @@ export default function ManageBarbers() {
   const handleSelect = (barber) => {
     setSelectedBarber(barber)
     setForm({ ...barber })
+    setOriginalForm({ ...barber })
   }
 
   // ================= SAVE CHANGES =================
   const handleSave = async () => {
+    if (!selectedBarber || !form) {
+      toast.error('No barber selected')
+      return
+    }
+
+    if (!hasChanges) return
+
+    if (!form.workingStartTime || !form.workingEndTime) {
+      toast.error('Please fill working hours')
+      return
+    }
+
+    if (form.workingStartTime >= form.workingEndTime) {
+      toast.error('Start time must be before end time')
+      return
+    }
+
+    setIsSaving(true)
+
     try {
       const body = {
         active: form.active,
@@ -140,7 +170,10 @@ export default function ManageBarbers() {
         body: JSON.stringify(body),
       })
 
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const errorText = await res.text()
+        throw new Error(errorText || 'Update failed')
+      }
 
       const updated = await res.json()
 
@@ -151,9 +184,12 @@ export default function ManageBarbers() {
       setBarbers(updatedList)
       setSelectedBarber(updated)
       setForm(updated)
+      setOriginalForm(updated)
       toast.success('Barber updated successfully')
-    } catch {
-      toast.error('Update failed')
+    } catch (error) {
+      toast.error(error.message || 'Update failed')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -206,6 +242,78 @@ export default function ManageBarbers() {
     }
   }
 
+  const handleDeleteClick = (barber) => {
+    setBarberToDelete(barber)
+    setDeleteModalOpen(true)
+  }
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false)
+    setBarberToDelete(null)
+  }
+
+  const confirmDelete = async () => {
+    if (!barberToDelete?.id) return
+
+    setIsDeleting(true)
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/barber/${barberToDelete.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const errorText = await res.text()
+        throw new Error(errorText || 'Delete failed')
+      }
+
+      const updatedBarbers = barbers.filter((b) => b.id !== barberToDelete.id)
+      setBarbers(updatedBarbers)
+
+      if (selectedBarber?.id === barberToDelete.id) {
+        if (updatedBarbers.length > 0) {
+          setSelectedBarber(updatedBarbers[0])
+          setForm({ ...updatedBarbers[0] })
+          setOriginalForm({ ...updatedBarbers[0] })
+        } else {
+          setSelectedBarber(null)
+          setForm(null)
+          setOriginalForm(null)
+        }
+      }
+
+      toast.success('Barber deleted successfully')
+    } catch (error) {
+      toast.error(error.message || 'Delete failed')
+    } finally {
+      setIsDeleting(false)
+      setDeleteModalOpen(false)
+      setBarberToDelete(null)
+    }
+  }
+
+  const hasChanges =
+    form && originalForm
+      ? JSON.stringify({
+        active: form.active,
+        workingStartTime: form.workingStartTime,
+        workingEndTime: form.workingEndTime,
+        lunchStart: form.lunchStart,
+        lunchEnd: form.lunchEnd,
+        weeklyOffDays: form.weeklyOffDays || [],
+        leaves: form.leaves || [],
+      }) !==
+      JSON.stringify({
+        active: originalForm.active,
+        workingStartTime: originalForm.workingStartTime,
+        workingEndTime: originalForm.workingEndTime,
+        lunchStart: originalForm.lunchStart,
+        lunchEnd: originalForm.lunchEnd,
+        weeklyOffDays: originalForm.weeklyOffDays || [],
+        leaves: originalForm.leaves || [],
+      })
+      : false
+
   // ================= UI =================
   return (
     <OwnerLayout>
@@ -257,9 +365,8 @@ export default function ManageBarbers() {
               setShowPopup(true)
             }}
             disabled={!selectedSalonId}
-            className={`w-full text-white py-2 rounded-lg mb-4 ${
-              selectedSalonId ? 'bg-blue-600' : 'bg-gray-400 cursor-not-allowed'
-            }`}
+            className={`w-full text-white py-2 rounded-lg mb-4 ${selectedSalonId ? 'bg-blue-600' : 'bg-gray-400 cursor-not-allowed'
+              }`}
           >
             + Add Barber
           </button>
@@ -268,22 +375,42 @@ export default function ManageBarbers() {
             <div
               key={barber.id}
               onClick={() => handleSelect(barber)}
-              className={`p-4 mb-3 rounded-lg border cursor-pointer ${
-                selectedBarber?.id === barber.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-50'
-              }`}
+              className={`p-4 mb-3 rounded-lg border cursor-pointer transition ${selectedBarber?.id === barber.id
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-gray-50 hover:bg-gray-100'
+                }`}
             >
-              <div className='flex justify-between'>
-                <span className='font-medium'>{barber.name}</span>
-                <span className='text-sm'>
+              <div className='flex justify-between items-start gap-3'>
+                <div className='min-w-0'>
+                  <div className='flex items-center gap-2'>
+                    <span className='font-medium truncate'>{barber.name}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeleteClick(barber)
+                      }}
+                      disabled={isDeleting}
+                      className={`p-1 rounded-md transition shrink-0 ${selectedBarber?.id === barber.id
+                        ? 'hover:bg-white/20 text-white'
+                        : 'hover:bg-red-50 text-red-500 hover:text-red-600'
+                        } ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Trash2 className='w-4 h-4' />
+                    </button>
+                  </div>
+
+                  <p
+                    className={`text-sm mt-1 ${selectedBarber?.id === barber.id ? 'text-white/90' : 'text-gray-600'
+                      }`}
+                  >
+                    {barber.weeklyOffDays?.length || 0} Weekly Off | {barber.leaves?.length || 0} Leaves
+                  </p>
+                </div>
+
+                <span className='text-sm shrink-0'>
                   {barber.active ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              <p className='text-sm mt-1'>
-                {barber.weeklyOffDays?.length || 0} Weekly Off |{' '}
-                {barber.leaves?.length || 0} Leaves
-              </p>
             </div>
           ))}
         </div>
@@ -303,21 +430,18 @@ export default function ManageBarbers() {
                 <button
                   type='button'
                   onClick={() => setForm({ ...form, active: !form.active })}
-                  className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors duration-300 ${
-                    form.active ? 'bg-green-500' : 'bg-gray-300'
-                  }`}
+                  className={`relative inline-flex h-6 w-14 items-center rounded-full transition-colors duration-300 ${form.active ? 'bg-green-500' : 'bg-gray-300'
+                    }`}
                 >
                   <span
-                    className={`inline-block h-5 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-                      form.active ? 'translate-x-7' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-5 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${form.active ? 'translate-x-7' : 'translate-x-1'
+                      }`}
                   />
                 </button>
 
                 <span
-                  className={`font-medium ${
-                    form.active ? 'text-green-600' : 'text-gray-500'
-                  }`}
+                  className={`font-medium ${form.active ? 'text-green-600' : 'text-gray-500'
+                    }`}
                 >
                   {form.active ? 'Active' : 'Inactive'}
                 </span>
@@ -438,10 +562,47 @@ export default function ManageBarbers() {
 
             <button
               onClick={handleSave}
-              className='bg-green-600 text-white px-6 py-2 rounded-lg'
+              disabled={isSaving || !hasChanges}
+              className={`px-6 py-2 rounded-lg transition ${isSaving || !hasChanges
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-green-600 hover:bg-green-700 text-white'
+                }`}
             >
-              Save Changes
+              {isSaving ? 'Saving Changes...' : 'Save Changes'}
             </button>
+          </div>
+        )}
+
+        {deleteModalOpen && (
+          <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50'>
+            <div className='bg-white p-6 rounded-2xl shadow-lg w-[420px]'>
+              <h2 className='text-2xl font-bold mb-4'>Confirm Delete</h2>
+              <p className='mb-6 text-lg'>
+                Are you sure you want to delete{' '}
+                <strong>{barberToDelete?.name}</strong>?
+              </p>
+
+              <div className='flex justify-end gap-4'>
+                <button
+                  onClick={cancelDelete}
+                  disabled={isDeleting}
+                  className='px-4 py-2 border rounded-lg'
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  className={`px-4 py-2 text-white rounded-lg ${isDeleting
+                      ? 'bg-red-300 cursor-not-allowed'
+                      : 'bg-red-500 hover:bg-red-600'
+                    }`}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

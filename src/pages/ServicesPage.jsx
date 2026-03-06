@@ -34,6 +34,9 @@ export default function ServicesPage() {
   const [masterCategories, setMasterCategories] = useState([])
   const [selectedMasterCategoryId, setSelectedMasterCategoryId] = useState('')
 
+  const [isSavingService, setIsSavingService] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -168,6 +171,28 @@ export default function ServicesPage() {
   // ================= SERVICE SUBMIT =================
   const handleServiceSubmit = async () => {
     try {
+      if (!formData.name.trim()) {
+        toast.error('Please enter service name')
+        return
+      }
+
+      if (!formData.price) {
+        toast.error('Please enter price')
+        return
+      }
+
+      if (!formData.time) {
+        toast.error('Please select time')
+        return
+      }
+
+      if (!editingService && !formData.image) {
+        toast.error('Please select service image')
+        return
+      }
+
+      setIsSavingService(true)
+
       const data = new FormData()
       data.append('name', formData.name)
       data.append('description', formData.description)
@@ -181,14 +206,14 @@ export default function ServicesPage() {
           `${BASE_URL}/api/service/update-service/${editingService.id}`,
           data
         )
-        toast.success('Service updated successfully') // <-- SUCCESS TOAST
+        toast.success('Service updated successfully')
       } else {
         await axios.post(
           `${BASE_URL}/api/service/add-service/${selectedCategory.id}?salonId=${selectedSalonId}`,
           data,
           { headers: { 'Content-Type': 'multipart/form-data' } }
         )
-        toast.success('Service added successfully') // <-- SUCCESS TOAST
+        toast.success('Service added successfully')
       }
 
       setShowServiceModal(false)
@@ -205,18 +230,22 @@ export default function ServicesPage() {
       fetchServices(selectedSalonId, selectedCategory.id)
     } catch (err) {
       console.error(err)
-      toast.error('Failed to save service') // <-- ERROR TOAST
+      toast.error('Failed to save service')
+    } finally {
+      setIsSavingService(false)
     }
   }
 
   // ================= DELETE =================
   const handleConfirmDelete = async () => {
     try {
+      setIsDeleting(true)
+
       if (deleteType === 'category') {
         await axios.delete(
           `${BASE_URL}/api/service-category/delete-service-category/${selectedSalonId}/${deleteId}`
         )
-        toast.success('Category deleted successfully') // <-- SUCCESS TOAST
+        toast.success('Category deleted successfully')
         fetchCategories(selectedSalonId)
       }
 
@@ -224,7 +253,7 @@ export default function ServicesPage() {
         await axios.delete(
           `${BASE_URL}/api/service/delete-service/${selectedCategory.id}/${deleteId}`
         )
-        toast.success('Service deleted successfully') // <-- SUCCESS TOAST
+        toast.success('Service deleted successfully')
         fetchServices(selectedSalonId, selectedCategory.id)
       }
 
@@ -233,7 +262,9 @@ export default function ServicesPage() {
       setDeleteType(null)
     } catch (err) {
       console.error(err)
-      toast.error('Failed to delete') // <-- ERROR TOAST
+      toast.error('Failed to delete')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -306,11 +337,10 @@ export default function ServicesPage() {
                 setSelectedCategory(cat)
                 fetchServices(selectedSalonId, cat.id)
               }}
-              className={`p-2 sm:p-3 rounded-lg flex justify-between items-center mb-3 cursor-pointer text-sm sm:text-base ${
-                selectedCategory?.id === cat.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100'
-              }`}
+              className={`p-2 sm:p-3 rounded-lg flex justify-between items-center mb-3 cursor-pointer text-sm sm:text-base ${selectedCategory?.id === cat.id
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100'
+                }`}
             >
               <span>{cat.name}</span>
               <div className='flex gap-2'>
@@ -444,6 +474,9 @@ export default function ServicesPage() {
           title={editingService ? 'Edit Service' : 'Add Service'}
           onClose={() => setShowServiceModal(false)}
           onSubmit={handleServiceSubmit}
+          isSubmitting={isSavingService}
+          submitText={editingService ? 'Save Changes' : 'Add Service'}
+          loadingText={editingService ? 'Saving Changes...' : 'Adding Service...'}
         >
           <Input
             label='Name'
@@ -460,11 +493,24 @@ export default function ServicesPage() {
             value={formData.price}
             onChange={(v) => setFormData({ ...formData, price: v })}
           />
-          <Input
-            label='Time (minutes)'
-            value={formData.time}
-            onChange={(v) => setFormData({ ...formData, time: v })}
-          />
+          <div>
+            <label className='block mb-1'>Time (minutes)</label>
+            <select
+              className='w-full border p-2 rounded'
+              value={formData.time}
+              onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+            >
+              <option value=''>Select time</option>
+              <option value='15'>15 min</option>
+              <option value='30'>30 min</option>
+              <option value='45'>45 min</option>
+              <option value='60'>60 min</option>
+              <option value='75'>75 min</option>
+              <option value='90'>90 min</option>
+              <option value='105'>105 min</option>
+              <option value='120'>120 min</option>
+            </select>
+          </div>
           <select
             className='w-full border p-2 rounded'
             value={formData.genderCategory}
@@ -487,15 +533,13 @@ export default function ServicesPage() {
       )}
 
       {showDeleteModal && (
-        <div className='relative bg-white w-[90%] max-w-[420px] p-6 rounded-2xl shadow-2xl animate-fadeIn'>
-          {/* Background Blur */}
+        <div className='fixed inset-0 z-50 flex items-center justify-center'>
           <div
             className='absolute inset-0 bg-black/40 backdrop-blur-sm'
             onClick={() => setShowDeleteModal(false)}
           ></div>
 
-          {/* Modal Box */}
-          <div className='relative bg-white w-[90%] sm:w-[400px] p-6 rounded-2xl shadow-2xl'>
+          <div className='relative bg-white w-[90%] max-w-[420px] p-6 rounded-2xl shadow-2xl animate-fadeIn'>
             <h2 className='text-lg font-semibold mb-4 text-black'>
               Confirm Delete
             </h2>
@@ -510,6 +554,7 @@ export default function ServicesPage() {
             <div className='flex justify-end gap-3'>
               <button
                 onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
                 className='px-4 py-2 border rounded-lg'
               >
                 Cancel
@@ -517,9 +562,13 @@ export default function ServicesPage() {
 
               <button
                 onClick={handleConfirmDelete}
-                className='bg-red-600 text-white px-4 py-2 rounded-lg'
+                disabled={isDeleting}
+                className={`px-4 py-2 rounded-lg text-white ${isDeleting
+                  ? 'bg-red-300 cursor-not-allowed'
+                  : 'bg-red-600 hover:bg-red-700'
+                  }`}
               >
-                Yes, Delete
+                {isDeleting ? 'Deleting...' : 'Yes, Delete'}
               </button>
             </div>
           </div>
@@ -531,17 +580,23 @@ export default function ServicesPage() {
 
 /* ================= REUSABLE COMPONENTS ================= */
 
-function Modal({ title, children, onClose, onSubmit }) {
+function Modal({
+  title,
+  children,
+  onClose,
+  onSubmit,
+  submitText = 'Save',
+  loadingText = 'Saving...',
+  isSubmitting = false,
+}) {
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center'>
-      {/* 🔹 Background Overlay */}
       <div
         className='absolute inset-0 bg-black/40 backdrop-blur-sm'
         onClick={onClose}
       ></div>
 
-      {/* 🔹 Modal Box */}
-      <div className='relative bg-white w-[420px] p-6 rounded-2xl shadow-2xl animate-fadeIn'>
+      <div className='relative bg-white w-[420px] max-w-[90%] p-6 rounded-2xl shadow-2xl animate-fadeIn'>
         <div className='flex justify-between items-center mb-5'>
           <h2 className='text-lg font-semibold'>{title}</h2>
           <button onClick={onClose} className='text-gray-500 text-xl'>
@@ -552,14 +607,22 @@ function Modal({ title, children, onClose, onSubmit }) {
         <div className='space-y-4'>{children}</div>
 
         <div className='flex justify-end gap-3 mt-6'>
-          <button onClick={onClose} className='px-4 py-2 border rounded-lg'>
+          <button
+            onClick={onClose}
+            disabled={isSubmitting}
+            className='px-4 py-2 border rounded-lg'
+          >
             Cancel
           </button>
           <button
             onClick={onSubmit}
-            className='bg-green-600 text-white px-4 py-2 rounded-lg'
+            disabled={isSubmitting}
+            className={`px-4 py-2 rounded-lg text-white ${isSubmitting
+              ? 'bg-green-300 cursor-not-allowed'
+              : 'bg-green-600 hover:bg-green-700'
+              }`}
           >
-            Save
+            {isSubmitting ? loadingText : submitText}
           </button>
         </div>
       </div>
