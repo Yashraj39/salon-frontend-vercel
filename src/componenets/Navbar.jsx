@@ -281,7 +281,10 @@ export default function Navbar() {
                   >
                     Home
                   </span>
-                  <span onClick={() => navigate('/bookings')} className='cursor-pointer'>
+                  <span
+                    onClick={() => navigate('/bookings')}
+                    className='cursor-pointer'
+                  >
                     My Bookings
                   </span>
                 </div>
@@ -312,10 +315,11 @@ export default function Navbar() {
                     fixed md:absolute top-20 md:top-10 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 md:right-0
                     w-[95%] max-w-sm md:w-80 bg-white shadow-2xl rounded-2xl p-5 z-50
                     transition-all duration-300 ease-in-out
-                    ${showCartDropdown
+                    ${
+                      showCartDropdown
                         ? 'opacity-100 visible translate-y-0'
                         : 'opacity-0 invisible translate-y-3'
-                      }
+                    }
                     md:opacity-0 md:invisible md:translate-y-3
                     md:group-hover:opacity-100 md:group-hover:visible md:group-hover:translate-y-0
                   `}
@@ -458,7 +462,6 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile Menu */}
         {mobileMenu && isLoggedIn && (
           <div className='md:hidden bg-white border-t px-6 py-4 space-y-4'>
             <div
@@ -467,11 +470,44 @@ export default function Navbar() {
             >
               Home
             </div>
+
             <div
               onClick={() => navigate('/bookings')}
               className='cursor-pointer'
             >
               My Bookings
+            </div>
+
+            {/* Owner Button Mobile */}
+            <div className='pt-2 border-t'>
+              {ownerStatus === 'PENDING' ? (
+                <div className='text-red-600 font-medium'>
+                  Owner Application Pending
+                </div>
+              ) : ownerStatus === 'APPROVED' ? (
+                isOwnerPanel ? (
+                  <div
+                    onClick={() => navigate('/success')}
+                    className='bg-black text-white px-4 py-2 rounded-lg text-sm font-medium'
+                  >
+                    Switch to User
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => navigate('/owner-dashboard')}
+                    className='border px-4 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white'
+                  >
+                    Switch to Owner
+                  </div>
+                )
+              ) : (
+                <div
+                  onClick={() => setShowOwnerModal(true)}
+                  className='cursor-pointer font-medium'
+                >
+                  Become an Owner
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -580,10 +616,11 @@ export default function Navbar() {
                     setAgreed(false)
                   }
                 }}
-                className={`w-full py-3 rounded-lg font-medium transition ${agreed
-                  ? 'bg-black text-white'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
+                className={`w-full py-3 rounded-lg font-medium transition ${
+                  agreed
+                    ? 'bg-black text-white'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
                 Continue
               </button>

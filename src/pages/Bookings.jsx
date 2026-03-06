@@ -13,6 +13,7 @@ import {
   User,
   CreditCard,
 } from 'lucide-react'
+import Navbar from '../componenets/Navbar'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
 
@@ -108,6 +109,7 @@ export default function Bookings() {
 
   return (
     <div className='min-h-screen bg-[#f5f6f8]'>
+      <Navbar />
       <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-8'>
         <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8'>
           <div className='bg-[#ececef] rounded-full p-1 flex flex-wrap gap-1 w-full lg:w-auto'>
@@ -115,16 +117,19 @@ export default function Bookings() {
               <React.Fragment key={item.value}>
                 <button
                   onClick={() => setFilter(item.value)}
-                  className={`px-6 py-2.5 rounded-full text-sm sm:text-base font-semibold transition ${filter === item.value
-                    ? 'bg-black text-white'
-                    : 'text-gray-600 hover:text-black'
-                    }`}
+                  className={`px-6 py-2.5 rounded-full text-sm sm:text-base font-semibold transition ${
+                    filter === item.value
+                      ? 'bg-black text-white'
+                      : 'text-gray-600 hover:text-black'
+                  }`}
                 >
                   {item.label}
                 </button>
 
                 {idx !== FILTERS.length - 1 && (
-                  <div className='hidden md:flex items-center text-gray-400 px-1'>|</div>
+                  <div className='hidden md:flex items-center text-gray-400 px-1'>
+                    |
+                  </div>
                 )}
               </React.Fragment>
             ))}
@@ -162,8 +167,12 @@ export default function Bookings() {
           </div>
         ) : bookings.length === 0 ? (
           <div className='bg-white rounded-3xl border border-gray-100 shadow-sm px-6 py-14 text-center'>
-            <h2 className='text-2xl font-semibold text-gray-900'>No bookings found</h2>
-            <p className='text-gray-500 mt-2'>Your bookings will appear here.</p>
+            <h2 className='text-2xl font-semibold text-gray-900'>
+              No bookings found
+            </h2>
+            <p className='text-gray-500 mt-2'>
+              Your bookings will appear here.
+            </p>
           </div>
         ) : (
           <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7'>

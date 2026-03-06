@@ -83,7 +83,9 @@ export default function ServicesPage() {
 
         const stored = localStorage.getItem('salonId')
         const storedValid =
-          stored && stored !== 'undefined' && unique.some((s) => s.sid === stored)
+          stored &&
+          stored !== 'undefined' &&
+          unique.some((s) => s.sid === stored)
 
         const initialSalonId = storedValid ? stored : unique[0].sid
         setSelectedSalonId(initialSalonId)
@@ -236,7 +238,9 @@ export default function ServicesPage() {
   }
 
   const fetchMasterCategories = async () => {
-    const res = await axios.get(`${BASE_URL}/api/service-category/get-all-master-categories`)
+    const res = await axios.get(
+      `${BASE_URL}/api/service-category/get-all-master-categories`
+    )
     const data = Array.isArray(res.data) ? res.data : []
     setMasterCategories(data)
     setSelectedMasterCategoryId(data[0]?.id || '')
@@ -244,14 +248,14 @@ export default function ServicesPage() {
 
   return (
     <OwnerLayout>
-
-      <div className='flex gap-6'>
+      <div className='flex flex-col lg:flex-row gap-4 sm:gap-6'>
         {/* LEFT PANEL */}
-        <div className='w-1/3 bg-white p-6 rounded-xl shadow'>
-
+        <div className='w-full lg:w-1/3 bg-white p-4 sm:p-6 rounded-xl shadow max-h-[600px] overflow-y-auto'>
           {/* SALON DROPDOWN (LEFT PANEL) */}
           <div className='mb-4'>
-            <label className='block text-sm font-medium mb-2'>Select Salon</label>
+            <label className='block text-sm font-medium mb-2'>
+              Select Salon
+            </label>
 
             <select
               value={selectedSalonId || ''}
@@ -265,7 +269,7 @@ export default function ServicesPage() {
                 setSelectedCategory(null)
                 setServices([])
               }}
-              className='w-full border p-3 rounded-lg bg-white'
+              className='w-full border p-2 sm:p-3 rounded-lg bg-white text-sm sm:text-base'
             >
               {salons.length === 0 ? (
                 <option value=''>No salons found</option>
@@ -279,7 +283,6 @@ export default function ServicesPage() {
             </select>
           </div>
           <div className='flex justify-between items-center mb-4'>
-
             <h2 className='text-xl font-semibold'>Service Categories</h2>
             <button
               onClick={async () => {
@@ -303,10 +306,11 @@ export default function ServicesPage() {
                 setSelectedCategory(cat)
                 fetchServices(selectedSalonId, cat.id)
               }}
-              className={`p-3 rounded-lg flex justify-between items-center mb-3 cursor-pointer ${selectedCategory?.id === cat.id
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100'
-                }`}
+              className={`p-2 sm:p-3 rounded-lg flex justify-between items-center mb-3 cursor-pointer text-sm sm:text-base ${
+                selectedCategory?.id === cat.id
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100'
+              }`}
             >
               <span>{cat.name}</span>
               <div className='flex gap-2'>
@@ -324,7 +328,7 @@ export default function ServicesPage() {
         </div>
 
         {/* RIGHT PANEL */}
-        <div className='flex-1 bg-white p-6 rounded-xl shadow'>
+        <div className='w-full flex-1 bg-white p-4 sm:p-6 rounded-xl shadow overflow-hidden'>
           <div className='flex justify-between items-center mb-4'>
             <h2 className='text-xl font-semibold'>
               Services – {selectedCategory?.name}
@@ -350,63 +354,65 @@ export default function ServicesPage() {
             )}
           </div>
 
-          <table className='w-full'>
-            <thead>
-              <tr className='border-b text-left'>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Time</th>
-                <th>Gender</th>
-                <th>Edit</th>
-                <th>Delete</th>
-              </tr>
-            </thead>
-            <tbody>
-              {services.map((s) => (
-                <tr key={s.id} className='border-b '>
-                  <td>
-                    <img
-                      src={s.imageUrl}
-                      alt=''
-                      className='w-14 h-14 rounded object-cover'
-                    />
-                  </td>
-                  <td>{s.name}</td>
-                  <td>₹ {s.price}</td>
-                  <td>{s.time} min</td>
-                  <td>{s.genderCategory}</td>
-                  <td>
-                    <FiEdit
-                      className='cursor-pointer'
-                      onClick={() => {
-                        setEditingService(s)
-                        setFormData({
-                          name: s.name,
-                          description: s.description,
-                          genderCategory: s.genderCategory,
-                          price: s.price,
-                          time: s.time,
-                          image: null,
-                        })
-                        setShowServiceModal(true)
-                      }}
-                    />
-                  </td>
-                  <td>
-                    <FiTrash2
-                      className='cursor-pointer text-red-500'
-                      onClick={() => {
-                        setDeleteType('service')
-                        setDeleteId(s.id)
-                        setShowDeleteModal(true)
-                      }}
-                    />
-                  </td>
+          <div className='w-full overflow-x-auto'>
+            <table className='w-full min-w-[650px]'>
+              <thead>
+                <tr className='border-b text-left'>
+                  <th>Image</th>
+                  <th>Name</th>
+                  <th>Price</th>
+                  <th>Time</th>
+                  <th>Gender</th>
+                  <th>Edit</th>
+                  <th>Delete</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {services.map((s) => (
+                  <tr key={s.id} className='border-b '>
+                    <td>
+                      <img
+                        src={s.imageUrl}
+                        alt=''
+                        className='w-12 h-12 sm:w-14 sm:h-14 rounded object-cover'
+                      />
+                    </td>
+                    <td>{s.name}</td>
+                    <td>₹ {s.price}</td>
+                    <td>{s.time} min</td>
+                    <td>{s.genderCategory}</td>
+                    <td>
+                      <FiEdit
+                        className='cursor-pointer'
+                        onClick={() => {
+                          setEditingService(s)
+                          setFormData({
+                            name: s.name,
+                            description: s.description,
+                            genderCategory: s.genderCategory,
+                            price: s.price,
+                            time: s.time,
+                            image: null,
+                          })
+                          setShowServiceModal(true)
+                        }}
+                      />
+                    </td>
+                    <td>
+                      <FiTrash2
+                        className='cursor-pointer text-red-500'
+                        onClick={() => {
+                          setDeleteType('service')
+                          setDeleteId(s.id)
+                          setShowDeleteModal(true)
+                        }}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -480,10 +486,8 @@ export default function ServicesPage() {
         </Modal>
       )}
 
-
-
       {showDeleteModal && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center'>
+        <div className='relative bg-white w-[90%] max-w-[420px] p-6 rounded-2xl shadow-2xl animate-fadeIn'>
           {/* Background Blur */}
           <div
             className='absolute inset-0 bg-black/40 backdrop-blur-sm'
@@ -491,7 +495,7 @@ export default function ServicesPage() {
           ></div>
 
           {/* Modal Box */}
-          <div className='relative bg-white w-[400px] p-6 rounded-2xl shadow-2xl'>
+          <div className='relative bg-white w-[90%] sm:w-[400px] p-6 rounded-2xl shadow-2xl'>
             <h2 className='text-lg font-semibold mb-4 text-black'>
               Confirm Delete
             </h2>
