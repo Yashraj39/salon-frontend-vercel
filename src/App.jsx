@@ -13,6 +13,7 @@ import SelectService from './pages/SelectService'
 // import ProtectedRoute from "./pages/ProtectedRoute";
 import Profile from './pages/Profile'
 import ConfirmBooking from './pages/ConfirmBooking'
+
 import OwnerDashboard from './OwnerDashboard'
 
 // Main Pages
@@ -23,6 +24,7 @@ import AddSalon from './pages/AddSalon'
 import ManageBarbers from './pages/ManageBarbers'
 import OwnerLayout from './componenets/OwnerLayout'
 import ServicesPage from './pages/ServicesPage'
+import Bookings from './pages/Bookings'
 
 export default function App() {
   return (
@@ -69,6 +71,8 @@ export default function App() {
         <Route path='/manage-barbers' element={<ManageBarbers />} />
         <Route path='/owner' element={<OwnerLayout />} />
         <Route path='/services' element={<ServicesPage />} />
+        <Route path='/bookings' element={<Bookings />} />
+
         {/* 404 */}
         <Route
           path='*'
