@@ -277,13 +277,22 @@ export default function Navbar() {
                 <div className='hidden md:flex items-center gap-8 text-sm'>
                   <span
                     onClick={() => navigate('/success')}
-                    className='border-b-2 border-black cursor-pointer'
+                    className={`cursor-pointer ${
+                      location.pathname === '/success'
+                        ? 'border-b-2 border-black'
+                        : ''
+                    }`}
                   >
                     Home
                   </span>
+
                   <span
                     onClick={() => navigate('/bookings')}
-                    className='cursor-pointer'
+                    className={`cursor-pointer ${
+                      location.pathname === '/bookings'
+                        ? 'border-b-2 border-black'
+                        : ''
+                    }`}
                   >
                     My Bookings
                   </span>
