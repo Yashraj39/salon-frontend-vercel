@@ -159,7 +159,7 @@ export default function OwnerDashboard() {
 
   return (
     <OwnerLayout>
-      <div className='w-full max-w-7xl mx-auto px-3 sm:px-5 md:px-6'>
+      <div className='w-full max-w-7xl mx-auto px-3 sm:px-5 md:px-6 py-3'>
         {/* Top Controls */}
         <div className='flex flex-col md:flex-row md:items-center gap-4 mb-6'>
           <div className='flex-1 bg-white border rounded-xl px-4 py-3 shadow-sm flex items-center gap-3'>
@@ -225,14 +225,9 @@ export default function OwnerDashboard() {
               <p className='text-xs text-gray-500'>{selectedSalon?.name}</p>
             </div>
 
-            <select
-              value={range}
-              onChange={(e) => setRange(e.target.value)}
-              className='border rounded-lg px-3 py-2 text-sm'
-            >
-              <option value='7'>Last 7 Days</option>
-              <option value='30'>Last 30 Days</option>
-            </select>
+            <h3>
+              Last 7 days overview 
+            </h3>
           </div>
 
           <div className='p-4 sm:p-6'>

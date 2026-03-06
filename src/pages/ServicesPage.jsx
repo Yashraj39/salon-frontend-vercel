@@ -279,7 +279,7 @@ export default function ServicesPage() {
 
   return (
     <OwnerLayout>
-      <div className='flex flex-col lg:flex-row gap-4 sm:gap-6'>
+      <div className='py-3 flex flex-col lg:flex-row gap-4 sm:gap-6'>
         {/* LEFT PANEL */}
         <div className='w-full lg:w-1/3 bg-white p-4 sm:p-6 rounded-xl shadow max-h-[600px] overflow-y-auto'>
           {/* SALON DROPDOWN (LEFT PANEL) */}

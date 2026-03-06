@@ -317,7 +317,7 @@ export default function ManageBarbers() {
   // ================= UI =================
   return (
     <OwnerLayout>
-      <div className='min-h-screen bg-gray-100 p-6 flex flex-col lg:flex-row gap-6'>
+      <div className='py-3 flex flex-col lg:flex-row gap-4 sm:gap-6'>
         {/* LEFT PANEL */}
         <div className='lg:w-1/3 bg-white rounded-xl shadow p-5'>
           <h2 className='text-lg font-semibold mb-4'>Barber List</h2>
