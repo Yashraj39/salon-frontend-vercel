@@ -112,20 +112,22 @@ export default function Checkout() {
           'https://render-qs89.onrender.com/api/booking/available-slots'
         )
 
-        const formattedDate = new Date(selectedDate).toISOString().split('T')[0]
-
         url.searchParams.append('userId', userId)
         url.searchParams.append('salonId', salonId)
         url.searchParams.append('barberId', selectedBarber)
         url.searchParams.append('customerName', selectedCustomerName)
-        url.searchParams.append('date', formattedDate)
+        url.searchParams.append('date', selectedDate)
 
         const res = await fetch(url.toString())
         const data = await res.json()
 
+        console.log('selectedDate:', selectedDate)
+        console.log('slots response:', data)
+
         setSlots(Array.isArray(data) ? data : [])
       } catch (err) {
         console.error(err)
+        setSlots([])
       }
     }
 
@@ -363,7 +365,12 @@ export default function Checkout() {
             <label className='block mb-2 font-medium'>Select Date</label>
             <input
               type='date'
-              onChange={(e) => setSelectedDate(e.target.value)}
+              value={selectedDate}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={(e) => {
+                setSelectedDate(e.target.value)
+                setSelectedSlot(null)
+              }}
               className='w-full border p-3 rounded-xl'
             />
           </div>
@@ -386,9 +393,12 @@ export default function Checkout() {
 
             {barbers.map((b) => (
               <button
-                key={b.id}
-                onClick={() => setSelectedBarber(b.id)}
-                className={`block w-full border p-3 rounded-xl mt-2 text-left ${selectedBarber === b.id ? 'bg-black text-white' : 'bg-gray-50'
+                key={b.id || b._id}
+                onClick={() => {
+                  setSelectedBarber(b.id || b._id)
+                  setSelectedSlot(null)
+                }}
+                className={`block w-full border p-3 rounded-xl mt-2 text-left ${selectedBarber === (b.id || b._id) ? 'bg-black text-white' : 'bg-gray-50'
                   }`}
               >
                 {b.name}
@@ -475,7 +485,7 @@ export default function Checkout() {
               </p>
             )}
           </div>
-          
+
         </div>
       </div>
 
