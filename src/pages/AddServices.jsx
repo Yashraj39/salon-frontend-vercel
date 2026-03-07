@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { IoArrowBack, IoTimeOutline } from 'react-icons/io5'
 import { FiBell, FiUser } from 'react-icons/fi'
 import toast from 'react-hot-toast'
@@ -7,16 +7,18 @@ import { FaShoppingCart } from 'react-icons/fa'
 import Navbar from '../componenets/Navbar'
 
 export default function AddServices() {
+  const bookingMeta = JSON.parse(sessionStorage.getItem('bookingMeta') || '{}')
+  const bookingFor = bookingMeta?.bookingFor || 'myself'
+
   const navigate = useNavigate()
   const { salonId } = useParams()
   const [items, setItems] = useState([])
 
-  const user = JSON.parse(localStorage.getItem('user')) || {}
-  const userId = user.userId
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const userId = user?.userId
 
-  const location = useLocation()
-  const customerName = location.state?.customerName || user?.name || ''
-  const bookedBy = location.state?.bookedBy || user?.name || ''
+  const customerName = bookingMeta?.customerName || ''
+  const bookedBy = bookingMeta?.bookedBy || user?.name || ''
 
   const [totalPending, setTotalPending] = useState(0)
   const [navbarCart, setNavbarCart] = useState([])
@@ -24,29 +26,40 @@ export default function AddServices() {
   /* ================= FETCH CART ================= */
   useEffect(() => {
     const fetchCart = async () => {
-      if (!userId) return
+      if (!userId || !salonId || !customerName.trim()) return
 
       try {
         const url = new URL('https://render-qs89.onrender.com/api/cart/get')
         url.searchParams.append('userId', userId)
         url.searchParams.append('salonId', salonId)
-        url.searchParams.append('customerName', customerName)
+        url.searchParams.append('customerName', customerName.trim())
 
         const res = await fetch(url.toString())
+
+        if (!res.ok) {
+          const errText = await res.text()
+          console.error('Fetch cart failed:', res.status, errText)
+          setItems([])
+          return
+        }
+
         const data = await res.json()
 
         if (data?.items) {
           setItems(data.items)
           localStorage.setItem('cartData', JSON.stringify(data))
+        } else {
+          setItems([])
         }
-      } catch {
+      } catch (err) {
+        console.error(err)
         const raw = localStorage.getItem('cartData')
         if (raw) setItems(JSON.parse(raw).items || [])
       }
     }
 
     fetchCart()
-  }, [userId, salonId])
+  }, [userId, salonId, customerName])
 
   /* ================= NAVBAR CART ================= */
   const fetchNavbarCart = async () => {
@@ -173,9 +186,7 @@ export default function AddServices() {
 
           <button
             onClick={() =>
-              navigate(`/confirm-booking/${salonId}`, {
-                state: { customerName, bookedBy },
-              })
+              navigate(`/confirm-booking/${salonId}`)
             }
             className='bg-[#0B132B] text-white px-10 py-3 cursor-pointer rounded-lg'
           >

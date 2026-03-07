@@ -10,11 +10,14 @@ export default function Checkout() {
   const navigate = useNavigate()
   const { salonId } = useParams()
 
-  const user = JSON.parse(localStorage.getItem('user')) || {}
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
   const userId = user?.userId
 
-  const location = useLocation()
-  const stateCustomerName = location.state?.customerName
+  const bookingMeta = JSON.parse(sessionStorage.getItem('bookingMeta') || '{}')
+
+  const [selectedCustomerName, setSelectedCustomerName] = useState(
+    bookingMeta?.customerName || ''
+  )
 
   const [cart, setCart] = useState(null)
   const [barbers, setBarbers] = useState([])
@@ -22,30 +25,44 @@ export default function Checkout() {
   const [selectedDate, setSelectedDate] = useState('')
   const [slots, setSlots] = useState([])
   const [selectedSlot, setSelectedSlot] = useState(null)
-  const [selectedCustomerName, setSelectedCustomerName] = useState(
-    stateCustomerName || user?.name || ''
-  )
 
   const [totalPending, setTotalPending] = useState(0)
   const [navbarCart, setNavbarCart] = useState([])
   const [payLoading, setPayLoading] = useState(false)
 
+  useEffect(() => {
+    if (!selectedCustomerName?.trim()) {
+      toast.error('Customer name missing. Please start booking again.')
+      navigate(`/salon/${salonId}`)
+    }
+  }, [selectedCustomerName, salonId, navigate])
+
   /* ================= FETCH CART ================= */
   useEffect(() => {
-    if (!userId || !salonId) return
+    if (!userId || !salonId || !selectedCustomerName?.trim()) return
 
     const fetchCart = async () => {
       try {
         const url = new URL('https://render-qs89.onrender.com/api/cart/get')
         url.searchParams.append('userId', userId)
         url.searchParams.append('salonId', salonId)
-        url.searchParams.append('customerName', selectedCustomerName)
+        url.searchParams.append('customerName', selectedCustomerName.trim())
 
         const res = await fetch(url.toString())
+
+        if (!res.ok) {
+          const errText = await res.text()
+          console.error('Cart fetch error:', res.status, errText)
+          setCart({ items: [], totalPrice: 0 })
+          toast.error(errText || 'Failed to load cart')
+          return
+        }
+
         const data = await res.json()
         setCart(data || { items: [], totalPrice: 0 })
       } catch (err) {
         console.error(err)
+        setCart({ items: [], totalPrice: 0 })
       }
     }
 
@@ -104,7 +121,10 @@ export default function Checkout() {
 
   /* ================= FETCH SLOTS ================= */
   useEffect(() => {
-    if (!selectedBarber || !selectedDate) return
+    if (!selectedBarber || !selectedDate || !userId || !salonId || !selectedCustomerName?.trim()) {
+      setSlots([])
+      return
+    }
 
     const fetchSlots = async () => {
       try {
@@ -115,19 +135,25 @@ export default function Checkout() {
         url.searchParams.append('userId', userId)
         url.searchParams.append('salonId', salonId)
         url.searchParams.append('barberId', selectedBarber)
-        url.searchParams.append('customerName', selectedCustomerName)
+        url.searchParams.append('customerName', selectedCustomerName.trim())
         url.searchParams.append('date', selectedDate)
 
         const res = await fetch(url.toString())
+
+        if (!res.ok) {
+          const errorText = await res.text()
+          console.error('Slot API error:', res.status, errorText)
+          setSlots([])
+          toast.error(errorText || 'Slots not available')
+          return
+        }
+
         const data = await res.json()
-
-        console.log('selectedDate:', selectedDate)
-        console.log('slots response:', data)
-
         setSlots(Array.isArray(data) ? data : [])
       } catch (err) {
         console.error(err)
         setSlots([])
+        toast.error('Failed to load slots')
       }
     }
 
@@ -156,7 +182,7 @@ export default function Checkout() {
           body: JSON.stringify({
             userId,
             salonId,
-            customerName: selectedCustomerName,
+            customerName: selectedCustomerName.trim(),
           }),
         }
       )
@@ -188,7 +214,7 @@ export default function Checkout() {
                   userId,
                   salonId,
                   barberId: selectedBarber,
-                  customerName: selectedCustomerName,
+                  customerName: selectedCustomerName.trim(),
                   bookingDate: selectedDate,
                   startTime: selectedSlot.startTime,
                   endTime: selectedSlot.endTime,
@@ -271,7 +297,7 @@ export default function Checkout() {
       // ✅ Navigate to SelectService page
       navigate(`/book/${salonId}`, {
         state: {
-          customerName: selectedCustomerName,
+          customerName: selectedCustomerName.trim(),
         },
       })
     } catch (error) {
@@ -381,10 +407,12 @@ export default function Checkout() {
             <input
               type='text'
               value={selectedCustomerName}
-              onChange={(e) => setSelectedCustomerName(e.target.value)}
-              placeholder='Enter customer name'
-              className='w-full border p-3 rounded-xl'
+              readOnly
+              className='w-full border p-3 rounded-xl bg-gray-100 cursor-not-allowed'
             />
+            <p className='text-xs text-gray-500 mt-2'>
+              Customer name is locked for this booking flow.
+            </p>
           </div>
 
           {/* BARBERS */}

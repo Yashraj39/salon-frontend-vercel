@@ -12,14 +12,15 @@ export default function SelectService() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const user = JSON.parse(localStorage.getItem('user')) || {}
-  const userId = user.userId
-  const bookingFor = location.state?.bookingFor || 'myself'
-  const guestName = location.state?.guestName || ''
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const userId = user?.userId
 
-  const bookedBy = user?.name || ''
+  const bookingMeta = JSON.parse(sessionStorage.getItem('bookingMeta') || '{}')
+
+  const bookingFor = bookingMeta?.bookingFor || 'myself'
+  const bookedBy = bookingMeta?.bookedBy || user?.name || ''
   const customerName =
-    bookingFor === 'myself' ? user?.name || '' : guestName || ''
+    bookingMeta?.customerName || user?.name || ''
 
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
@@ -175,9 +176,16 @@ export default function SelectService() {
       fetchCartCount()
 
       // ✅ Navigate to add-services page immediately after adding
-      navigate(`/add-services/${salonId}`, {
-        state: { customerName, bookedBy },
-      })
+      sessionStorage.setItem(
+        'bookingMeta',
+        JSON.stringify({
+          bookingFor,
+          bookedBy,
+          customerName: customerName.trim(),
+        })
+      )
+
+      navigate(`/add-services/${salonId}`)
     } catch (err) {
       console.error(err)
       toast.error('Server error')
@@ -396,10 +404,10 @@ export default function SelectService() {
               {gender === 'all'
                 ? 'All'
                 : gender === 'men'
-                ? 'Men'
-                : gender === 'women'
-                ? 'Women'
-                : 'Kid'}
+                  ? 'Men'
+                  : gender === 'women'
+                    ? 'Women'
+                    : 'Kid'}
               {genderOpen ? <IoIosArrowUp /> : <IoIosArrowDown />}
             </button>
 
@@ -417,10 +425,10 @@ export default function SelectService() {
                     {g === 'all'
                       ? 'All'
                       : g === 'men'
-                      ? 'Men'
-                      : g === 'women'
-                      ? 'Women'
-                      : 'Kid'}
+                        ? 'Men'
+                        : g === 'women'
+                          ? 'Women'
+                          : 'Kid'}
                   </div>
                 ))}
               </div>

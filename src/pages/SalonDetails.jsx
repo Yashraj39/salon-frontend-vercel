@@ -56,21 +56,29 @@ export default function SalonDetails() {
 
   /* ================= CONTINUE ================= */
   const handleContinueBooking = () => {
-    if (bookingFor === 'someone') {
-      if (!guestName) {
-        toast.error('Please fill all details')
-        return
-      }
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const bookedBy = user?.name || ''
+
+    const finalCustomerName =
+      bookingFor === 'myself' ? bookedBy : guestName.trim()
+
+    if (bookingFor === 'someone' && !finalCustomerName) {
+      toast.error('Please enter guest name')
+      return
     }
+
+    sessionStorage.setItem(
+      'bookingMeta',
+      JSON.stringify({
+        bookingFor,
+        bookedBy,
+        customerName: finalCustomerName,
+      })
+    )
 
     setShowBookingModal(false)
 
-    navigate(`/book/${salon.id}`, {
-      state: {
-        bookingFor,
-        guestName,
-      },
-    })
+    navigate(`/book/${salon._id || salon.id}`)
   }
 
   if (loading) return <p className='text-center mt-10'>Loading...</p>
@@ -83,9 +91,8 @@ export default function SalonDetails() {
 
       {/* ================= CONTENT ================= */}
       <main
-        className={`flex-1 max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-6 ${
-          showBookingModal ? 'blur-sm pointer-events-none' : ''
-        }`}
+        className={`flex-1 max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-6 ${showBookingModal ? 'blur-sm pointer-events-none' : ''
+          }`}
       >
         <button
           onClick={() => navigate(-1)}
@@ -201,9 +208,8 @@ export default function SalonDetails() {
 
             <div
               className={`overflow-hidden transition-all duration-500 ease-in-out
-  ${
-    bookingFor === 'someone' ? 'max-h-40 opacity-100 mt-3' : 'max-h-0 opacity-0'
-  }`}
+  ${bookingFor === 'someone' ? 'max-h-40 opacity-100 mt-3' : 'max-h-0 opacity-0'
+                }`}
             >
               <input
                 type='text'
