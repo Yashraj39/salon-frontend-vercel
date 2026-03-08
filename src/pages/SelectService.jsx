@@ -157,7 +157,7 @@ export default function SelectService() {
         userId,
         salonId,
         serviceId,
-        customerName,
+        customerName: customerName.trim(),
       })
 
       const res = await fetch(
