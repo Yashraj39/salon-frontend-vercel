@@ -108,7 +108,7 @@ export default function Bookings() {
   }
 
   return (
-    <div className='min-h-screen bg-[#f5f6f8]'>
+    <div className='min-h-screen bg-[#f5f6f8] animate-[fadeIn_.25s_ease]'>
       <Navbar />
       <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-8'>
         <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8'>

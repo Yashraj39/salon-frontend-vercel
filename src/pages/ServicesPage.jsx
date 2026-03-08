@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
-import toast from 'react-hot-toast' // <-- ADD THIS
+import toast from 'react-hot-toast'
 import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi'
 import OwnerLayout from '../componenets/OwnerLayout'
 
@@ -28,7 +28,7 @@ export default function ServicesPage() {
   const [editingService, setEditingService] = useState(null)
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deleteType, setDeleteType] = useState(null) // 'category' or 'service'
+  const [deleteType, setDeleteType] = useState(null)
   const [deleteId, setDeleteId] = useState(null)
 
   const [masterCategories, setMasterCategories] = useState([])
@@ -46,7 +46,6 @@ export default function ServicesPage() {
     image: null,
   })
 
-  // ================= LOAD SALONS =================
   useEffect(() => {
     if (!ownerId) {
       toast.error('Owner not found, please login again')
@@ -102,7 +101,6 @@ export default function ServicesPage() {
       })
   }, [ownerId])
 
-  // ================= LOAD CATEGORIES =================
   useEffect(() => {
     if (selectedSalonId) fetchCategories(selectedSalonId)
   }, [selectedSalonId])
@@ -131,7 +129,6 @@ export default function ServicesPage() {
     }
   }
 
-  // ================= LOAD SERVICES =================
   const fetchServices = async (sid, categoryId) => {
     try {
       setLoading(true)
@@ -147,7 +144,6 @@ export default function ServicesPage() {
     }
   }
 
-  // ================= CATEGORY SUBMIT =================
   const handleCategorySubmit = async () => {
     try {
       if (!selectedMasterCategoryId) {
@@ -168,7 +164,6 @@ export default function ServicesPage() {
     }
   }
 
-  // ================= SERVICE SUBMIT =================
   const handleServiceSubmit = async () => {
     try {
       if (!formData.name.trim()) {
@@ -236,7 +231,6 @@ export default function ServicesPage() {
     }
   }
 
-  // ================= DELETE =================
   const handleConfirmDelete = async () => {
     try {
       setIsDeleting(true)
@@ -279,403 +273,503 @@ export default function ServicesPage() {
 
   return (
     <OwnerLayout>
-      <div className='py-3 flex flex-col lg:flex-row gap-4 sm:gap-6 items-start'>
-        {/* LEFT PANEL */}
-                <div className='w-full lg:w-[300px] xl:w-[340px] bg-white p-4 sm:p-5 rounded-xl shadow'>
-          {/* SALON DROPDOWN (LEFT PANEL) */}
-          <div className='mb-4'>
-            <label className='block text-sm font-medium mb-2'>
-              Select Salon
-            </label>
-
-            <select
-              value={selectedSalonId || ''}
-              onChange={(e) => {
-                const sid = e.target.value
-                setSelectedSalonId(sid)
-                localStorage.setItem('salonId', sid)
-
-                // reset UI when salon changes
-                setCategories([])
-                setSelectedCategory(null)
-                setServices([])
-              }}
-              className='w-full border p-2 sm:p-3 rounded-lg bg-white text-sm sm:text-base'
-            >
-              {salons.length === 0 ? (
-                <option value=''>No salons found</option>
-              ) : (
-                salons.map((s) => (
-                  <option key={s.sid} value={s.sid}>
-                    {s.name}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
-          <div className='flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4'>
-            <h2 className='text-xl font-semibold'>Service Categories</h2>
-            <button
-              onClick={async () => {
-                try {
-                  await fetchMasterCategories()
-                  setShowCategoryModal(true)
-                } catch (e) {
-                  toast.error('Failed to load master categories')
-                }
-              }}
-              className='bg-blue-600 text-white px-3 py-2 rounded flex items-center justify-center gap-2 w-full sm:w-auto'
-            >
-              <FiPlus /> Add
-            </button>
-          </div>
-
-          {categories.length === 0 ? (
-            <div className='text-sm text-gray-500 border rounded-xl p-4 text-center'>
-              No categories found
-            </div>
-          ) : (
-            categories.map((cat) => (
-              <div
-                key={cat.id}
-                onClick={() => {
-                  setSelectedCategory(cat)
-                  fetchServices(selectedSalonId, cat.id)
-                }}
-                className={`p-3 rounded-xl flex justify-between items-center gap-3 mb-3 cursor-pointer text-sm sm:text-base transition ${selectedCategory?.id === cat.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-800'
-                  }`}
-              >
-                <span className='truncate flex-1'>{cat.name}</span>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setDeleteType('category')
-                    setDeleteId(cat.id)
-                    setShowDeleteModal(true)
-                  }}
-                  className={`p-2 rounded-lg shrink-0 ${selectedCategory?.id === cat.id
-                    ? 'hover:bg-white/10'
-                    : 'hover:bg-gray-200'
-                    }`}
-                >
-                  <FiTrash2 />
-                </button>
-              </div>
-            ))
-          )}
+      <div className='max-w-7xl mx-auto py-4 animate-fadeIn'>
+        <div className='mb-6'>
+          <h1 className='text-2xl sm:text-[28px] font-bold text-gray-950 tracking-tight'>
+            Manage Services
+          </h1>
+          <p className='text-sm text-gray-500 mt-1'>
+            Manage salon categories and services with pricing, timing, and gender targeting.
+          </p>
         </div>
 
-        {/* RIGHT PANEL */}
-        <div className='w-full flex-1 min-w-0 bg-white p-4 sm:p-5 rounded-xl shadow'>
-          <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4'>
-            <h2 className='text-lg sm:text-xl font-semibold break-words'>
-              Services – {selectedCategory?.name || 'Select Category'}
-            </h2>
+        <div className='flex flex-col lg:flex-row gap-5 sm:gap-6 items-start'>
+          <div className='w-full lg:w-[300px] xl:w-[340px] bg-white p-5 rounded-3xl border border-gray-200 shadow-sm animate-slideUp'>
+            <div className='mb-4'>
+              <label className='block text-sm font-medium mb-2 text-gray-800'>
+                Select Salon
+              </label>
 
-            {selectedCategory && (
-              <button
-                onClick={() => {
-                  setEditingService(null)
-                  setFormData({
-                    name: '',
-                    description: '',
-                    genderCategory: 'women',
-                    price: '',
-                    time: '',
-                    image: null,
-                  })
-                  setShowServiceModal(true)
+              <select
+                value={selectedSalonId || ''}
+                onChange={(e) => {
+                  const sid = e.target.value
+                  setSelectedSalonId(sid)
+                  localStorage.setItem('salonId', sid)
+                  setCategories([])
+                  setSelectedCategory(null)
+                  setServices([])
                 }}
-                className='bg-green-600 text-white px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 w-full sm:w-auto'
+                className='w-full border border-gray-200 px-4 py-3 rounded-2xl bg-white text-sm sm:text-base outline-none focus:border-gray-400 transition-all duration-300'
               >
-                <FiPlus /> Add Service
+                {salons.length === 0 ? (
+                  <option value=''>No salons found</option>
+                ) : (
+                  salons.map((s) => (
+                    <option key={s.sid} value={s.sid}>
+                      {s.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            <div className='flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4'>
+              <h2 className='text-xl font-semibold text-gray-950'>Service Categories</h2>
+              <button
+                onClick={async () => {
+                  try {
+                    await fetchMasterCategories()
+                    setShowCategoryModal(true)
+                  } catch (e) {
+                    toast.error('Failed to load master categories')
+                  }
+                }}
+                className='bg-black text-white px-4 py-2.5 rounded-2xl flex items-center justify-center gap-2 w-full sm:w-auto shadow-sm hover:bg-gray-800 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300'
+              >
+                <FiPlus /> Add
               </button>
-            )}
-          </div>
+            </div>
 
-          {!selectedCategory ? (
-            <div className='text-sm text-gray-500 border rounded-xl p-4 text-center'>
-              Please select a category to view services
-            </div>
-          ) : services.length === 0 ? (
-            <div className='text-sm text-gray-500 border rounded-xl p-4 text-center'>
-              No services found in this category
-            </div>
-          ) : (
-            <>
-              {/* Desktop table */}
-              <div className='hidden lg:block w-full overflow-x-auto'>
-                <table className='w-full min-w-[680px] text-sm lg:text-base'>
-                  <thead>
-                    <tr className='border-b text-left'>
-                      <th className='py-3 pr-4'>Image</th>
-                      <th className='py-3 pr-4'>Name</th>
-                      <th className='py-3 pr-4'>Price</th>
-                      <th className='py-3 pr-4'>Time</th>
-                      <th className='py-3 pr-4'>Gender</th>
-                      <th className='py-3 pr-4'>Edit</th>
-                      <th className='py-3'>Delete</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {services.map((s) => (
-                      <tr key={s.id} className='border-b'>
-                        <td className='py-3 pr-4'>
-                          <img
-                            src={s.imageUrl}
-                            alt={s.name}
-                            className='w-14 h-14 rounded-lg object-cover'
-                          />
-                        </td>
-                        <td className='py-3 pr-4 whitespace-nowrap'>{s.name}</td>
-                        <td className='py-3 pr-4 whitespace-nowrap'>₹ {s.price}</td>
-                        <td className='py-3 pr-4 whitespace-nowrap'>{s.time} min</td>
-                        <td className='py-3 pr-4 whitespace-nowrap capitalize'>
-                          {s.genderCategory}
-                        </td>
-                        <td className='py-3 pr-4'>
-                          <button
-                            onClick={() => {
-                              setEditingService(s)
-                              setFormData({
-                                name: s.name,
-                                description: s.description,
-                                genderCategory: s.genderCategory,
-                                price: s.price,
-                                time: s.time,
-                                image: null,
-                              })
-                              setShowServiceModal(true)
-                            }}
-                            className='p-2 rounded-lg hover:bg-gray-100'
-                          >
-                            <FiEdit className='cursor-pointer' />
-                          </button>
-                        </td>
-                        <td className='py-3'>
-                          <button
-                            onClick={() => {
-                              setDeleteType('service')
-                              setDeleteId(s.id)
-                              setShowDeleteModal(true)
-                            }}
-                            className='p-2 rounded-lg hover:bg-red-50'
-                          >
-                            <FiTrash2 className='cursor-pointer text-red-500' />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {categories.length === 0 ? (
+              <div className='text-sm text-gray-500 border border-dashed border-gray-300 rounded-2xl p-5 text-center bg-gray-50'>
+                No categories found
               </div>
-
-              {/* Mobile cards */}
-              <div className='lg:hidden space-y-3'>
-                {services.map((s) => (
+            ) : (
+              <div className='space-y-3'>
+                {categories.map((cat, index) => (
                   <div
-                    key={s.id}
-                    className='border rounded-xl p-3 flex gap-3 items-start'
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategory(cat)
+                      fetchServices(selectedSalonId, cat.id)
+                    }}
+                    className={`p-4 rounded-2xl flex justify-between items-center gap-3 cursor-pointer text-sm sm:text-base transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${selectedCategory?.id === cat.id
+                      ? 'bg-black text-white border border-black shadow-md'
+                      : 'bg-gray-50 text-gray-800 border border-gray-200 hover:bg-gray-100'
+                      }`}
+                    style={{ animationDelay: `${index * 40}ms` }}
                   >
-                    <img
-                      src={s.imageUrl}
-                      alt={s.name}
-                      className='w-16 h-16 rounded-lg object-cover shrink-0'
-                    />
+                    <span className='truncate flex-1 font-medium'>{cat.name}</span>
 
-                    <div className='flex-1 min-w-0'>
-                      <div className='flex items-start justify-between gap-2'>
-                        <h3 className='font-semibold text-sm truncate'>{s.name}</h3>
-                        <div className='flex items-center gap-2 shrink-0'>
-                          <button
-                            onClick={() => {
-                              setEditingService(s)
-                              setFormData({
-                                name: s.name,
-                                description: s.description,
-                                genderCategory: s.genderCategory,
-                                price: s.price,
-                                time: s.time,
-                                image: null,
-                              })
-                              setShowServiceModal(true)
-                            }}
-                            className='p-2 rounded-lg bg-gray-100'
-                          >
-                            <FiEdit />
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setDeleteType('service')
-                              setDeleteId(s.id)
-                              setShowDeleteModal(true)
-                            }}
-                            className='p-2 rounded-lg bg-red-50'
-                          >
-                            <FiTrash2 className='text-red-500' />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className='mt-2 grid grid-cols-2 gap-2 text-xs sm:text-sm text-gray-600'>
-                        <div>
-                          <span className='font-medium text-gray-800'>Price:</span> ₹ {s.price}
-                        </div>
-                        <div>
-                          <span className='font-medium text-gray-800'>Time:</span> {s.time} min
-                        </div>
-                        <div className='col-span-2 capitalize'>
-                          <span className='font-medium text-gray-800'>Gender:</span> {s.genderCategory}
-                        </div>
-                      </div>
-                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setDeleteType('category')
+                        setDeleteId(cat.id)
+                        setShowDeleteModal(true)
+                      }}
+                      className={`p-2 rounded-xl shrink-0 transition ${selectedCategory?.id === cat.id
+                        ? 'hover:bg-white/10'
+                        : 'hover:bg-gray-200'
+                        }`}
+                    >
+                      <FiTrash2 />
+                    </button>
                   </div>
                 ))}
               </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ================= CATEGORY MODAL ================= */}
-      {showCategoryModal && (
-        <Modal
-          title='Add Category to Salon'
-          onClose={() => setShowCategoryModal(false)}
-          onSubmit={handleCategorySubmit}
-        >
-          <label className='block mb-1'>Select Category</label>
-          <select
-            className='w-full border p-2.5 rounded text-sm sm:text-base'
-            value={selectedMasterCategoryId}
-            onChange={(e) => setSelectedMasterCategoryId(e.target.value)}
-          >
-            {masterCategories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </Modal>
-      )}
-
-      {/* ================= SERVICE MODAL ================= */}
-      {showServiceModal && (
-        <Modal
-          title={editingService ? 'Edit Service' : 'Add Service'}
-          onClose={() => setShowServiceModal(false)}
-          onSubmit={handleServiceSubmit}
-          isSubmitting={isSavingService}
-          submitText={editingService ? 'Save Changes' : 'Add Service'}
-          loadingText={editingService ? 'Saving Changes...' : 'Adding Service...'}
-        >
-          <Input
-            label='Name'
-            value={formData.name}
-            onChange={(v) => setFormData({ ...formData, name: v })}
-          />
-          <Input
-            label='Description'
-            value={formData.description}
-            onChange={(v) => setFormData({ ...formData, description: v })}
-          />
-          <Input
-            label='Price'
-            type='number'
-            value={formData.price}
-            onChange={(v) => setFormData({ ...formData, price: v })}
-          />
-          <div>
-            <label className='block mb-1'>Time (minutes)</label>
-            <select
-              className='w-full border p-2.5 rounded text-sm sm:text-base'
-              value={formData.time}
-              onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-            >
-              <option value=''>Select time</option>
-              <option value='15'>15 min</option>
-              <option value='30'>30 min</option>
-              <option value='45'>45 min</option>
-              <option value='60'>60 min</option>
-              <option value='75'>75 min</option>
-              <option value='90'>90 min</option>
-              <option value='105'>105 min</option>
-              <option value='120'>120 min</option>
-            </select>
+            )}
           </div>
-          <select
-            className='w-full border p-2.5 rounded text-sm sm:text-base'
-            value={formData.genderCategory}
-            onChange={(e) =>
-              setFormData({ ...formData, genderCategory: e.target.value })
-            }
+
+          <div className='w-full flex-1 min-w-0 bg-white p-5 rounded-3xl border border-gray-200 shadow-sm animate-slideUp-delayed'>
+            <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4'>
+              <div>
+                <h2 className='text-lg sm:text-xl font-semibold break-words text-gray-950'>
+                  Services – {selectedCategory?.name || 'Select Category'}
+                </h2>
+                <p className='text-sm text-gray-500 mt-1'>
+                  {selectedCategory
+                    ? 'View and manage services for the selected category.'
+                    : 'Choose a category to manage services.'}
+                </p>
+              </div>
+
+              {selectedCategory && (
+                <button
+                  onClick={() => {
+                    setEditingService(null)
+                    setFormData({
+                      name: '',
+                      description: '',
+                      genderCategory: 'women',
+                      price: '',
+                      time: '',
+                      image: null,
+                    })
+                    setShowServiceModal(true)
+                  }}
+                  className='bg-black text-white px-4 py-2.5 rounded-2xl flex items-center justify-center gap-2 w-full sm:w-auto shadow-sm hover:bg-gray-800 hover:-translate-y-0.5 hover:shadow-md transition-all duration-300'
+                >
+                  <FiPlus /> Add Service
+                </button>
+              )}
+            </div>
+
+            {!selectedCategory ? (
+              <div className='text-sm text-gray-500 border border-dashed border-gray-300 rounded-2xl p-6 text-center bg-gray-50'>
+                Please select a category to view services
+              </div>
+            ) : loading ? (
+              <div className='space-y-3'>
+                {[1, 2, 3].map((item) => (
+                  <div
+                    key={item}
+                    className='h-24 rounded-2xl bg-gray-50 border border-gray-100 animate-pulse'
+                  />
+                ))}
+              </div>
+            ) : services.length === 0 ? (
+              <div className='text-sm text-gray-500 border border-dashed border-gray-300 rounded-2xl p-6 text-center bg-gray-50'>
+                No services found in this category
+              </div>
+            ) : (
+              <>
+                <div className='hidden lg:block w-full overflow-x-auto'>
+                  <table className='w-full min-w-[720px] text-sm lg:text-base'>
+                    <thead>
+                      <tr className='border-b border-gray-100 text-left text-gray-500'>
+                        <th className='py-3 pr-4 font-medium'>Image</th>
+                        <th className='py-3 pr-4 font-medium'>Name</th>
+                        <th className='py-3 pr-4 font-medium'>Price</th>
+                        <th className='py-3 pr-4 font-medium'>Time</th>
+                        <th className='py-3 pr-4 font-medium'>Gender</th>
+                        <th className='py-3 pr-4 font-medium'>Edit</th>
+                        <th className='py-3 font-medium'>Delete</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {services.map((s, index) => (
+                        <tr
+                          key={s.id}
+                          className='border-b border-gray-100 hover:bg-gray-50 transition-all duration-300 animate-fadeIn'
+                          style={{ animationDelay: `${index * 35}ms` }}
+                        >
+                          <td className='py-3 pr-4'>
+                            <img
+                              src={s.imageUrl}
+                              alt={s.name}
+                              className='w-14 h-14 rounded-xl object-cover'
+                            />
+                          </td>
+                          <td className='py-3 pr-4 whitespace-nowrap font-medium text-gray-900'>
+                            {s.name}
+                          </td>
+                          <td className='py-3 pr-4 whitespace-nowrap'>₹ {s.price}</td>
+                          <td className='py-3 pr-4 whitespace-nowrap'>{s.time} min</td>
+                          <td className='py-3 pr-4 whitespace-nowrap capitalize'>
+                            {s.genderCategory}
+                          </td>
+                          <td className='py-3 pr-4'>
+                            <button
+                              onClick={() => {
+                                setEditingService(s)
+                                setFormData({
+                                  name: s.name,
+                                  description: s.description,
+                                  genderCategory: s.genderCategory,
+                                  price: s.price,
+                                  time: s.time,
+                                  image: null,
+                                })
+                                setShowServiceModal(true)
+                              }}
+                              className='p-2 rounded-xl hover:bg-gray-100 transition'
+                            >
+                              <FiEdit className='cursor-pointer' />
+                            </button>
+                          </td>
+                          <td className='py-3'>
+                            <button
+                              onClick={() => {
+                                setDeleteType('service')
+                                setDeleteId(s.id)
+                                setShowDeleteModal(true)
+                              }}
+                              className='p-2 rounded-xl hover:bg-red-50 transition'
+                            >
+                              <FiTrash2 className='cursor-pointer text-red-500' />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className='lg:hidden space-y-3'>
+                  {services.map((s, index) => (
+                    <div
+                      key={s.id}
+                      className='border border-gray-200 rounded-2xl p-3 flex gap-3 items-start bg-gray-50 hover:bg-gray-100 transition-all duration-300 animate-fadeIn'
+                      style={{ animationDelay: `${index * 35}ms` }}
+                    >
+                      <img
+                        src={s.imageUrl}
+                        alt={s.name}
+                        className='w-16 h-16 rounded-xl object-cover shrink-0'
+                      />
+
+                      <div className='flex-1 min-w-0'>
+                        <div className='flex items-start justify-between gap-2'>
+                          <h3 className='font-semibold text-sm truncate text-gray-900'>{s.name}</h3>
+                          <div className='flex items-center gap-2 shrink-0'>
+                            <button
+                              onClick={() => {
+                                setEditingService(s)
+                                setFormData({
+                                  name: s.name,
+                                  description: s.description,
+                                  genderCategory: s.genderCategory,
+                                  price: s.price,
+                                  time: s.time,
+                                  image: null,
+                                })
+                                setShowServiceModal(true)
+                              }}
+                              className='p-2 rounded-xl bg-white border border-gray-200'
+                            >
+                              <FiEdit />
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setDeleteType('service')
+                                setDeleteId(s.id)
+                                setShowDeleteModal(true)
+                              }}
+                              className='p-2 rounded-xl bg-red-50'
+                            >
+                              <FiTrash2 className='text-red-500' />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className='mt-2 grid grid-cols-2 gap-2 text-xs sm:text-sm text-gray-600'>
+                          <div>
+                            <span className='font-medium text-gray-800'>Price:</span> ₹ {s.price}
+                          </div>
+                          <div>
+                            <span className='font-medium text-gray-800'>Time:</span> {s.time} min
+                          </div>
+                          <div className='col-span-2 capitalize'>
+                            <span className='font-medium text-gray-800'>Gender:</span> {s.genderCategory}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {showCategoryModal && (
+          <Modal
+            title='Add Category to Salon'
+            onClose={() => setShowCategoryModal(false)}
+            onSubmit={handleCategorySubmit}
           >
-            <option value='men'>Men</option>
-            <option value='women'>Women</option>
-            <option value='child'>Child</option>
-          </select>
+            <label className='block mb-2 text-sm font-medium text-gray-800'>
+              Select Category
+            </label>
+            <select
+              className='w-full border border-gray-200 px-4 py-3 rounded-2xl text-sm outline-none focus:border-gray-400 transition-all duration-300 bg-white'
+              value={selectedMasterCategoryId}
+              onChange={(e) => setSelectedMasterCategoryId(e.target.value)}
+            >
+              {masterCategories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </Modal>
+        )}
 
-          <input
-            type='file'
-            className='w-full text-sm'
-            onChange={(e) =>
-              setFormData({ ...formData, image: e.target.files[0] })
-            }
-          />
-        </Modal>
-      )}
+        {showServiceModal && (
+          <Modal
+            title={editingService ? 'Edit Service' : 'Add Service'}
+            onClose={() => setShowServiceModal(false)}
+            onSubmit={handleServiceSubmit}
+            isSubmitting={isSavingService}
+            submitText={editingService ? 'Save Changes' : 'Add Service'}
+            loadingText={editingService ? 'Saving Changes...' : 'Adding Service...'}
+          >
+            <Input
+              label='Name'
+              value={formData.name}
+              onChange={(v) => setFormData({ ...formData, name: v })}
+            />
+            <div>
+              <label className='block mb-2 text-sm font-medium text-gray-800'>
+                Description
+              </label>
+              <textarea
+                rows='3'
+                className='w-full border border-gray-200 px-4 py-3 rounded-2xl text-sm outline-none focus:border-gray-400 transition-all duration-300 resize-none'
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+              />
+            </div>
+            <Input
+              label='Price'
+              type='number'
+              value={formData.price}
+              onChange={(v) => setFormData({ ...formData, price: v })}
+            />
 
-      {showDeleteModal && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center'>
-          <div
-            className='absolute inset-0 bg-black/40 backdrop-blur-sm'
-            onClick={() => setShowDeleteModal(false)}
-          ></div>
-
-          <div className='relative bg-white w-[92%] sm:w-full max-w-[420px] p-4 sm:p-6 rounded-2xl shadow-2xl animate-fadeIn'>
-            <h2 className='text-base sm:text-lg font-semibold mb-4 text-black'>
-              Confirm Delete
-            </h2>
-
-            <p className='text-sm sm:text-base text-gray-600 mb-6'>
-              Are you sure you want to delete this{' '}
-              {deleteType === 'category' ? 'category' : 'service'}?
-              <br />
-              This action cannot be undone.
-            </p>
-
-            <div className='flex flex-col-reverse sm:flex-row justify-end gap-3'>
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                disabled={isDeleting}
-                className='px-4 py-2 border rounded-lg w-full sm:w-auto'
+            <div>
+              <label className='block mb-2 text-sm font-medium text-gray-800'>
+                Time (minutes)
+              </label>
+              <select
+                className='w-full border border-gray-200 px-4 py-3 rounded-2xl text-sm sm:text-base outline-none focus:border-gray-400 transition-all duration-300'
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
               >
-                Cancel
-              </button>
+                <option value=''>Select time</option>
+                <option value='15'>15 min</option>
+                <option value='30'>30 min</option>
+                <option value='45'>45 min</option>
+                <option value='60'>60 min</option>
+                <option value='75'>75 min</option>
+                <option value='90'>90 min</option>
+                <option value='105'>105 min</option>
+                <option value='120'>120 min</option>
+              </select>
+            </div>
 
-              <button
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-                className={`px-4 py-2 rounded-lg text-white w-full sm:w-auto ${isDeleting
-                  ? 'bg-red-300 cursor-not-allowed'
-                  : 'bg-red-600 hover:bg-red-700'
-                  }`}
+            <div>
+              <label className='block mb-2 text-sm font-medium text-gray-800'>
+                Gender
+              </label>
+              <select
+                className='w-full border border-gray-200 px-4 py-3 rounded-2xl text-sm sm:text-base outline-none focus:border-gray-400 transition-all duration-300'
+                value={formData.genderCategory}
+                onChange={(e) =>
+                  setFormData({ ...formData, genderCategory: e.target.value })
+                }
               >
-                {isDeleting ? 'Deleting...' : 'Yes, Delete'}
-              </button>
+                <option value='men'>Men</option>
+                <option value='women'>Women</option>
+                <option value='child'>Child</option>
+              </select>
+            </div>
+
+            <div>
+              <label className='block mb-2 text-sm font-medium text-gray-800'>
+                Service Image
+              </label>
+              <input
+                type='file'
+                className='w-full text-sm border border-gray-200 px-3 py-2.5 rounded-2xl bg-white file:mr-3 file:px-4 file:py-2 file:border-0 file:rounded-xl file:bg-black file:text-white'
+                onChange={(e) =>
+                  setFormData({ ...formData, image: e.target.files[0] })
+                }
+              />
+            </div>
+          </Modal>
+        )}
+
+        {showDeleteModal && (
+          <div className='fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn'>
+            <div
+              className='absolute inset-0 bg-black/40 backdrop-blur-sm'
+              onClick={() => setShowDeleteModal(false)}
+            ></div>
+
+            <div className='relative bg-white w-[92%] sm:w-full max-w-[420px] p-5 sm:p-6 rounded-3xl shadow-2xl animate-scaleIn'>
+              <h2 className='text-lg font-semibold mb-4 text-black'>
+                Confirm Delete
+              </h2>
+
+              <p className='text-sm sm:text-base text-gray-600 mb-6 leading-7'>
+                Are you sure you want to delete this{' '}
+                {deleteType === 'category' ? 'category' : 'service'}?
+                <br />
+                This action cannot be undone.
+              </p>
+
+              <div className='flex flex-col-reverse sm:flex-row justify-end gap-3'>
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                  className='px-4 py-2.5 border border-gray-200 rounded-2xl w-full sm:w-auto hover:bg-gray-50 transition'
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className={`px-4 py-2.5 rounded-2xl text-white w-full sm:w-auto transition ${isDeleting
+                    ? 'bg-red-300 cursor-not-allowed'
+                    : 'bg-red-600 hover:bg-red-700'
+                    }`}
+                >
+                  {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        <style>{`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+            }
+            to {
+              opacity: 1;
+            }
+          }
+
+          @keyframes slideUp {
+            from {
+              opacity: 0;
+              transform: translateY(18px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          @keyframes scaleIn {
+            from {
+              opacity: 0;
+              transform: scale(0.96);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+
+          .animate-fadeIn {
+            animation: fadeIn 0.35s ease both;
+          }
+
+          .animate-slideUp {
+            animation: slideUp 0.45s ease both;
+          }
+
+          .animate-slideUp-delayed {
+            animation: slideUp 0.6s ease 0.08s both;
+          }
+
+          .animate-scaleIn {
+            animation: scaleIn 0.25s ease both;
+          }
+        `}</style>
+      </div>
     </OwnerLayout>
   )
 }
-
-/* ================= REUSABLE COMPONENTS ================= */
 
 function Modal({
   title,
@@ -687,36 +781,45 @@ function Modal({
   isSubmitting = false,
 }) {
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-4 sm:py-8 animate-fadeIn'>
       <div
         className='absolute inset-0 bg-black/40 backdrop-blur-sm'
         onClick={onClose}
       ></div>
 
-      <div className='relative bg-white w-[94%] sm:w-[420px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl shadow-2xl animate-fadeIn'>
-        <div className='flex justify-between items-center mb-5'>
-          <h2 className='text-lg font-semibold'>{title}</h2>
-          <button onClick={onClose} className='text-gray-500 text-xl'>
+      <div className='relative w-full max-w-md sm:max-w-lg max-h-[80vh] bg-white rounded-[28px] shadow-2xl animate-scaleIn flex flex-col'>
+        <div className='flex justify-between items-center px-5 sm:px-6 py-4 sm:py-5 border-b border-gray-100'>
+          <h2 className='text-xl sm:text-2xl font-semibold text-gray-950'>
+            {title}
+          </h2>
+
+          <button
+            onClick={onClose}
+            className='w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 text-2xl flex items-center justify-center transition shrink-0'
+          >
             ✕
           </button>
         </div>
 
-        <div className='space-y-4 text-sm sm:text-base'>{children}</div>
+        <div className='flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4'>
+          {children}
+        </div>
 
-        <div className='flex flex-col-reverse sm:flex-row justify-end gap-3 mt-6'>
+        <div className='flex flex-col-reverse sm:flex-row justify-end gap-3 px-5 sm:px-6 py-4 border-t border-gray-100 bg-white rounded-b-[28px]'>
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className='px-4 py-2 border rounded-lg w-full sm:w-auto'
+            className='px-5 py-3 border border-gray-200 rounded-2xl w-full sm:w-auto hover:bg-gray-50 transition'
           >
             Cancel
           </button>
+
           <button
             onClick={onSubmit}
             disabled={isSubmitting}
-            className={`px-4 py-2 rounded-lg text-white w-full sm:w-auto ${isSubmitting
-              ? 'bg-green-300 cursor-not-allowed'
-              : 'bg-green-600 hover:bg-green-700'
+            className={`px-5 py-3 rounded-2xl text-white w-full sm:w-auto transition-all duration-300 ${isSubmitting
+                ? 'bg-green-300 cursor-not-allowed'
+                : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
               }`}
           >
             {isSubmitting ? loadingText : submitText}
@@ -730,10 +833,12 @@ function Modal({
 function Input({ label, value, onChange, type = 'text' }) {
   return (
     <div>
-      <label className='block mb-1 text-sm sm:text-base'>{label}</label>
+      <label className='block mb-2 text-sm font-medium text-gray-800'>
+        {label}
+      </label>
       <input
         type={type}
-        className='w-full border p-2.5 rounded text-sm sm:text-base'
+        className='w-full border border-gray-200 px-4 py-3 rounded-2xl text-sm outline-none focus:border-gray-400 transition-all duration-300'
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

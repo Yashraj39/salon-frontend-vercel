@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import OwnerLayout from '../componenets/OwnerLayout'
-import { Trash2 } from "lucide-react"
+import { Trash2, Plus, Image as ImageIcon } from 'lucide-react'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
 
@@ -182,9 +182,7 @@ export default function ManageSalons() {
       return
     }
 
-    if (!hasSalonChanged) {
-      return
-    }
+    if (!hasSalonChanged) return
 
     setIsUpdatingSalon(true)
 
@@ -286,241 +284,272 @@ export default function ManageSalons() {
 
   return (
     <OwnerLayout>
-      <div className='py-3 flex flex-col lg:flex-row gap-4 sm:gap-6'>
-        <div className='lg:w-1/3 bg-white rounded-xl shadow p-5'>
-          <h2 className='text-lg font-semibold mb-4'>Salon List</h2>
+      <div className='max-w-7xl mx-auto py-4 animate-fadeIn'>
+        <div className='mb-6'>
+          <h1 className='text-2xl sm:text-[28px] font-bold text-gray-950 tracking-tight'>
+            Manage Salons
+          </h1>
+          <p className='text-sm text-gray-500 mt-1'>
+            View, update, add, and manage all your salons in one place.
+          </p>
+        </div>
 
-          <button
-            onClick={handleOpenAddPopup}
-            className='w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg mb-4 transition'
-          >
-            + Add Salon
-          </button>
+        <div className='flex flex-col xl:flex-row gap-5 sm:gap-6'>
+          <div className='xl:w-[360px] bg-white rounded-3xl border border-gray-200 shadow-sm p-5 animate-slideUp'>
+            <div className='flex items-center justify-between mb-4'>
+              <h2 className='text-lg font-semibold text-gray-950'>Salon List</h2>
+              <span className='text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-600'>
+                {salons.length} Total
+              </span>
+            </div>
 
-          <div className='space-y-4'>
-            {salons.map((salon) => (
-              <div
-                key={salon.id}
-                onClick={() => handleSelectSalon(salon)}
-                className={`p-4 rounded-lg border cursor-pointer transition ${selectedSalon?.id === salon.id
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
-              >
-                <div className='flex justify-between gap-3'>
-                  <div className='min-w-0'>
-                    <h3 className='font-medium text-lg truncate'>{salon.name}</h3>
-                    <p
-                      className={`text-sm mt-1 ${selectedSalon?.id === salon.id
-                        ? 'text-white/90'
-                        : 'text-gray-600'
+            <button
+              onClick={handleOpenAddPopup}
+              className='w-full bg-black hover:bg-gray-800 hover:-translate-y-0.5 text-white py-3 rounded-2xl mb-4 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-sm hover:shadow-md'
+            >
+              <Plus size={18} />
+              Add Salon
+            </button>
+
+            <div className='space-y-3 max-h-[620px] overflow-y-auto pr-1'>
+              {salons.length > 0 ? (
+                salons.map((salon, index) => (
+                  <div
+                    key={salon.id}
+                    onClick={() => handleSelectSalon(salon)}
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
+                      selectedSalon?.id === salon.id
+                        ? 'bg-black text-white border-black shadow-md'
+                        : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                    }`}
+                    style={{ animationDelay: `${index * 40}ms` }}
+                  >
+                    <div className='flex justify-between gap-3'>
+                      <div className='min-w-0'>
+                        <h3 className='font-semibold text-base truncate'>{salon.name}</h3>
+                        <p
+                          className={`text-sm mt-1 ${
+                            selectedSalon?.id === salon.id
+                              ? 'text-white/80'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          {salon.city || 'No city'}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteClick(salon)
+                        }}
+                        className={`p-2 rounded-xl transition shrink-0 ${
+                          selectedSalon?.id === salon.id
+                            ? 'hover:bg-white/10 text-white'
+                            : 'hover:bg-red-50 text-red-500 hover:text-red-600'
                         }`}
-                    >
-                      {salon.city}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className='rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500'>
+                  No salons added yet
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className='flex-1 bg-white rounded-3xl border border-gray-200 shadow-sm p-5 sm:p-6 animate-slideUp-delayed'>
+            {selectedSalon ? (
+              <>
+                <div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6'>
+                  <div>
+                    <h2 className='text-xl sm:text-2xl font-bold text-gray-950'>
+                      Salon Details
+                    </h2>
+                    <p className='text-sm text-gray-500 mt-1'>
+                      Update salon profile details and cover image.
                     </p>
                   </div>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeleteClick(salon)
-                    }}
-                    className="p-2 rounded-md hover:bg-red-50 text-red-500 hover:text-red-600 transition shrink-0"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <div className='inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-600'>
+                    Selected: <span className='font-semibold ml-1'>{selectedSalon.name}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        <div className='lg:w-2/3 bg-white rounded-xl shadow p-6'>
-          {selectedSalon ? (
-            <>
-              <h2 className='text-xl font-bold mb-6'>Salon Details</h2>
-
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-                <div>
-                  <label className='block mb-1 font-medium'>Salon Name</label>
-                  <input
-                    type='text'
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-5 mb-5'>
+                  <InputField
+                    label='Salon Name'
                     name='name'
                     value={form.name}
                     onChange={handleChange}
-                    className='border p-2 rounded w-full'
+                    placeholder='Enter salon name'
                   />
-                </div>
 
-                <div>
-                  <label className='block mb-1 font-medium'>City</label>
-                  <input
-                    type='text'
+                  <InputField
+                    label='City'
                     name='city'
                     value={form.city}
                     onChange={handleChange}
-                    className='border p-2 rounded w-full'
+                    placeholder='Enter city'
                   />
                 </div>
-              </div>
 
-              <div className='mb-6'>
-                <label className='block mb-1 font-medium'>Address</label>
-                <textarea
-                  name='address'
-                  value={form.address}
-                  onChange={handleChange}
-                  rows='3'
-                  className='border p-2 rounded w-full resize-none'
-                />
-              </div>
+                <div className='mb-5'>
+                  <label className='block mb-2 text-sm font-medium text-gray-800'>
+                    Address
+                  </label>
+                  <textarea
+                    name='address'
+                    value={form.address}
+                    onChange={handleChange}
+                    rows='4'
+                    className='border border-gray-200 px-4 py-3 rounded-2xl w-full resize-none outline-none focus:border-gray-400 transition-all duration-300'
+                    placeholder='Enter salon address'
+                  />
+                </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-                <div>
-                  <label className='block mb-1 font-medium'>Contact</label>
-                  <input
-                    type='text'
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-5 mb-5'>
+                  <InputField
+                    label='Contact'
                     name='contact'
                     value={form.contact}
                     onChange={handleChange}
-                    className='border p-2 rounded w-full'
+                    placeholder='Enter contact number'
                   />
-                </div>
 
-                <div>
-                  <label className='block mb-1 font-medium'>Salon Email</label>
-                  <input
-                    type='email'
+                  <InputField
+                    label='Salon Email'
                     name='salonEmail'
+                    type='email'
                     value={form.salonEmail}
                     onChange={handleChange}
-                    className='border p-2 rounded w-full'
+                    placeholder='Enter salon email'
                   />
                 </div>
-              </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-                <div>
-                  <label className='block mb-1 font-medium'>Open Time</label>
-                  <input
-                    type='time'
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-5 mb-5'>
+                  <InputField
+                    label='Open Time'
                     name='opentime'
+                    type='time'
                     value={form.opentime}
                     onChange={handleChange}
-                    className='border p-2 rounded w-full'
                   />
-                </div>
 
-                <div>
-                  <label className='block mb-1 font-medium'>Close Time</label>
-                  <input
-                    type='time'
+                  <InputField
+                    label='Close Time'
                     name='closetime'
+                    type='time'
                     value={form.closetime}
                     onChange={handleChange}
-                    className='border p-2 rounded w-full'
                   />
                 </div>
-              </div>
 
-              <div className='mb-6'>
-                <label className='block mb-1 font-medium'>Google Map Link</label>
-                <input
-                  type='text'
-                  name='mapLink'
-                  value={form.mapLink}
-                  onChange={handleChange}
-                  className='border p-2 rounded w-full'
-                />
-              </div>
-
-              <div className='mb-8'>
-                <label className='block mb-2 font-medium'>Cover Image</label>
-
-                <div className='border rounded-xl p-4 bg-gray-50'>
-                  {!editCover && currentCoverUrl ? (
-                    <div>
-                      <p className='text-sm text-gray-500 mb-2'>Current cover image</p>
-                      <img
-                        src={currentCoverUrl}
-                        alt='Salon Cover'
-                        className='w-full h-56 object-cover rounded-lg border mb-3'
-                      />
-                    </div>
-                  ) : null}
-
-                  {editCover ? (
-                    <div>
-                      <p className='text-sm text-gray-500 mb-2'>New selected cover image</p>
-                      <img
-                        src={URL.createObjectURL(editCover)}
-                        alt='New Cover Preview'
-                        className='w-full h-56 object-cover rounded-lg border mb-3'
-                      />
-                      <button
-                        type='button'
-                        onClick={() => setEditCover(null)}
-                        className='text-sm text-red-600 hover:text-red-700'
-                      >
-                        Remove selected cover
-                      </button>
-                    </div>
-                  ) : null}
-
-                  {!currentCoverUrl && !editCover && (
-                    <div className='h-56 flex items-center justify-center rounded-lg border bg-white text-gray-400 mb-3'>
-                      No cover image available
-                    </div>
-                  )}
-
-                  <input
-                    type='file'
-                    accept='image/*'
-                    onChange={(e) => setEditCover(e.target.files[0])}
-                    className='w-full border p-2 rounded bg-white mt-3'
+                <div className='mb-6'>
+                  <InputField
+                    label='Google Map Link'
+                    name='mapLink'
+                    value={form.mapLink}
+                    onChange={handleChange}
+                    placeholder='Paste Google Map link'
                   />
                 </div>
-              </div>
 
-              <button
-                onClick={handleUpdateSalon}
-                disabled={isUpdatingSalon || !hasSalonChanged}
-                className={`px-6 py-2 rounded-lg transition text-white ${isUpdatingSalon || !hasSalonChanged
-                  ? 'bg-green-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-600 hover:bg-green-700'
+                <div className='mb-8'>
+                  <label className='block mb-2 text-sm font-medium text-gray-800'>
+                    Cover Image
+                  </label>
+
+                  <div className='border border-gray-200 rounded-3xl p-4 sm:p-5 bg-gray-50 transition-all duration-300'>
+                    {!editCover && currentCoverUrl ? (
+                      <div>
+                        <p className='text-sm text-gray-500 mb-3'>Current cover image</p>
+                        <img
+                          src={currentCoverUrl}
+                          alt='Salon Cover'
+                          className='w-full h-56 sm:h-64 object-cover rounded-2xl border border-gray-200 mb-3'
+                        />
+                      </div>
+                    ) : null}
+
+                    {editCover ? (
+                      <div>
+                        <p className='text-sm text-gray-500 mb-3'>New selected cover image</p>
+                        <img
+                          src={URL.createObjectURL(editCover)}
+                          alt='New Cover Preview'
+                          className='w-full h-56 sm:h-64 object-cover rounded-2xl border border-gray-200 mb-3'
+                        />
+                        <button
+                          type='button'
+                          onClick={() => setEditCover(null)}
+                          className='text-sm text-red-600 hover:text-red-700'
+                        >
+                          Remove selected cover
+                        </button>
+                      </div>
+                    ) : null}
+
+                    {!currentCoverUrl && !editCover && (
+                      <div className='h-56 sm:h-64 flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white text-gray-400 mb-3'>
+                        <ImageIcon size={28} />
+                        <p className='text-sm mt-2'>No cover image available</p>
+                      </div>
+                    )}
+
+                    <input
+                      type='file'
+                      accept='image/*'
+                      onChange={(e) => setEditCover(e.target.files[0])}
+                      className='w-full border border-gray-200 p-3 rounded-2xl bg-white mt-3'
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleUpdateSalon}
+                  disabled={isUpdatingSalon || !hasSalonChanged}
+                  className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${
+                    isUpdatingSalon || !hasSalonChanged
+                      ? 'bg-gray-300 cursor-not-allowed'
+                      : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
                   }`}
-              >
-                {isUpdatingSalon ? 'Saving Changes...' : 'Save Changes'}
-              </button>
-            </>
-          ) : (
-            <div className='h-full flex items-center justify-center text-gray-500'>
-              No salon selected
-            </div>
-          )}
+                >
+                  {isUpdatingSalon ? 'Saving Changes...' : 'Save Changes'}
+                </button>
+              </>
+            ) : (
+              <div className='h-full min-h-[420px] flex items-center justify-center text-gray-500 text-center'>
+                No salon selected
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {deleteModalOpen && (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50'>
-          <div className='bg-white p-6 rounded-2xl shadow-lg w-[420px]'>
-            <h2 className='text-2xl font-bold mb-4'>Confirm Delete</h2>
-            <p className='mb-6 text-lg'>
-              Are you sure you want to delete{' '}
-              <strong>{salonToDelete?.name}</strong>?
+        <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn'>
+          <div className='bg-white p-6 rounded-3xl shadow-lg w-full max-w-md animate-scaleIn'>
+            <h2 className='text-2xl font-bold mb-3 text-gray-950'>Confirm Delete</h2>
+            <p className='mb-6 text-gray-600 leading-7'>
+              Are you sure you want to delete <strong>{salonToDelete?.name}</strong>?
             </p>
 
-            <div className='flex justify-end gap-4'>
+            <div className='flex justify-end gap-3'>
               <button
                 onClick={cancelDelete}
-                className='px-4 py-2 border rounded-lg'
+                className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
               >
                 Cancel
               </button>
 
               <button
                 onClick={confirmDelete}
-                className='px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg'
+                className='px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-2xl transition'
               >
                 Delete
               </button>
@@ -530,33 +559,32 @@ export default function ManageSalons() {
       )}
 
       {showPopup && (
-        <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
-          <div className='bg-white w-full max-w-5xl rounded-2xl shadow-2xl p-8 relative max-h-[90vh] overflow-y-auto'>
-            <h2 className='text-2xl font-bold mb-1'>Add New Salon</h2>
-            <p className='text-sm text-gray-500 mb-6'>
-              Fill salon details, upload salon images, and choose one
-              verification document.
-            </p>
+        <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn'>
+          <div className='bg-white w-full max-w-6xl rounded-3xl shadow-2xl p-6 sm:p-8 relative max-h-[92vh] overflow-y-auto animate-scaleIn'>
+            <div className='mb-6'>
+              <h2 className='text-2xl font-bold text-gray-950 mb-1'>Add New Salon</h2>
+              <p className='text-sm text-gray-500'>
+                Fill salon details, upload salon images, and choose one verification document.
+              </p>
+            </div>
 
-            <h3 className='text-lg font-semibold mb-3'>Basic Details</h3>
+            <h3 className='text-lg font-semibold mb-3 text-gray-950'>Basic Details</h3>
 
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-              <input
+              <PopupInput
                 type='text'
                 name='name'
                 placeholder='Salon Name'
                 value={form.name}
                 onChange={handleChange}
-                className='w-full border p-3 rounded-lg'
               />
 
-              <input
+              <PopupInput
                 type='text'
                 name='city'
                 placeholder='City'
                 value={form.city}
                 onChange={handleChange}
-                className='w-full border p-3 rounded-lg'
               />
             </div>
 
@@ -565,177 +593,101 @@ export default function ManageSalons() {
               placeholder='Salon Address'
               value={form.address}
               onChange={handleChange}
-              className='w-full border p-3 rounded-lg resize-none mb-4'
-              rows='3'
+              className='w-full border border-gray-200 px-4 py-3 rounded-2xl resize-none mb-4 outline-none focus:border-gray-400 transition-all duration-300'
+              rows='4'
             />
 
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-              <input
+              <PopupInput
                 type='text'
                 name='contact'
                 placeholder='Contact Number'
                 value={form.contact}
                 onChange={handleChange}
-                className='w-full border p-3 rounded-lg'
               />
 
-              <input
+              <PopupInput
                 type='email'
                 name='salonEmail'
                 placeholder='Salon Email'
                 value={form.salonEmail}
                 onChange={handleChange}
-                className='w-full border p-3 rounded-lg'
               />
             </div>
 
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-              <input
+              <PopupInput
                 type='time'
                 name='opentime'
                 value={form.opentime}
                 onChange={handleChange}
-                className='w-full border p-3 rounded-lg'
               />
 
-              <input
+              <PopupInput
                 type='time'
                 name='closetime'
                 value={form.closetime}
                 onChange={handleChange}
-                className='w-full border p-3 rounded-lg'
               />
             </div>
 
-            <input
+            <PopupInput
               type='text'
               name='mapLink'
               placeholder='Google Map Link'
               value={form.mapLink}
               onChange={handleChange}
-              className='w-full border p-3 rounded-lg mb-6'
+              className='mb-6'
             />
 
-            <h3 className='text-lg font-semibold mb-3'>Salon Images</h3>
+            <h3 className='text-lg font-semibold mb-3 text-gray-950'>Salon Images</h3>
 
             <div className='grid grid-cols-1 md:grid-cols-2 gap-5 mb-6'>
-              <div className='border rounded-xl p-4'>
-                <label className='block mb-2 font-medium'>Cover Image</label>
-                <input
-                  type='file'
-                  accept='image/*'
-                  onChange={(e) => setAddCover(e.target.files[0])}
-                  className='w-full border p-2 rounded-lg'
-                />
-                {addCover && (
-                  <div className='mt-3'>
-                    <img
-                      src={URL.createObjectURL(addCover)}
-                      alt='Cover Preview'
-                      className='w-full h-40 object-cover rounded-lg border'
-                    />
-                    <button
-                      type='button'
-                      onClick={() => setAddCover(null)}
-                      className='mt-2 text-sm text-red-600'
-                    >
-                      Remove image
-                    </button>
-                  </div>
-                )}
-              </div>
+              <UploadCard
+                label='Cover Image'
+                file={addCover}
+                setFile={setAddCover}
+                accept='image/*'
+                previewType='image'
+              />
 
-              <div className='border rounded-xl p-4'>
-                <label className='block mb-2 font-medium'>Interior Image</label>
-                <input
-                  type='file'
-                  accept='image/*'
-                  onChange={(e) => setAddInterior(e.target.files[0])}
-                  className='w-full border p-2 rounded-lg'
-                />
-                {addInterior && (
-                  <div className='mt-3'>
-                    <img
-                      src={URL.createObjectURL(addInterior)}
-                      alt='Interior Preview'
-                      className='w-full h-40 object-cover rounded-lg border'
-                    />
-                    <button
-                      type='button'
-                      onClick={() => setAddInterior(null)}
-                      className='mt-2 text-sm text-red-600'
-                    >
-                      Remove image
-                    </button>
-                  </div>
-                )}
-              </div>
+              <UploadCard
+                label='Interior Image'
+                file={addInterior}
+                setFile={setAddInterior}
+                accept='image/*'
+                previewType='image'
+              />
 
-              <div className='border rounded-xl p-4'>
-                <label className='block mb-2 font-medium'>Exterior Image</label>
-                <input
-                  type='file'
-                  accept='image/*'
-                  onChange={(e) => setAddExterior(e.target.files[0])}
-                  className='w-full border p-2 rounded-lg'
-                />
-                {addExterior && (
-                  <div className='mt-3'>
-                    <img
-                      src={URL.createObjectURL(addExterior)}
-                      alt='Exterior Preview'
-                      className='w-full h-40 object-cover rounded-lg border'
-                    />
-                    <button
-                      type='button'
-                      onClick={() => setAddExterior(null)}
-                      className='mt-2 text-sm text-red-600'
-                    >
-                      Remove image
-                    </button>
-                  </div>
-                )}
-              </div>
+              <UploadCard
+                label='Exterior Image'
+                file={addExterior}
+                setFile={setAddExterior}
+                accept='image/*'
+                previewType='image'
+              />
 
-              <div className='border rounded-xl p-4'>
-                <label className='block mb-2 font-medium'>Owner Photo</label>
-                <input
-                  type='file'
-                  accept='image/*'
-                  onChange={(e) => setAddOwnerPhoto(e.target.files[0])}
-                  className='w-full border p-2 rounded-lg'
-                />
-                {addOwnerPhoto && (
-                  <div className='mt-3'>
-                    <img
-                      src={URL.createObjectURL(addOwnerPhoto)}
-                      alt='Owner Preview'
-                      className='w-full h-40 object-cover rounded-lg border'
-                    />
-                    <button
-                      type='button'
-                      onClick={() => setAddOwnerPhoto(null)}
-                      className='mt-2 text-sm text-red-600'
-                    >
-                      Remove image
-                    </button>
-                  </div>
-                )}
-              </div>
+              <UploadCard
+                label='Owner Photo'
+                file={addOwnerPhoto}
+                setFile={setAddOwnerPhoto}
+                accept='image/*'
+                previewType='image'
+              />
             </div>
 
             <div className='mb-6'>
-              <h3 className='text-lg font-semibold mb-3'>
+              <h3 className='text-lg font-semibold mb-3 text-gray-950'>
                 Verification Document
               </h3>
 
               <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
                 <div>
-                  <label className='block mb-2 font-medium'>Document Type</label>
+                  <label className='block mb-2 text-sm font-medium text-gray-800'>Document Type</label>
                   <select
                     value={documentType}
                     onChange={(e) => setDocumentType(e.target.value)}
-                    className='w-full border p-3 rounded-lg'
+                    className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400 transition-all duration-300'
                   >
                     <option value='GST_CERTIFICATE'>GST Certificate</option>
                     <option value='SHOP_LICENSE'>Shop License</option>
@@ -744,36 +696,19 @@ export default function ManageSalons() {
                   </select>
                 </div>
 
-                <div>
-                  <label className='block mb-2 font-medium'>
-                    Upload Document
-                  </label>
-                  <input
-                    type='file'
-                    onChange={(e) => setAddDocument(e.target.files[0])}
-                    className='w-full border p-3 rounded-lg'
-                  />
-
-                  {addDocument && (
-                    <div className='mt-3 rounded-lg border bg-gray-50 px-3 py-2'>
-                      <p className='text-sm truncate'>{addDocument.name}</p>
-                      <button
-                        type='button'
-                        onClick={() => setAddDocument(null)}
-                        className='mt-2 text-sm text-red-600'
-                      >
-                        Remove document
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <UploadCard
+                  label='Upload Document'
+                  file={addDocument}
+                  setFile={setAddDocument}
+                  previewType='file'
+                />
               </div>
             </div>
 
             <div className='flex justify-end gap-3'>
               <button
                 onClick={handleClosePopup}
-                className='px-5 py-2 border rounded-lg'
+                className='px-5 py-3 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
               >
                 Cancel
               </button>
@@ -781,8 +716,11 @@ export default function ManageSalons() {
               <button
                 onClick={handleAddSalon}
                 disabled={isAddingSalon}
-                className={`px-5 py-2 text-white rounded-lg ${isAddingSalon ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
+                className={`px-5 py-3 text-white rounded-2xl transition-all duration-300 ${
+                  isAddingSalon
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                }`}
               >
                 {isAddingSalon ? 'Adding Salon...' : 'Add Salon'}
               </button>
@@ -790,6 +728,120 @@ export default function ManageSalons() {
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(18px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.96);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.35s ease both;
+        }
+
+        .animate-slideUp {
+          animation: slideUp 0.45s ease both;
+        }
+
+        .animate-slideUp-delayed {
+          animation: slideUp 0.6s ease 0.08s both;
+        }
+
+        .animate-scaleIn {
+          animation: scaleIn 0.25s ease both;
+        }
+      `}</style>
     </OwnerLayout>
+  )
+}
+
+function InputField({ label, className = '', ...props }) {
+  return (
+    <div className={className}>
+      <label className='block mb-2 text-sm font-medium text-gray-800'>{label}</label>
+      <input
+        {...props}
+        className='border border-gray-200 px-4 py-3 rounded-2xl w-full outline-none focus:border-gray-400 transition-all duration-300'
+      />
+    </div>
+  )
+}
+
+function PopupInput({ className = '', ...props }) {
+  return (
+    <input
+      {...props}
+      className={`w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400 transition-all duration-300 ${className}`}
+    />
+  )
+}
+
+function UploadCard({ label, file, setFile, accept, previewType = 'image' }) {
+  return (
+    <div className='border border-gray-200 rounded-3xl p-4 bg-gray-50 transition-all duration-300 hover:shadow-sm'>
+      <label className='block mb-2 text-sm font-medium text-gray-800'>{label}</label>
+      <input
+        type='file'
+        accept={accept}
+        onChange={(e) => setFile(e.target.files[0])}
+        className='w-full border border-gray-200 p-3 rounded-2xl bg-white'
+      />
+
+      {file && previewType === 'image' && (
+        <div className='mt-3 animate-fadeIn'>
+          <img
+            src={URL.createObjectURL(file)}
+            alt='Preview'
+            className='w-full h-40 object-cover rounded-2xl border border-gray-200'
+          />
+          <button
+            type='button'
+            onClick={() => setFile(null)}
+            className='mt-2 text-sm text-red-600'
+          >
+            Remove image
+          </button>
+        </div>
+      )}
+
+      {file && previewType === 'file' && (
+        <div className='mt-3 rounded-2xl border border-gray-200 bg-white px-3 py-3 animate-fadeIn'>
+          <p className='text-sm truncate text-gray-700'>{file.name}</p>
+          <button
+            type='button'
+            onClick={() => setFile(null)}
+            className='mt-2 text-sm text-red-600'
+          >
+            Remove document
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
