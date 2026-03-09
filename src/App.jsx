@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 
 // Auth Pages
+import AuthPage from './pages/AuthPage'
 import Register from './pages/Register'
 import OTPVerify from './pages/OTPVerify'
 import Login from './pages/Login'
@@ -49,8 +50,8 @@ export default function App() {
         <Route path='/' element={<Home />} />
 
         {/* Auth Flow */}
-        <Route path='/login' element={<Login />} />
-        <Route path='/register' element={<Register />} />
+        <Route path='/login' element={<AuthPage defaultMode='login' />} />
+        <Route path='/register' element={<AuthPage defaultMode='register' />} />
         <Route path='/otp' element={<OTPVerify />} />
         <Route path='/forgot-password' element={<ForgotPassword />} />
         <Route path='/reset-otp' element={<ResetOTP />} />
