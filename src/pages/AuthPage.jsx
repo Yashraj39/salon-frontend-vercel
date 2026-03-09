@@ -321,35 +321,35 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                             </div>
 
                                             <div>
-                                                <label className='mb-2 block text-sm font-semibold text-slate-700'>
-                                                    Password
-                                                </label>
-                                                <div className='group flex h-12 items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition-all duration-300 hover:border-slate-300 focus-within:border-slate-900 focus-within:shadow-[0_0_0_4px_rgba(15,23,42,0.06)]'>
-                                                    <FiLock className='text-slate-400 transition-colors duration-300 group-focus-within:text-slate-900' />
+                                                <div className='mb-2 flex items-center justify-between'>
+                                                    <label className='block text-sm font-semibold text-slate-700'>
+                                                        Password
+                                                    </label>
+
+                                                    <button
+                                                        type='button'
+                                                        onClick={() => navigate('/forgot-password')}
+                                                        className='text-xs font-medium text-slate-500 underline-offset-4 transition hover:text-slate-900 hover:underline'
+                                                    >
+                                                        Forgot password?
+                                                    </button>
+                                                </div>
+
+                                                <div className='group flex h-12 items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm'>
+                                                    <FiLock className='text-slate-400' />
                                                     <input
-                                                        type={showRegisterPassword ? 'text' : 'password'}
-                                                        placeholder='Create your password'
-                                                        className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
-                                                        value={registerPassword}
-                                                        onChange={(e) =>
-                                                            setRegisterPassword(e.target.value)
-                                                        }
-                                                        onKeyDown={(e) =>
-                                                            e.key === 'Enter' && handleRegister()
-                                                        }
+                                                        type={showLoginPassword ? 'text' : 'password'}
+                                                        placeholder='Enter your password'
+                                                        className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
+                                                        value={loginPassword}
+                                                        onChange={(e) => setLoginPassword(e.target.value)}
                                                     />
                                                     <button
                                                         type='button'
-                                                        onClick={() =>
-                                                            setShowRegisterPassword((prev) => !prev)
-                                                        }
-                                                        className='text-slate-400 transition hover:text-slate-800'
+                                                        onClick={() => setShowLoginPassword((prev) => !prev)}
+                                                        className='text-slate-400'
                                                     >
-                                                        {showRegisterPassword ? (
-                                                            <FiEyeOff size={18} />
-                                                        ) : (
-                                                            <FiEye size={18} />
-                                                        )}
+                                                        {showLoginPassword ? <FiEyeOff /> : <FiEye />}
                                                     </button>
                                                 </div>
                                             </div>
@@ -513,9 +513,20 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                         </div>
 
                                         <div>
-                                            <label className='mb-2 block text-sm font-semibold text-slate-700'>
-                                                Password
-                                            </label>
+                                            <div className='mb-2 flex items-center justify-between gap-3'>
+                                                <label className='block text-sm font-semibold text-slate-700'>
+                                                    Password
+                                                </label>
+
+                                                <button
+                                                    type='button'
+                                                    onClick={() => navigate('/forgot-password')}
+                                                    className='shrink-0 text-xs font-medium text-slate-500 underline-offset-4 transition hover:text-slate-900 hover:underline'
+                                                >
+                                                    Forgot password?
+                                                </button>
+                                            </div>
+
                                             <div className='group flex h-12 items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm'>
                                                 <FiLock className='text-slate-400' />
                                                 <input
