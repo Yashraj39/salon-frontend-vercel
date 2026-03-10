@@ -186,7 +186,7 @@ export default function ManageBookings() {
     return [page - 1, page, page + 1]
   }, [page, totalPages])
 
-  const formatDateTime = (bookingDate, startTime) => {
+  const formatDateTime = (bookingDate, startTime, endTime) => {
     if (!bookingDate) return { date: '-', time: '-' }
 
     let dateText = bookingDate
@@ -200,16 +200,26 @@ export default function ManageBookings() {
       })
     }
 
-    let timeText = '-'
-    if (startTime && /^\d{2}:\d{2}(:\d{2})?$/.test(startTime)) {
-      const [h, m] = startTime.split(':')
+    const formatTime = (value) => {
+      if (!value || !/^\d{2}:\d{2}(:\d{2})?$/.test(value)) return '-'
+
+      const [h, m] = value.split(':')
       const temp = new Date()
       temp.setHours(Number(h), Number(m), 0, 0)
-      timeText = temp.toLocaleTimeString('en-IN', {
+
+      return temp.toLocaleTimeString('en-IN', {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
       })
+    }
+
+    const formattedStart = formatTime(startTime)
+    const formattedEnd = formatTime(endTime)
+
+    let timeText = formattedStart
+    if (formattedStart !== '-' && formattedEnd !== '-') {
+      timeText = `${formattedStart} - ${formattedEnd}`
     }
 
     return { date: dateText, time: timeText }
@@ -301,9 +311,7 @@ export default function ManageBookings() {
           </div>
 
           <div className='mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
-            <p className='text-sm text-gray-500'>
-              Filters apply automatically when changed.
-            </p>
+            <p className='text-sm text-gray-500'></p>
 
             <button
               onClick={handleClearFilters}
@@ -345,7 +353,11 @@ export default function ManageBookings() {
             </div>
           ) : (
             bookings.map((item) => {
-              const { date, time } = formatDateTime(item.bookingDate, item.startTime)
+              const { date, time } = formatDateTime(
+                item.bookingDate,
+                item.startTime,
+                item.endTime
+              )
 
               return (
                 <div
@@ -444,7 +456,11 @@ export default function ManageBookings() {
                   </tr>
                 ) : (
                   bookings.map((item) => {
-                    const { date, time } = formatDateTime(item.bookingDate, item.startTime)
+                    const { date, time } = formatDateTime(
+                      item.bookingDate,
+                      item.startTime,
+                      item.endTime
+                    )
 
                     return (
                       <tr
