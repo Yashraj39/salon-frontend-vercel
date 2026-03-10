@@ -250,7 +250,7 @@ export default function SalonDetails() {
                   key={i}
                   className='group relative rounded-2xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-[0_14px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300'
                 >
-                  <div className='absolute inset-x-0 top-0 h-1 rounded-t-3xl bg-gradient-to-r from-black via-gray-700 to-gray-400 opacity-90'></div>
+                  <div className='absolute inset-x-[1px] top-[0px] h-2 rounded-t-[20px] bg-gradient-to-r from-black via-gray-700 to-gray-400 opacity-90'></div>
 
                   <div className='flex items-start justify-between gap-3 mb-4'>
                     <h3 className='text-lg font-semibold text-gray-900'>

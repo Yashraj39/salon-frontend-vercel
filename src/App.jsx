@@ -26,6 +26,7 @@ import ManageBarbers from './pages/ManageBarbers'
 import OwnerLayout from './componenets/OwnerLayout'
 import ServicesPage from './pages/ServicesPage'
 import Bookings from './pages/Bookings'
+import ManageBookings from './pages/ManageBookings'
 
 export default function App() {
   return (
@@ -73,6 +74,7 @@ export default function App() {
         <Route path='/owner' element={<OwnerLayout />} />
         <Route path='/services' element={<ServicesPage />} />
         <Route path='/bookings' element={<Bookings />} />
+        <Route path='/manage-bookings' element={<ManageBookings />} />
 
         {/* 404 */}
         <Route

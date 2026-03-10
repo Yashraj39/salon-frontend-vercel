@@ -26,7 +26,7 @@ export default function OwnerLayout({ children }) {
     { name: 'Add Salon', path: '/add-salon' },
     { name: 'Barbers', path: '/manage-barbers' },
     { name: 'Services', path: '/services' },
-    { name: 'Settings', path: '/settings' },
+    { name: 'Bookings', path: '/manage-bookings' },
     { name: '', path: '/reviews' },
   ]
 
