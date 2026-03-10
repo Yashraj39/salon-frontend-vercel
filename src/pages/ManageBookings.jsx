@@ -251,12 +251,12 @@ export default function ManageBookings() {
 
   return (
     <OwnerLayout>
-      <div className='w-full max-w-7xl mx-auto px-3 sm:px-5 md:px-6 py-4 sm:py-5 animate-fadeIn'>
+      <div className='max-w-7xl mx-auto py-4 animate-fadeIn'>
         <div className='mb-6'>
-          <h1 className='text-2xl sm:text-3xl md:text-4xl font-bold text-gray-950 tracking-tight'>
-            Bookings
+          <h1 className='text-2xl sm:text-[28px] font-bold text-gray-950 tracking-tight'>
+            Manage Bookings
           </h1>
-          <p className='text-sm sm:text-base text-gray-500 mt-2'>
+          <p className='text-sm text-gray-500 mt-1'>
             View and manage all bookings from your salons in one place.
           </p>
         </div>

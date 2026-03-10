@@ -1,14 +1,65 @@
 @import "tailwindcss";
 
+/* ===============================
+   GLOBAL LAYOUT FIX
+================================ */
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+}
+
+/* Prevent layout shift when scrollbar appears */
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Hide scrollbar visually */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===============================
+   SMOOTH PAGE ANIMATIONS
+================================ */
+
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.96);
   }
   to {
     opacity: 1;
@@ -16,37 +67,26 @@
   }
 }
 
+/* ===============================
+   ANIMATION CLASSES
+================================ */
+
 .animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.35s ease both;
+  will-change: transform, opacity;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.45s ease both;
+  will-change: transform, opacity;
+}
+
+.animate-slideUp-delayed {
+  animation: slideUp 0.6s ease 0.08s both;
+  will-change: transform, opacity;
 }
 
 .animate-scaleIn {
-  animation: scaleIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0.96;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-html {
-  scrollbar-gutter: stable;
-  overflow-y: scroll;
+  animation: scaleIn 0.25s ease both;
+  will-change: transform, opacity;
 }
