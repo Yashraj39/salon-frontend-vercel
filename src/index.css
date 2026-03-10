@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ===============================
-   GLOBAL LAYOUT FIX
+   GLOBAL LAYOUT
 ================================ */
 
 html,
@@ -9,25 +9,33 @@ body,
 #root {
   width: 100%;
   max-width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
   overflow-x: hidden;
 }
 
-body {
-  margin: 0;
-}
-
-/* Prevent layout shift when scrollbar appears */
 html {
-  overflow-y: scroll;
-  scrollbar-gutter: stable;
-  scrollbar-width: none;
+  overflow-x: hidden;
+  overflow-y: auto;
   -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Hide scrollbar visually */
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
+html::-webkit-scrollbar {
+  width: 0;
+  height: 0;
   display: none;
+}
+
+body {
+  overflow: visible;
+  background: white;
+}
+
+#root {
+  min-height: 100vh;
+  overflow: visible;
 }
 
 /* ===============================
@@ -66,10 +74,6 @@ body::-webkit-scrollbar {
     transform: scale(1);
   }
 }
-
-/* ===============================
-   ANIMATION CLASSES
-================================ */
 
 .animate-fadeIn {
   animation: fadeIn 0.35s ease both;

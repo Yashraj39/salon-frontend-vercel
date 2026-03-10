@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { IoArrowBack, IoTimeOutline } from 'react-icons/io5'
 import toast from 'react-hot-toast'
 import Navbar from '../componenets/Navbar'
@@ -10,6 +10,8 @@ export default function AddServices() {
 
   const navigate = useNavigate()
   const { salonId } = useParams()
+  const location = useLocation()
+
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [clearing, setClearing] = useState(false)
@@ -17,11 +19,27 @@ export default function AddServices() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const userId = user?.userId
 
-  const customerName = bookingMeta?.customerName || ''
-  const bookedBy = bookingMeta?.bookedBy || user?.name || ''
+  const customerName =
+    location.state?.customerName || bookingMeta?.customerName || ''
+
+  const bookedBy =
+    location.state?.bookedBy || bookingMeta?.bookedBy || user?.name || ''
 
   const [totalPending, setTotalPending] = useState(0)
   const [navbarCart, setNavbarCart] = useState([])
+
+    useEffect(() => {
+    if (customerName?.trim()) {
+      sessionStorage.setItem(
+        'bookingMeta',
+        JSON.stringify({
+          bookingFor,
+          bookedBy,
+          customerName: customerName.trim(),
+        })
+      )
+    }
+  }, [bookingFor, bookedBy, customerName])
 
   useEffect(() => {
     const fetchCart = async () => {

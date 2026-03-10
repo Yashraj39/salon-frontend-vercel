@@ -402,8 +402,8 @@ export default function Navbar() {
                     >
                       <span
                         className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/success'
-                            ? 'text-[#111827]'
-                            : 'text-[#667085] group-hover:text-[#111827]'
+                          ? 'text-[#111827]'
+                          : 'text-[#667085] group-hover:text-[#111827]'
                           }`}
                       >
                         Home
@@ -411,8 +411,8 @@ export default function Navbar() {
 
                       <span
                         className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/success'
-                            ? 'opacity-100 scale-x-100'
-                            : 'opacity-0 scale-x-0'
+                          ? 'opacity-100 scale-x-100'
+                          : 'opacity-0 scale-x-0'
                           }`}
                       />
                     </button>
@@ -424,8 +424,8 @@ export default function Navbar() {
                     >
                       <span
                         className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/bookings'
-                            ? 'text-[#111827]'
-                            : 'text-[#667085] group-hover:text-[#111827]'
+                          ? 'text-[#111827]'
+                          : 'text-[#667085] group-hover:text-[#111827]'
                           }`}
                       >
                         My Bookings
@@ -433,8 +433,8 @@ export default function Navbar() {
 
                       <span
                         className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/bookings'
-                            ? 'opacity-100 scale-x-100'
-                            : 'opacity-0 scale-x-0'
+                          ? 'opacity-100 scale-x-100'
+                          : 'opacity-0 scale-x-0'
                           }`}
                       />
                     </button>
@@ -495,6 +495,7 @@ export default function Navbar() {
                               onClick={() =>
                                 navigate(`/add-services/${item.salonId}`, {
                                   state: {
+                                    bookingFor: item.customerName === user?.name ? 'myself' : 'someone',
                                     customerName: item.customerName || '',
                                     bookedBy: user?.name || '',
                                   },

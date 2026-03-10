@@ -110,7 +110,7 @@ export default function Bookings() {
   return (
     <div className='min-h-screen bg-[#f5f6f8] animate-[fadeIn_.25s_ease]'>
       <Navbar />
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 pt-6 sm:pt-8 pb-20'>
+      <div className='max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-8'>
         <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8'>
           <div className='bg-[#ececef] rounded-full p-1 flex flex-wrap gap-1 w-full lg:w-auto'>
             {FILTERS.map((item, idx) => (
