@@ -8,8 +8,8 @@ import {
   FiCalendar,
 } from 'react-icons/fi'
 
-// const BASE_URL = 'https://render-qs89.onrender.com'
-const BASE_URL = 'http://localhost:8080'
+const BASE_URL = 'https://render-qs89.onrender.com'
+//const BASE_URL = 'http://localhost:8080'
 const PAGE_SIZE = 5
 
 export default function ManageBookings() {
@@ -251,7 +251,7 @@ export default function ManageBookings() {
 
   return (
     <OwnerLayout>
-      <div className='w-full max-w-7xl mx-auto px-3 sm:px-5 md:px-6 py-4 sm:py-5'>
+      <div className='w-full max-w-7xl mx-auto px-3 sm:px-5 md:px-6 py-4 sm:py-5 animate-fadeIn'>
         <div className='mb-6'>
           <h1 className='text-2xl sm:text-3xl md:text-4xl font-bold text-gray-950 tracking-tight'>
             Bookings
@@ -261,7 +261,7 @@ export default function ManageBookings() {
           </p>
         </div>
 
-        <div className='bg-white border border-gray-200 rounded-3xl shadow-sm p-4 sm:p-5 mb-5'>
+        <div className='bg-white border border-gray-200 rounded-3xl shadow-sm p-4 sm:p-5 mb-5 animate-slideUp'>
           <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4'>
             <FilterSelect
               label='Select Salon'
@@ -352,7 +352,7 @@ export default function ManageBookings() {
               </p>
             </div>
           ) : (
-            bookings.map((item) => {
+            bookings.map((item, index) => {
               const { date, time } = formatDateTime(
                 item.bookingDate,
                 item.startTime,
@@ -412,7 +412,7 @@ export default function ManageBookings() {
           )}
         </div>
 
-        <div className='hidden lg:block bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden'>
+        <div className='hidden lg:block bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden animate-slideUp-delayed'>
           <div className='overflow-x-auto'>
             <table className='w-full min-w-[980px]'>
               <thead>
@@ -455,7 +455,7 @@ export default function ManageBookings() {
                     </td>
                   </tr>
                 ) : (
-                  bookings.map((item) => {
+                  bookings.map((item, index) => {
                     const { date, time } = formatDateTime(
                       item.bookingDate,
                       item.startTime,
@@ -465,7 +465,8 @@ export default function ManageBookings() {
                     return (
                       <tr
                         key={item.bookingId}
-                        className='border-b border-gray-100 hover:bg-gray-50/60 transition'
+                        className='border-b border-gray-100 hover:bg-gray-50/60 transition animate-fadeIn'
+                        style={{ animationDelay: `${index * 35}ms` }}
                       >
                         <td className='px-5 py-5 align-top'>
                           <div className='flex items-start gap-3'>
@@ -530,7 +531,7 @@ export default function ManageBookings() {
                         </td>
 
                         <td className='px-5 py-5 align-top'>
-                          <button className='w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center transition'>
+                          <button className='w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center transition-all duration-300 hover:-translate-y-0.5'>
                             <FiMoreHorizontal size={18} />
                           </button>
                         </td>
@@ -543,7 +544,7 @@ export default function ManageBookings() {
           </div>
         </div>
 
-        <div className='mt-4 px-1 sm:px-0 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
+        <div className='mt-4 px-1 sm:px-0 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 animate-fadeIn'>
           <p className='text-sm text-gray-500'>
             Showing {startIndex}-{endIndex} out of {totalBookings}
           </p>
@@ -600,6 +601,54 @@ export default function ManageBookings() {
           </div>
         </div>
       </div>
+      <style>{`
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.35s ease both;
+  }
+
+  .animate-slideUp {
+    animation: slideUp 0.45s ease both;
+  }
+
+  .animate-slideUp-delayed {
+    animation: slideUp 0.6s ease 0.08s both;
+  }
+
+  .animate-scaleIn {
+    animation: scaleIn 0.25s ease both;
+  }
+`}</style>
     </OwnerLayout>
   )
 }
