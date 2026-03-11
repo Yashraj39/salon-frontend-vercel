@@ -703,6 +703,11 @@ function DeleteAccountModal({ onClose, onConfirm, userName }) {
             </label>
             <input
               type='password'
+              name='delete-account-password'
+              autoComplete='new-password'
+              autoCapitalize='off'
+              autoCorrect='off'
+              spellCheck={false}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className='mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-slate-300 focus:shadow-[0_0_0_4px_rgba(15,23,42,0.04)]'
