@@ -36,7 +36,6 @@ export default function AuthPage({ defaultMode = 'login' }) {
         console.log('Response data:', data)
 
         if (typeof data === 'string' && data.trim()) return data
-
         if (typeof data?.message === 'string' && data.message.trim()) return data.message
         if (typeof data?.detail === 'string' && data.detail.trim()) return data.detail
         if (typeof data?.error === 'string' && data.error.trim()) return data.error
@@ -58,7 +57,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
     }
 
     const handleLogin = async () => {
-        if (!loginEmail || !loginPassword) {
+        if (!loginEmail.trim() || !loginPassword.trim()) {
             toast.error('Please fill all fields')
             return
         }
@@ -93,7 +92,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
     }
 
     const handleRegister = async () => {
-        if (!name || !registerEmail || !registerPassword) {
+        if (!name.trim() || !registerEmail.trim() || !registerPassword.trim()) {
             toast.error('Please fill all fields')
             return
         }
@@ -119,7 +118,9 @@ export default function AuthPage({ defaultMode = 'login' }) {
         }
     }
 
-    const isLoginFormValid = loginEmail.trim() !== '' && loginPassword.trim() !== ''
+    const isLoginFormValid =
+        loginEmail.trim() !== '' &&
+        loginPassword.trim() !== ''
 
     const isRegisterFormValid =
         name.trim() !== '' &&
@@ -137,10 +138,10 @@ export default function AuthPage({ defaultMode = 'login' }) {
 
             <div className='relative z-10 mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-6 sm:px-6 lg:px-8'>
                 <div className='relative hidden h-[760px] w-full max-w-6xl overflow-hidden rounded-[32px] border border-white/60 bg-white/55 shadow-[0_30px_100px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:block'>
-                    {/* WHITE PANEL */}
                     <div
-                        className={`absolute inset-y-0 left-0 w-1/2 p-8 transition-transform duration-700 ease-in-out ${isRegister ? 'translate-x-full' : 'translate-x-0'
-                            }`}
+                        className={`absolute inset-y-0 left-0 w-1/2 p-8 transition-transform duration-700 ease-in-out ${
+                            isRegister ? 'translate-x-full' : 'translate-x-0'
+                        }`}
                     >
                         <div className='flex h-full items-start justify-center rounded-[28px] bg-white px-10 py-8'>
                             <div className='w-full max-w-md'>
@@ -186,9 +187,11 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                     <input
                                                         type='email'
                                                         placeholder='Enter your email'
+                                                        autoComplete='email'
                                                         className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
                                                         value={loginEmail}
                                                         onChange={(e) => setLoginEmail(e.target.value)}
+                                                        onInput={(e) => setLoginEmail(e.target.value)}
                                                         onKeyDown={(e) =>
                                                             e.key === 'Enter' && handleLogin()
                                                         }
@@ -216,9 +219,11 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                     <input
                                                         type={showLoginPassword ? 'text' : 'password'}
                                                         placeholder='Enter your password'
+                                                        autoComplete='current-password'
                                                         className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
                                                         value={loginPassword}
                                                         onChange={(e) => setLoginPassword(e.target.value)}
+                                                        onInput={(e) => setLoginPassword(e.target.value)}
                                                         onKeyDown={(e) =>
                                                             e.key === 'Enter' && handleLogin()
                                                         }
@@ -271,7 +276,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                         <div className='mt-12'>
                                             <h2 className='text-4xl font-bold leading-tight tracking-tight text-slate-900'>
                                                 Create
-
+                                                <br />
                                                 account
                                             </h2>
 
@@ -291,9 +296,11 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                     <input
                                                         type='text'
                                                         placeholder='Enter your name'
+                                                        autoComplete='name'
                                                         className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
                                                         value={name}
                                                         onChange={(e) => setName(e.target.value)}
+                                                        onInput={(e) => setName(e.target.value)}
                                                         onKeyDown={(e) =>
                                                             e.key === 'Enter' && handleRegister()
                                                         }
@@ -310,9 +317,11 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                     <input
                                                         type='email'
                                                         placeholder='Enter your email'
+                                                        autoComplete='email'
                                                         className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
                                                         value={registerEmail}
                                                         onChange={(e) => setRegisterEmail(e.target.value)}
+                                                        onInput={(e) => setRegisterEmail(e.target.value)}
                                                         onKeyDown={(e) =>
                                                             e.key === 'Enter' && handleRegister()
                                                         }
@@ -335,21 +344,34 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                     </button>
                                                 </div>
 
-                                                <div className='group flex h-12 items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm'>
-                                                    <FiLock className='text-slate-400' />
+                                                <div className='group flex h-12 items-center rounded-2xl border border-slate-200 bg-white px-4 shadow-sm transition-all duration-300 hover:border-slate-300 focus-within:border-slate-900 focus-within:shadow-[0_0_0_4px_rgba(15,23,42,0.06)]'>
+                                                    <FiLock className='text-slate-400 transition-colors duration-300 group-focus-within:text-slate-900' />
                                                     <input
-                                                        type={showLoginPassword ? 'text' : 'password'}
+                                                        type={showRegisterPassword ? 'text' : 'password'}
                                                         placeholder='Enter your password'
-                                                        className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
-                                                        value={loginPassword}
-                                                        onChange={(e) => setLoginPassword(e.target.value)}
+                                                        autoComplete='new-password'
+                                                        className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
+                                                        value={registerPassword}
+                                                        onChange={(e) => setRegisterPassword(e.target.value)}
+                                                        onInput={(e) =>
+                                                            setRegisterPassword(e.target.value)
+                                                        }
+                                                        onKeyDown={(e) =>
+                                                            e.key === 'Enter' && handleRegister()
+                                                        }
                                                     />
                                                     <button
                                                         type='button'
-                                                        onClick={() => setShowLoginPassword((prev) => !prev)}
-                                                        className='text-slate-400'
+                                                        onClick={() =>
+                                                            setShowRegisterPassword((prev) => !prev)
+                                                        }
+                                                        className='text-slate-400 transition hover:text-slate-800'
                                                     >
-                                                        {showLoginPassword ? <FiEyeOff /> : <FiEye />}
+                                                        {showRegisterPassword ? (
+                                                            <FiEyeOff size={18} />
+                                                        ) : (
+                                                            <FiEye size={18} />
+                                                        )}
                                                     </button>
                                                 </div>
                                             </div>
@@ -386,10 +408,10 @@ export default function AuthPage({ defaultMode = 'login' }) {
                         </div>
                     </div>
 
-                    {/* DARK PANEL */}
                     <div
-                        className={`absolute inset-y-0 right-0 w-1/2 p-6 transition-transform duration-700 ease-in-out ${isRegister ? '-translate-x-full' : 'translate-x-0'
-                            }`}
+                        className={`absolute inset-y-0 right-0 w-1/2 p-6 transition-transform duration-700 ease-in-out ${
+                            isRegister ? '-translate-x-full' : 'translate-x-0'
+                        }`}
                     >
                         <div className='relative flex h-full flex-col justify-between overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(135deg,#0f172a_0%,#111827_45%,#1e293b_100%)] p-8 shadow-2xl'>
                             <div className='absolute inset-0'>
@@ -460,7 +482,6 @@ export default function AuthPage({ defaultMode = 'login' }) {
                     </div>
                 </div>
 
-                {/* MOBILE */}
                 <div className='w-full max-w-xl lg:hidden'>
                     <div className='overflow-hidden rounded-[28px] border border-white/60 bg-white/75 p-6 shadow-[0_20px_70px_rgba(15,23,42,0.12)] backdrop-blur-xl'>
                         <div className='w-full'>
@@ -505,9 +526,14 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                 <input
                                                     type='email'
                                                     placeholder='Enter your email'
+                                                    autoComplete='email'
                                                     className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
                                                     value={loginEmail}
                                                     onChange={(e) => setLoginEmail(e.target.value)}
+                                                    onInput={(e) => setLoginEmail(e.target.value)}
+                                                    onKeyDown={(e) =>
+                                                        e.key === 'Enter' && handleLogin()
+                                                    }
                                                 />
                                             </div>
                                         </div>
@@ -532,9 +558,14 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                 <input
                                                     type={showLoginPassword ? 'text' : 'password'}
                                                     placeholder='Enter your password'
+                                                    autoComplete='current-password'
                                                     className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
                                                     value={loginPassword}
                                                     onChange={(e) => setLoginPassword(e.target.value)}
+                                                    onInput={(e) => setLoginPassword(e.target.value)}
+                                                    onKeyDown={(e) =>
+                                                        e.key === 'Enter' && handleLogin()
+                                                    }
                                                 />
                                                 <button
                                                     type='button'
@@ -557,7 +588,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                             <button
                                                 onClick={handleLogin}
                                                 disabled={loginLoading || !isLoginFormValid}
-                                                className='order-2 inline-flex h-12 items-center justify-center rounded-2xl bg-slate-900 px-6 text-sm font-semibold text-white'
+                                                className='order-2 inline-flex h-12 items-center justify-center rounded-2xl bg-slate-900 px-6 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70'
                                             >
                                                 {loginLoading ? 'Logging in...' : 'Log in'}
                                             </button>
@@ -588,9 +619,14 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                 <input
                                                     type='text'
                                                     placeholder='Enter your name'
+                                                    autoComplete='name'
                                                     className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
                                                     value={name}
                                                     onChange={(e) => setName(e.target.value)}
+                                                    onInput={(e) => setName(e.target.value)}
+                                                    onKeyDown={(e) =>
+                                                        e.key === 'Enter' && handleRegister()
+                                                    }
                                                 />
                                             </div>
                                         </div>
@@ -604,9 +640,14 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                 <input
                                                     type='email'
                                                     placeholder='Enter your email'
+                                                    autoComplete='email'
                                                     className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
                                                     value={registerEmail}
                                                     onChange={(e) => setRegisterEmail(e.target.value)}
+                                                    onInput={(e) => setRegisterEmail(e.target.value)}
+                                                    onKeyDown={(e) =>
+                                                        e.key === 'Enter' && handleRegister()
+                                                    }
                                                 />
                                             </div>
                                         </div>
@@ -620,9 +661,16 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                 <input
                                                     type={showRegisterPassword ? 'text' : 'password'}
                                                     placeholder='Create your password'
+                                                    autoComplete='new-password'
                                                     className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
                                                     value={registerPassword}
                                                     onChange={(e) => setRegisterPassword(e.target.value)}
+                                                    onInput={(e) =>
+                                                        setRegisterPassword(e.target.value)
+                                                    }
+                                                    onKeyDown={(e) =>
+                                                        e.key === 'Enter' && handleRegister()
+                                                    }
                                                 />
                                                 <button
                                                     type='button'
@@ -646,7 +694,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                             <button
                                                 onClick={handleRegister}
                                                 disabled={registerLoading || !isRegisterFormValid}
-                                                className='inline-flex h-12 items-center justify-center rounded-2xl bg-slate-900 px-6 text-sm font-semibold text-white'
+                                                className='inline-flex h-12 items-center justify-center rounded-2xl bg-slate-900 px-6 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70'
                                             >
                                                 {registerLoading ? 'Signing up...' : 'Sign up'}
                                             </button>
@@ -660,15 +708,15 @@ export default function AuthPage({ defaultMode = 'login' }) {
             </div>
 
             <style>{`
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover,
-        input:-webkit-autofill:focus,
-        input:-webkit-autofill:active {
-          -webkit-box-shadow: 0 0 0 1000px white inset !important;
-          -webkit-text-fill-color: #0f172a !important;
-          transition: background-color 5000s ease-in-out 0s;
-        }
-      `}</style>
+                input:-webkit-autofill,
+                input:-webkit-autofill:hover,
+                input:-webkit-autofill:focus,
+                input:-webkit-autofill:active {
+                    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+                    -webkit-text-fill-color: #0f172a !important;
+                    transition: background-color 5000s ease-in-out 0s;
+                }
+            `}</style>
         </div>
     )
 }
