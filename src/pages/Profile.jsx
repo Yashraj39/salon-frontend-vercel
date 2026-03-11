@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import {
   FaUser,
   FaEnvelope,
-  FaPhone,
   FaLock,
   FaCamera,
   FaTrashAlt,
@@ -33,7 +32,6 @@ export default function Profile() {
     userId: '',
     name: '',
     email: '',
-    phone: '',
     avatar: '',
   })
 
@@ -47,7 +45,6 @@ export default function Profile() {
       userId: user.userId || '',
       name: user.name || '',
       email: user.email || '',
-      phone: user.phone || '',
       avatar: '',
     })
 
@@ -115,19 +112,49 @@ export default function Profile() {
     setUserData((prev) => ({ ...prev, avatar: '' }))
   }
 
-  const handleSave = () => {
-    localStorage.setItem(
-      'user',
-      JSON.stringify({
-        userId: userData.userId,
-        name: userData.name,
-        email: userData.email,
-        phone: userData.phone,
-      })
-    )
+  const handleSave = async () => {
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/v1.0/update-profile/${userData.userId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: userData.name,
+          }),
+        }
+      )
 
-    toast.success('Profile updated')
-    setEditMode(false)
+      if (!res.ok) {
+        const errorText = await res.text()
+        toast.error(errorText || 'Profile update failed')
+        return
+      }
+
+      const updatedUser = await res.json()
+
+      localStorage.setItem(
+        'user',
+        JSON.stringify({
+          userId: updatedUser.userId,
+          name: updatedUser.name,
+          email: updatedUser.email,
+        })
+      )
+
+      setUserData((prev) => ({
+        ...prev,
+        name: updatedUser.name,
+        email: updatedUser.email,
+      }))
+
+      toast.success('Profile updated')
+      setEditMode(false)
+    } catch (error) {
+      toast.error('Something went wrong')
+    }
   }
 
   const handleCancel = () => {
@@ -145,15 +172,79 @@ export default function Profile() {
     setShowPasswordModal(true)
   }
 
-  const handlePasswordSubmit = (e) => {
-    e.preventDefault()
-    setShowPasswordModal(false)
-    toast('Change password API will be connected later')
+  const handlePasswordSubmit = async (formData) => {
+    try {
+      if (
+        !formData.currentPassword ||
+        !formData.newPassword ||
+        !formData.confirmPassword
+      ) {
+        toast.error('Please fill all fields')
+        return
+      }
+
+      if (formData.newPassword !== formData.confirmPassword) {
+        toast.error('New password and confirm password do not match')
+        return
+      }
+
+      const res = await fetch(`${BASE_URL}/api/v1.0/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userData.userId,
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword,
+        }),
+      })
+
+      const message = await res.text()
+
+      if (!res.ok) {
+        toast.error(message || 'Password change failed')
+        return
+      }
+
+      toast.success(message || 'Password updated successfully')
+      setShowPasswordModal(false)
+    } catch (error) {
+      toast.error('Something went wrong')
+    }
   }
 
-  const handleConfirmDelete = () => {
-    setShowDeleteModal(false)
-    toast.error('Delete account API will be connected later')
+  const handleConfirmDelete = async (password) => {
+    try {
+      if (!password) {
+        toast.error('Password is required')
+        return
+      }
+
+      const res = await fetch(`${BASE_URL}/api/v1.0/delete-account`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userData.userId,
+          password,
+        }),
+      })
+
+      const message = await res.text()
+
+      if (!res.ok) {
+        toast.error(message || 'Delete account failed')
+        return
+      }
+
+      localStorage.removeItem('user')
+      toast.success(message || 'Account deleted successfully')
+      navigate('/home')
+    } catch (error) {
+      toast.error('Something went wrong')
+    }
   }
 
   return (
@@ -245,11 +336,6 @@ export default function Profile() {
                       Member
                     </span>
 
-                    {userData.phone && (
-                      <span className='rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700'>
-                        +91 {userData.phone}
-                      </span>
-                    )}
                   </div>
                 </div>
 
@@ -328,7 +414,7 @@ export default function Profile() {
                 )}
               </div>
 
-              <div className='mt-8 grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6'>
+              <div className='mt-8 grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6'>
                 <Input
                   label='Username'
                   icon={<FaUser />}
@@ -347,21 +433,13 @@ export default function Profile() {
                   placeholder='Email address'
                 />
 
-                <Input
-                  label='Phone Number'
-                  icon={<FaPhone />}
-                  name='phone'
-                  value={userData.phone}
-                  onChange={handleChange}
-                  disabled={!editMode}
-                  placeholder='Enter phone number'
-                />
-
-                <PasswordField
-                  label='Password'
-                  value='********'
-                  onChangePassword={handleChangePasswordClick}
-                />
+                <div className='lg:col-span-2'>
+                  <PasswordField
+                    label='Password'
+                    value='********'
+                    onChangePassword={handleChangePasswordClick}
+                  />
+                </div>
               </div>
 
               <div className='mt-8 border-t border-slate-200 pt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
@@ -512,7 +590,13 @@ function ChangePasswordModal({ onClose, onSubmit }) {
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className='px-6 py-6 space-y-4'>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            onSubmit(formData)
+          }}
+          className='px-6 py-6 space-y-4'
+        >
           <ModalInput
             label='Current Password'
             name='currentPassword'
@@ -572,6 +656,8 @@ function ModalInput({ label, ...props }) {
 }
 
 function DeleteAccountModal({ onClose, onConfirm, userName }) {
+  const [password, setPassword] = useState('')
+
   return (
     <div className='fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/55 backdrop-blur-[2px] px-4 animate-[fadeIn_.2s_ease]'>
       <div className='w-full max-w-lg rounded-3xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.22)] animate-[fadeIn_.25s_ease]'>
@@ -599,7 +685,7 @@ function DeleteAccountModal({ onClose, onConfirm, userName }) {
           </button>
         </div>
 
-        <div className='px-6 py-6'>
+        <div className='px-6 py-6 space-y-4'>
           <div className='rounded-2xl border border-red-200 bg-red-50 px-4 py-4'>
             <p className='text-sm leading-6 text-slate-700'>
               You are about to delete{' '}
@@ -609,6 +695,19 @@ function DeleteAccountModal({ onClose, onConfirm, userName }) {
               . This action may permanently remove your profile, bookings, and
               related account data.
             </p>
+          </div>
+
+          <div>
+            <label className='text-sm font-medium text-slate-700'>
+              Enter password to confirm
+            </label>
+            <input
+              type='password'
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className='mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-slate-300 focus:shadow-[0_0_0_4px_rgba(15,23,42,0.04)]'
+              placeholder='Enter your password'
+            />
           </div>
         </div>
 
@@ -621,7 +720,7 @@ function DeleteAccountModal({ onClose, onConfirm, userName }) {
           </button>
 
           <button
-            onClick={onConfirm}
+            onClick={() => onConfirm(password)}
             className='inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-700 active:scale-[0.98]'
           >
             <FaTrashAlt className='text-sm' />
@@ -631,4 +730,4 @@ function DeleteAccountModal({ onClose, onConfirm, userName }) {
       </div>
     </div>
   )
-} 
+}
