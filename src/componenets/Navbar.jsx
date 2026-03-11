@@ -61,6 +61,7 @@ export default function Navbar() {
 
   const [showModal, setShowModal] = useState(false)
   const [ownerStatus, setOwnerStatus] = useState(null)
+  const [profileImage, setProfileImage] = useState('')
 
   useEffect(() => {
     if (!currentUserId) return
@@ -76,6 +77,22 @@ export default function Navbar() {
       setEmail('')
       setAadharFile(null)
     }
+  }, [currentUserId])
+
+  useEffect(() => {
+    if (!currentUserId) {
+      setProfileImage('')
+      return
+    }
+
+    fetch(`${BASE_URL}/api/v1.0/get-profile-image/${currentUserId}`)
+      .then((res) => (res.ok ? res.text() : ''))
+      .then((url) => {
+        setProfileImage(url ? url.trim() : '')
+      })
+      .catch(() => {
+        setProfileImage('')
+      })
   }, [currentUserId])
 
   const fetchNavbarCart = async () => {
@@ -525,9 +542,17 @@ export default function Navbar() {
                   <button
                     type='button'
                     onClick={() => navigate('/profile')}
-                    className='flex h-10 w-10 items-center justify-center rounded-full border border-[#e6eaf0] bg-white text-[#344054] hover:bg-[#f8fafc] transition'
+                    className='flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-[#e6eaf0] bg-white text-[#344054] hover:bg-[#f8fafc] transition'
                   >
-                    <FiUser className='text-[19px]' />
+                    {profileImage ? (
+                      <img
+                        src={profileImage}
+                        alt='profile'
+                        className='h-full w-full object-cover'
+                      />
+                    ) : (
+                      <FiUser className='text-[19px]' />
+                    )}
                   </button>
 
                   <div className='hidden md:block'>{ownerButton()}</div>

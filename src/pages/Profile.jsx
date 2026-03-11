@@ -52,12 +52,12 @@ export default function Profile() {
     })
 
     fetch(`${BASE_URL}/api/v1.0/get-profile-image/${user.userId}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.imageUrl) {
+      .then((res) => (res.ok ? res.text() : ''))
+      .then((url) => {
+        if (url) {
           setUserData((prev) => ({
             ...prev,
-            avatar: data.imageUrl,
+            avatar: url.trim(),
           }))
         }
       })
@@ -96,13 +96,13 @@ export default function Profile() {
         return
       }
 
-      let data = null
+      let imageUrl = ''
       try {
-        data = await res.json()
+        imageUrl = (await res.text()).trim()
       } catch { }
 
-      if (data?.imageUrl) {
-        setUserData((prev) => ({ ...prev, avatar: data.imageUrl }))
+      if (imageUrl) {
+        setUserData((prev) => ({ ...prev, avatar: imageUrl }))
       }
 
       toast.success('Profile image updated')
