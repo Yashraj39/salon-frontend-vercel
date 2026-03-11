@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../api'
 import toast from 'react-hot-toast'
+import getErrorMessage from '../utils/getErrorMessage'
 import {
     FiMail,
     FiLock,
@@ -28,33 +29,6 @@ export default function AuthPage({ defaultMode = 'login' }) {
     const [registerPassword, setRegisterPassword] = useState('')
     const [showRegisterPassword, setShowRegisterPassword] = useState(false)
     const [registerLoading, setRegisterLoading] = useState(false)
-
-    const getErrorMessage = (err, fallback = 'Something went wrong') => {
-        const data = err?.response?.data
-
-        console.log('Full error:', err)
-        console.log('Response data:', data)
-
-        if (typeof data === 'string' && data.trim()) return data
-        if (typeof data?.message === 'string' && data.message.trim()) return data.message
-        if (typeof data?.detail === 'string' && data.detail.trim()) return data.detail
-        if (typeof data?.error === 'string' && data.error.trim()) return data.error
-
-        if (Array.isArray(data?.errors) && data.errors.length > 0) {
-            return String(data.errors[0])
-        }
-
-        if (err?.response?.status === 409) return 'User already registered with this email'
-        if (err?.response?.status === 403) return 'Email not verified'
-        if (err?.response?.status === 404) return 'User not found'
-        if (err?.response?.status === 401) return 'Invalid email or password'
-        if (err?.response?.status === 400) return 'Invalid request'
-        if (err?.response?.status >= 500) return 'Server error, please try again'
-
-        if (typeof err?.message === 'string' && err.message.trim()) return err.message
-
-        return fallback
-    }
 
     const handleLogin = async () => {
         if (!loginEmail.trim() || !loginPassword.trim()) {
@@ -85,7 +59,8 @@ export default function AuthPage({ defaultMode = 'login' }) {
         } catch (err) {
             const msg = getErrorMessage(err, 'Login failed!')
             console.log('Toast message:', msg)
-            toast.error(String(msg || 'Login failed!'))
+            toast.dismiss()
+            toast.error(msg)
         } finally {
             setLoginLoading(false)
         }
@@ -110,9 +85,10 @@ export default function AuthPage({ defaultMode = 'login' }) {
             toast.success('OTP sent successfully!')
             navigate('/otp', { state: { email: registerEmail } })
         } catch (error) {
-            const msg = getErrorMessage(error, 'Registration Failed!')
+            const msg = getErrorMessage(error, 'Registration failed!')
             console.log('Toast message:', msg)
-            toast.error(String(msg || 'Registration Failed!'))
+            toast.dismiss()
+            toast.error(msg)
         } finally {
             setRegisterLoading(false)
         }
@@ -139,9 +115,8 @@ export default function AuthPage({ defaultMode = 'login' }) {
             <div className='relative z-10 mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-6 sm:px-6 lg:px-8'>
                 <div className='relative hidden h-[760px] w-full max-w-6xl overflow-hidden rounded-[32px] border border-white/60 bg-white/55 shadow-[0_30px_100px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:block'>
                     <div
-                        className={`absolute inset-y-0 left-0 w-1/2 p-8 transition-transform duration-700 ease-in-out ${
-                            isRegister ? 'translate-x-full' : 'translate-x-0'
-                        }`}
+                        className={`absolute inset-y-0 left-0 w-1/2 p-8 transition-transform duration-700 ease-in-out ${isRegister ? 'translate-x-full' : 'translate-x-0'
+                            }`}
                     >
                         <div className='flex h-full items-start justify-center rounded-[28px] bg-white px-10 py-8'>
                             <div className='w-full max-w-md'>
@@ -409,9 +384,8 @@ export default function AuthPage({ defaultMode = 'login' }) {
                     </div>
 
                     <div
-                        className={`absolute inset-y-0 right-0 w-1/2 p-6 transition-transform duration-700 ease-in-out ${
-                            isRegister ? '-translate-x-full' : 'translate-x-0'
-                        }`}
+                        className={`absolute inset-y-0 right-0 w-1/2 p-6 transition-transform duration-700 ease-in-out ${isRegister ? '-translate-x-full' : 'translate-x-0'
+                            }`}
                     >
                         <div className='relative flex h-full flex-col justify-between overflow-hidden rounded-[32px] border border-white/10 bg-[linear-gradient(135deg,#0f172a_0%,#111827_45%,#1e293b_100%)] p-8 shadow-2xl'>
                             <div className='absolute inset-0'>
