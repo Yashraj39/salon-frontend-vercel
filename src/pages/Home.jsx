@@ -235,8 +235,8 @@ export default function Home() {
 
                 <div
                   className={`overflow-hidden transition-all duration-300 ${openService
-                      ? 'max-h-[420px] opacity-100 mt-3'
-                      : 'max-h-0 opacity-0'
+                    ? 'max-h-[420px] opacity-100 mt-3'
+                    : 'max-h-0 opacity-0'
                     }`}
                 >
                   <div className='space-y-2'>
@@ -332,19 +332,20 @@ export default function Home() {
                 {filteredSalons.map((salon, index) => (
                   <article
                     key={salon.salonId || index}
-                    className='group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.10)]'
+                    className='group rounded-3xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.10)] overflow-hidden'
                   >
-                    <div className='relative overflow-hidden'>
+                    <div className='relative overflow-hidden rounded-t-3xl'>
                       <img
                         src={
                           salon.imageUrl ||
                           'https://via.placeholder.com/600x400?text=Salon'
                         }
                         alt={salon.name || 'Salon'}
-                        className='h-52 w-full object-cover transition duration-500 group-hover:scale-105'
+                        className='block h-52 w-full object-cover transform-gpu will-change-transform transition duration-500 group-hover:scale-105'
+                        style={{ backfaceVisibility: 'hidden' }}
                       />
 
-                      <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent' />
+                      <div className='absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent pointer-events-none' />
 
                       <div className='absolute bottom-4 left-4'>
                         <span className='inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-800 backdrop-blur-sm'>
@@ -385,9 +386,7 @@ export default function Home() {
                       </div>
 
                       <button
-                        onClick={() =>
-                          navigate(`/salon-details/${salon.salonId}`)
-                        }
+                        onClick={() => navigate(`/salon-details/${salon.salonId}`)}
                         className='mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:scale-[0.99]'
                       >
                         View Salon
