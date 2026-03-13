@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import OwnerLayout from '../componenets/OwnerLayout'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, Plane } from 'lucide-react'
 
-const BASE_URL = 'https://render-qs89.onrender.com'
+const BASE_URL = 'http://localhost:8080'
 
 const weekDays = [
   { label: 'Sun', value: 'SUNDAY' },
@@ -23,6 +23,20 @@ const normalizeLeaves = (leaves = []) => {
     .filter(Boolean)
 
   return [...new Set(cleaned)].sort()
+}
+
+const normalizeTemporaryInactiveSlots = (slots = []) => {
+  return (Array.isArray(slots) ? slots : [])
+    .map((slot) => ({
+      ...slot,
+      date: typeof slot?.date === 'string' ? slot.date.slice(0, 10) : '',
+      startTime:
+        typeof slot?.startTime === 'string' ? slot.startTime.slice(0, 5) : '',
+      endTime:
+        typeof slot?.endTime === 'string' ? slot.endTime.slice(0, 5) : '',
+      reason: slot?.reason || '',
+    }))
+    .filter((slot) => slot.date && slot.startTime && slot.endTime)
 }
 
 const todayDateString = () => {
@@ -76,6 +90,21 @@ const normalizeTimeForRange = (time, rangeStart) => {
   return value
 }
 
+const combineDateAndTime = (date, time) => {
+  if (!date || !time) return null
+  return new Date(`${date}T${time}:00`)
+}
+
+const hasScheduledTemporaryInactive = (barber, nowMs) => {
+  if (!Array.isArray(barber?.temporaryInactiveSlots)) return false
+
+  return barber.temporaryInactiveSlots.some((slot) => {
+    const end = combineDateAndTime(slot.date, slot.endTime)
+    if (!end) return false
+    return end.getTime() >= nowMs
+  })
+}
+
 const validateBarberForm = (data, salon) => {
   if (!data?.name?.trim()) return 'Barber name is required'
   if (!data.workingStartTime) return 'Start time is required'
@@ -123,10 +152,7 @@ const validateBarberForm = (data, salon) => {
       return 'Lunch start must be before lunch end'
     }
 
-    if (
-      lunchStartMin < barberRange.startMin ||
-      lunchEndMin > barberRange.endMin
-    ) {
+    if (lunchStartMin < barberRange.startMin || lunchEndMin > barberRange.endMin) {
       return 'Lunch must be between barber working time'
     }
   }
@@ -173,6 +199,8 @@ export default function ManageBarbers() {
     savedSalonId && savedSalonId !== 'undefined' ? savedSalonId : ''
   )
 
+  const [nowMs, setNowMs] = useState(Date.now())
+
   const selectedSalon = salons.find((s) => s.sid === selectedSalonId) || null
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
@@ -187,6 +215,22 @@ export default function ManageBarbers() {
     endTime: '',
     reason: '',
   })
+
+  const [vacationModalOpen, setVacationModalOpen] = useState(false)
+  const [vacationLoading, setVacationLoading] = useState(false)
+  const [vacationForm, setVacationForm] = useState({
+    startDate: '',
+    endDate: '',
+    reason: '',
+  })
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNowMs(Date.now())
+    }, 30000)
+
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     if (!ownerId) {
@@ -261,6 +305,9 @@ export default function ManageBarbers() {
               lunchEnd: normalizeTime(barber.lunchEnd),
               weeklyOffDays: barber.weeklyOffDays || [],
               leaves: normalizeLeaves(barber.leaves || []),
+              temporaryInactiveSlots: normalizeTemporaryInactiveSlots(
+                barber.temporaryInactiveSlots || []
+              ),
             }))
           : []
 
@@ -288,6 +335,9 @@ export default function ManageBarbers() {
       lunchEnd: normalizeTime(barber.lunchEnd),
       weeklyOffDays: barber.weeklyOffDays || [],
       leaves: normalizeLeaves(barber.leaves || []),
+      temporaryInactiveSlots: normalizeTemporaryInactiveSlots(
+        barber.temporaryInactiveSlots || []
+      ),
     }
 
     setSelectedBarber(normalized)
@@ -354,11 +404,12 @@ export default function ManageBarbers() {
         lunchEnd: normalizeTime(data.lunchEnd),
         weeklyOffDays: data.weeklyOffDays || [],
         leaves: normalizeLeaves(data.leaves || []),
+        temporaryInactiveSlots: normalizeTemporaryInactiveSlots(
+          data.temporaryInactiveSlots || []
+        ),
       }
 
-      const updatedList = barbers.map((b) => (b.id === updated.id ? updated : b))
-
-      setBarbers(updatedList)
+      setBarbers((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
       setSelectedBarber(updated)
       setForm(updated)
       setOriginalForm(updated)
@@ -431,6 +482,8 @@ export default function ManageBarbers() {
         : await res.text()
 
       if (res.status === 409) {
+        setTempInactiveModalOpen(false)
+
         setConflictModal({
           title: 'This will cancel some bookings',
           reason: data?.reason || tempInactiveForm.reason || 'Barber temporarily unavailable',
@@ -450,7 +503,24 @@ export default function ManageBarbers() {
         throw new Error(typeof data === 'string' ? data : 'Failed to update availability')
       }
 
-      toast.success(typeof data === 'string' ? data : 'Barber marked unavailable successfully')
+      const updated = {
+        ...data,
+        workingStartTime: normalizeTime(data.workingStartTime),
+        workingEndTime: normalizeTime(data.workingEndTime),
+        lunchStart: normalizeTime(data.lunchStart),
+        lunchEnd: normalizeTime(data.lunchEnd),
+        weeklyOffDays: data.weeklyOffDays || [],
+        leaves: normalizeLeaves(data.leaves || []),
+        temporaryInactiveSlots: normalizeTemporaryInactiveSlots(
+          data.temporaryInactiveSlots || []
+        ),
+      }
+
+      setBarbers((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
+      setSelectedBarber(updated)
+      setForm(updated)
+      setOriginalForm(updated)
+
       setTempInactiveModalOpen(false)
       setTempInactiveForm({
         date: '',
@@ -458,10 +528,151 @@ export default function ManageBarbers() {
         endTime: '',
         reason: '',
       })
+
+      toast.success('Barber marked unavailable successfully')
     } catch (error) {
       toast.error(error.message || 'Failed to update availability')
     } finally {
       setTempInactiveLoading(false)
+    }
+  }
+
+  const cancelTemporaryInactive = async () => {
+    if (!selectedBarber?.id) return
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/barber/${selectedBarber.id}/cancel-temporary-inactive`,
+        { method: 'POST' }
+      )
+
+      if (!res.ok) {
+        throw new Error('Failed to activate barber')
+      }
+
+      const data = await res.json()
+
+      const updated = {
+        ...data,
+        workingStartTime: normalizeTime(data.workingStartTime),
+        workingEndTime: normalizeTime(data.workingEndTime),
+        lunchStart: normalizeTime(data.lunchStart),
+        lunchEnd: normalizeTime(data.lunchEnd),
+        weeklyOffDays: data.weeklyOffDays || [],
+        leaves: normalizeLeaves(data.leaves || []),
+        temporaryInactiveSlots: normalizeTemporaryInactiveSlots(
+          data.temporaryInactiveSlots || []
+        ),
+      }
+
+      setBarbers((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
+      setSelectedBarber(updated)
+      setForm(updated)
+      setOriginalForm(updated)
+
+      setTempInactiveModalOpen(false)
+      setConflictModal(null)
+      setTempInactiveForm({
+        date: '',
+        startTime: '',
+        endTime: '',
+        reason: '',
+      })
+
+      toast.success('Barber activated')
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
+
+  const handleVacationSubmit = async (forceCancel = false, customReason = '') => {
+    if (!selectedBarber?.id) {
+      toast.error('No barber selected')
+      return
+    }
+
+    if (!vacationForm.startDate || !vacationForm.endDate) {
+      toast.error('Please select vacation start and end date')
+      return
+    }
+
+    if (vacationForm.endDate < vacationForm.startDate) {
+      toast.error('Vacation end date cannot be before start date')
+      return
+    }
+
+    setVacationLoading(true)
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/barber/${selectedBarber.id}/vacation`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startDate: vacationForm.startDate,
+          endDate: vacationForm.endDate,
+          autoCancelConflictingBookings: forceCancel,
+          cancellationReason:
+            customReason || vacationForm.reason || 'Barber vacation added by owner',
+        }),
+      })
+
+      const contentType = res.headers.get('content-type') || ''
+      const data = contentType.includes('application/json')
+        ? await res.json()
+        : await res.text()
+
+      if (res.status === 409) {
+        setVacationModalOpen(false)
+
+        setConflictModal({
+          title: 'Vacation will cancel some bookings',
+          reason: data?.reason || vacationForm.reason || 'Barber vacation added by owner',
+          conflicts: data?.conflicts || [],
+          onConfirm: async () => {
+            setConflictModal(null)
+            await handleVacationSubmit(
+              true,
+              data?.reason || vacationForm.reason || 'Barber vacation added by owner'
+            )
+          },
+        })
+        return
+      }
+
+      if (!res.ok) {
+        throw new Error(typeof data === 'string' ? data : 'Failed to add vacation')
+      }
+
+      const updated = {
+        ...data,
+        workingStartTime: normalizeTime(data.workingStartTime),
+        workingEndTime: normalizeTime(data.workingEndTime),
+        lunchStart: normalizeTime(data.lunchStart),
+        lunchEnd: normalizeTime(data.lunchEnd),
+        weeklyOffDays: data.weeklyOffDays || [],
+        leaves: normalizeLeaves(data.leaves || []),
+        temporaryInactiveSlots: normalizeTemporaryInactiveSlots(
+          data.temporaryInactiveSlots || []
+        ),
+      }
+
+      setBarbers((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
+      setSelectedBarber(updated)
+      setForm(updated)
+      setOriginalForm(updated)
+
+      setVacationModalOpen(false)
+      setVacationForm({
+        startDate: '',
+        endDate: '',
+        reason: '',
+      })
+
+      toast.success('Vacation added successfully')
+    } catch (error) {
+      toast.error(error.message || 'Failed to add vacation')
+    } finally {
+      setVacationLoading(false)
     }
   }
 
@@ -506,6 +717,9 @@ export default function ManageBarbers() {
         lunchEnd: normalizeTime(data.lunchEnd),
         weeklyOffDays: data.weeklyOffDays || [],
         leaves: normalizeLeaves(data.leaves || []),
+        temporaryInactiveSlots: normalizeTemporaryInactiveSlots(
+          data.temporaryInactiveSlots || []
+        ),
       }
 
       localStorage.setItem('salonId', salonToUse)
@@ -597,6 +811,9 @@ export default function ManageBarbers() {
         })
       : false
 
+  const showInactive =
+    !selectedBarber?.active || hasScheduledTemporaryInactive(selectedBarber, nowMs)
+
   return (
     <OwnerLayout>
       <div className='max-w-7xl mx-auto py-4 animate-fadeIn'>
@@ -605,7 +822,7 @@ export default function ManageBarbers() {
             Manage Barbers
           </h1>
           <p className='text-sm text-gray-500 mt-1'>
-            Manage barber schedules, weekly offs, leaves, and working hours.
+            Manage barber schedules, weekly offs, leaves, working hours, and vacations.
           </p>
         </div>
 
@@ -656,6 +873,7 @@ export default function ManageBarbers() {
                   weeklyOffDays: [],
                   leaves: [],
                   active: true,
+                  temporaryInactiveSlots: [],
                 })
                 setShowPopup(true)
               }}
@@ -672,55 +890,60 @@ export default function ManageBarbers() {
 
             <div className='space-y-3 max-h-[620px] overflow-y-auto pr-1'>
               {barbers.length > 0 ? (
-                barbers.map((barber, index) => (
-                  <div
-                    key={barber.id}
-                    onClick={() => handleSelect(barber)}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
-                      selectedBarber?.id === barber.id
-                        ? 'bg-black text-white border-black shadow-md'
-                        : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                    }`}
-                    style={{ animationDelay: `${index * 40}ms` }}
-                  >
-                    <div className='flex justify-between items-start gap-3'>
-                      <div className='min-w-0'>
-                        <div className='flex items-center gap-2'>
-                          <span className='font-medium truncate'>{barber.name}</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteClick(barber)
-                            }}
-                            disabled={isDeleting}
-                            className={`p-1 rounded-md transition shrink-0 ${
+                barbers.map((barber, index) => {
+                  const barberShowInactive =
+                    !barber.active || hasScheduledTemporaryInactive(barber, nowMs)
+
+                  return (
+                    <div
+                      key={barber.id}
+                      onClick={() => handleSelect(barber)}
+                      className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
+                        selectedBarber?.id === barber.id
+                          ? 'bg-black text-white border-black shadow-md'
+                          : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                      }`}
+                      style={{ animationDelay: `${index * 40}ms` }}
+                    >
+                      <div className='flex justify-between items-start gap-3'>
+                        <div className='min-w-0'>
+                          <div className='flex items-center gap-2'>
+                            <span className='font-medium truncate'>{barber.name}</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteClick(barber)
+                              }}
+                              disabled={isDeleting}
+                              className={`p-1 rounded-md transition shrink-0 ${
+                                selectedBarber?.id === barber.id
+                                  ? 'hover:bg-white/20 text-white'
+                                  : 'hover:bg-red-50 text-red-500 hover:text-red-600'
+                              } ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              <Trash2 className='w-4 h-4' />
+                            </button>
+                          </div>
+
+                          <p
+                            className={`text-sm mt-1 ${
                               selectedBarber?.id === barber.id
-                                ? 'hover:bg-white/20 text-white'
-                                : 'hover:bg-red-50 text-red-500 hover:text-red-600'
-                            } ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                ? 'text-white/90'
+                                : 'text-gray-600'
+                            }`}
                           >
-                            <Trash2 className='w-4 h-4' />
-                          </button>
+                            {barber.weeklyOffDays?.length || 0} Weekly Off |{' '}
+                            {barber.leaves?.length || 0} Leaves
+                          </p>
                         </div>
 
-                        <p
-                          className={`text-sm mt-1 ${
-                            selectedBarber?.id === barber.id
-                              ? 'text-white/90'
-                              : 'text-gray-600'
-                          }`}
-                        >
-                          {barber.weeklyOffDays?.length || 0} Weekly Off |{' '}
-                          {barber.leaves?.length || 0} Leaves
-                        </p>
+                        <span className='text-sm shrink-0'>
+                          {barberShowInactive ? 'Inactive' : 'Active'}
+                        </span>
                       </div>
-
-                      <span className='text-sm shrink-0'>
-                        {barber.active ? 'Active' : 'Inactive'}
-                      </span>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               ) : (
                 <div className='rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500'>
                   No barbers found for this salon
@@ -737,7 +960,7 @@ export default function ManageBarbers() {
                     Barber Details & Schedule
                   </h2>
                   <p className='text-sm text-gray-500 mt-1'>
-                    Update status, schedule, weekly offs, and leave dates.
+                    Update status, schedule, weekly offs, leave dates, and vacations.
                   </p>
                 </div>
 
@@ -755,52 +978,51 @@ export default function ManageBarbers() {
                   <button
                     type='button'
                     onClick={() => {
-                      if (form.active) {
-                        setTempInactiveForm({
-                          date: '',
-                          startTime: '',
-                          endTime: '',
-                          reason: '',
-                        })
-                        setTempInactiveModalOpen(true)
-                      } else {
-                        setForm({ ...form, active: true })
+                      if (showInactive) {
+                        cancelTemporaryInactive()
+                        return
                       }
+
+                      setTempInactiveForm({
+                        date: '',
+                        startTime: '',
+                        endTime: '',
+                        reason: '',
+                      })
+                      setTempInactiveModalOpen(true)
                     }}
                     className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 ${
-                      form.active ? 'bg-green-500' : 'bg-gray-300'
+                      showInactive ? 'bg-gray-300' : 'bg-green-500'
                     }`}
                   >
                     <span
                       className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-                        form.active ? 'translate-x-8' : 'translate-x-1'
+                        showInactive ? 'translate-x-1' : 'translate-x-8'
                       }`}
                     />
                   </button>
 
                   <span
-                    className={`font-medium ${
-                      form.active ? 'text-green-600' : 'text-gray-500'
-                    }`}
+                    className={`font-medium ${showInactive ? 'text-gray-500' : 'text-green-600'}`}
                   >
-                    {form.active ? 'Active' : 'Inactive'}
+                    {showInactive ? 'Inactive' : 'Active'}
                   </span>
 
                   {selectedBarber?.id && (
                     <button
                       type='button'
                       onClick={() => {
-                        setTempInactiveForm({
-                          date: '',
-                          startTime: '',
-                          endTime: '',
+                        setVacationForm({
+                          startDate: '',
+                          endDate: '',
                           reason: '',
                         })
-                        setTempInactiveModalOpen(true)
+                        setVacationModalOpen(true)
                       }}
-                      className='px-4 py-2 rounded-2xl border border-gray-200 text-sm hover:bg-gray-50'
+                      className='inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-gray-200 text-sm hover:bg-gray-50'
                     >
-                      Set Temporary Inactive
+                      <Plane size={16} />
+                      Add Vacation
                     </button>
                   )}
                 </div>
@@ -952,7 +1174,7 @@ export default function ManageBarbers() {
         </div>
 
         {deleteModalOpen && (
-          <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn'>
+          <div className='fixed inset-0 bg-black/25 backdrop-blur-[2px] flex items-center justify-center z-[60] p-4 animate-fadeIn'>
             <div className='bg-white p-6 rounded-3xl shadow-lg w-full max-w-md animate-scaleIn'>
               <h2 className='text-2xl font-bold mb-4 text-gray-950'>Confirm Delete</h2>
               <p className='mb-6 text-gray-600 leading-7'>
@@ -985,7 +1207,7 @@ export default function ManageBarbers() {
         )}
 
         {conflictModal && (
-          <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn'>
+          <div className='fixed inset-0 bg-black/30 backdrop-blur-[2px] flex items-center justify-center z-[70] p-4 animate-fadeIn'>
             <div className='bg-white w-full max-w-2xl rounded-3xl p-6 shadow-xl animate-scaleIn'>
               <h2 className='text-2xl font-bold text-gray-950 mb-3'>{conflictModal.title}</h2>
               <p className='text-sm text-gray-600 mb-4'>
@@ -1032,7 +1254,7 @@ export default function ManageBarbers() {
         )}
 
         {tempInactiveModalOpen && (
-          <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn'>
+          <div className='fixed inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-[60] p-4 animate-fadeIn'>
             <div className='bg-white w-full max-w-lg rounded-3xl p-6 shadow-xl animate-scaleIn'>
               <h2 className='text-2xl font-bold text-gray-950 mb-2'>Temporary Inactive</h2>
               <p className='text-sm text-gray-600 mb-5'>
@@ -1135,8 +1357,90 @@ export default function ManageBarbers() {
           </div>
         )}
 
+        {vacationModalOpen && (
+          <div className='fixed inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-[60] p-4 animate-fadeIn'>
+            <div className='bg-white w-full max-w-lg rounded-3xl p-6 shadow-xl animate-scaleIn'>
+              <h2 className='text-2xl font-bold text-gray-950 mb-2'>Add Vacation</h2>
+              <p className='text-sm text-gray-600 mb-5'>
+                Select a date range for barber vacation.
+              </p>
+
+              <div className='space-y-4'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div>
+                    <label className='block mb-2 text-sm font-medium text-gray-800'>Start Date</label>
+                    <input
+                      type='date'
+                      min={todayDateString()}
+                      value={vacationForm.startDate}
+                      onChange={(e) =>
+                        setVacationForm({ ...vacationForm, startDate: e.target.value })
+                      }
+                      className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400'
+                    />
+                  </div>
+
+                  <div>
+                    <label className='block mb-2 text-sm font-medium text-gray-800'>End Date</label>
+                    <input
+                      type='date'
+                      min={vacationForm.startDate || todayDateString()}
+                      value={vacationForm.endDate}
+                      onChange={(e) =>
+                        setVacationForm({ ...vacationForm, endDate: e.target.value })
+                      }
+                      className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400'
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className='block mb-2 text-sm font-medium text-gray-800'>Reason</label>
+                  <textarea
+                    rows='3'
+                    value={vacationForm.reason}
+                    onChange={(e) =>
+                      setVacationForm({ ...vacationForm, reason: e.target.value })
+                    }
+                    placeholder='Reason for vacation'
+                    className='w-full border border-gray-200 px-4 py-3 rounded-2xl resize-none outline-none focus:border-gray-400'
+                  />
+                </div>
+              </div>
+
+              <div className='flex justify-end gap-3 mt-6'>
+                <button
+                  onClick={() => {
+                    setVacationModalOpen(false)
+                    setVacationForm({
+                      startDate: '',
+                      endDate: '',
+                      reason: '',
+                    })
+                  }}
+                  className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={() => handleVacationSubmit()}
+                  disabled={vacationLoading}
+                  className={`px-5 py-2.5 text-white rounded-2xl transition ${
+                    vacationLoading
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-black hover:bg-gray-800'
+                  }`}
+                >
+                  {vacationLoading ? 'Saving...' : 'Add Vacation'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {showPopup && (
-          <div className='fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn'>
+          <div className='fixed inset-0 bg-black/25 backdrop-blur-[2px] flex items-center justify-center z-[60] p-4 animate-fadeIn'>
             <div className='bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 relative animate-scaleIn max-h-[92vh] overflow-y-auto'>
               <h2 className='text-2xl font-bold mb-1 text-gray-950'>Add New Barber</h2>
               <p className='text-sm text-gray-500 mb-6'>
