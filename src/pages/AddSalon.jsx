@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 import OwnerLayout from '../componenets/OwnerLayout'
 import { Trash2, Plus, Image as ImageIcon } from 'lucide-react'
 
-const BASE_URL = 'https://render-qs89.onrender.com'
+const BASE_URL = 'http://localhost:8080'
 
 const emptyForm = {
   name: '',
@@ -14,6 +14,53 @@ const emptyForm = {
   opentime: '',
   closetime: '',
   mapLink: '',
+}
+
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+const isValidIndianPhone = (phone) => {
+  return /^[6-9]\d{9}$/.test(phone)
+}
+
+const isValidUrl = (value) => {
+  if (!value) return true
+  try {
+    new URL(value)
+    return true
+  } catch {
+    return false
+  }
+}
+
+const validateSalonForm = ({
+  form,
+  requireDocument = false,
+  requireCover = false,
+  addDocument,
+  addCover,
+}) => {
+  if (!form.name?.trim()) return 'Salon name is required'
+  if (!form.city?.trim()) return 'City is required'
+  if (!form.address?.trim()) return 'Address is required'
+  if (!form.contact?.trim()) return 'Contact number is required'
+  if (!isValidIndianPhone(form.contact.trim()))
+    return 'Enter valid 10 digit contact number'
+  if (!form.salonEmail?.trim()) return 'Salon email is required'
+  if (!isValidEmail(form.salonEmail.trim())) return 'Enter valid salon email'
+  if (!form.opentime) return 'Open time is required'
+  if (!form.closetime) return 'Close time is required'
+  if (form.opentime >= form.closetime)
+    return 'Open time must be before close time'
+  if (form.mapLink && !isValidUrl(form.mapLink.trim()))
+    return 'Enter valid map link'
+
+  if (requireDocument && !addDocument)
+    return 'Please upload verification document'
+  if (requireCover && !addCover) return 'Please upload cover image'
+
+  return null
 }
 
 export default function ManageSalons() {
@@ -130,13 +177,16 @@ export default function ManageSalons() {
   }
 
   const handleAddSalon = async () => {
-    if (!addDocument) {
-      toast.error('Please upload verification document')
-      return
-    }
+    const validationError = validateSalonForm({
+      form,
+      requireDocument: true,
+      requireCover: true,
+      addDocument,
+      addCover,
+    })
 
-    if (!addCover) {
-      toast.error('Please upload cover image')
+    if (validationError) {
+      toast.error(validationError)
       return
     }
 
@@ -184,6 +234,19 @@ export default function ManageSalons() {
 
     if (!hasSalonChanged) return
 
+    const validationError = validateSalonForm({
+      form,
+      requireDocument: false,
+      requireCover: false,
+      addDocument: null,
+      addCover: null,
+    })
+
+    if (validationError) {
+      toast.error(validationError)
+      return
+    }
+
     setIsUpdatingSalon(true)
 
     try {
@@ -225,14 +288,10 @@ export default function ManageSalons() {
       const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
       const currentOwnerId = currentUser?.userId
 
-      const formData = new FormData()
-      formData.append('ownerId', currentOwnerId)
-
       const response = await fetch(
-        `${BASE_URL}/api/salon/delete-salon/${salonToDelete.id}`,
+        `${BASE_URL}/api/salon/delete-salon/${salonToDelete.id}?ownerId=${currentOwnerId}`,
         {
           method: 'DELETE',
-          body: formData,
         }
       )
 
@@ -277,8 +336,7 @@ export default function ManageSalons() {
     selectedSalon?.image ||
     ''
 
-  const hasFormChanged =
-    JSON.stringify(form) !== JSON.stringify(originalForm)
+  const hasFormChanged = JSON.stringify(form) !== JSON.stringify(originalForm)
 
   const hasSalonChanged = hasFormChanged || !!editCover
 
@@ -417,7 +475,10 @@ export default function ManageSalons() {
                     label='Contact'
                     name='contact'
                     value={form.contact}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                      setForm({ ...form, contact: onlyDigits })
+                    }}
                     placeholder='Enter contact number'
                   />
 
@@ -603,7 +664,10 @@ export default function ManageSalons() {
                 name='contact'
                 placeholder='Contact Number'
                 value={form.contact}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                  setForm({ ...form, contact: onlyDigits })
+                }}
               />
 
               <PopupInput

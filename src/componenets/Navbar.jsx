@@ -10,9 +10,8 @@ import { FaShoppingCart } from 'react-icons/fa'
 import React, { useEffect, useState, useRef } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
-const BASE_URL = 'https://render-qs89.onrender.com'
+const BASE_URL = 'http://localhost:8080'
 
-// Utility functions for per-user storage
 const saveOwnerApplication = (userId, data) => {
   const allApps = JSON.parse(localStorage.getItem('allOwnerApplications')) || {}
   allApps[userId] = data
@@ -36,7 +35,7 @@ export default function Navbar() {
   const isOwnerPanel = location.pathname.startsWith('/owner')
   const isLoggedIn = !!localStorage.getItem('user')
 
-  const user = JSON.parse(localStorage.getItem('user')) || {}
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
   const userId = user.userId
 
   const [currentUserId, setCurrentUserId] = useState(userId || null)
@@ -62,6 +61,10 @@ export default function Navbar() {
   const [showModal, setShowModal] = useState(false)
   const [ownerStatus, setOwnerStatus] = useState(null)
   const [profileImage, setProfileImage] = useState('')
+
+  const [notifications, setNotifications] = useState([])
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     if (!currentUserId) return
@@ -94,6 +97,39 @@ export default function Navbar() {
         setProfileImage('')
       })
   }, [currentUserId])
+
+  const fetchNotifications = async () => {
+    if (!userId) return
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/notifications/user/${userId}`)
+      if (!res.ok) return
+
+      const data = await res.json()
+      const safe = Array.isArray(data) ? data : []
+
+      setNotifications(safe)
+      setUnreadCount(
+        safe.filter((item) => !(item.isRead === true || item.read === true)).length
+      )
+    } catch (e) {
+      console.error('Notification fetch error:', e)
+    }
+  }
+
+  useEffect(() => {
+    fetchNotifications()
+  }, [userId])
+
+  useEffect(() => {
+    if (!userId) return
+
+    const interval = setInterval(() => {
+      fetchNotifications()
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [userId])
 
   const fetchNavbarCart = async () => {
     if (!userId) return
@@ -171,6 +207,16 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleOwnerDropdownOutside)
     return () =>
       document.removeEventListener('mousedown', handleOwnerDropdownOutside)
+  }, [])
+
+  useEffect(() => {
+    const handleOutside = () => {
+      setShowNotificationDropdown(false)
+      setShowCartDropdown(false)
+    }
+
+    document.addEventListener('click', handleOutside)
+    return () => document.removeEventListener('click', handleOutside)
   }, [])
 
   const handleOwnerApply = async () => {
@@ -257,10 +303,11 @@ export default function Navbar() {
           <button
             type='button'
             onClick={() => setOwnerDropdownOpen((prev) => !prev)}
-            className={`group flex items-center justify-between min-w-[235px] h-[50px] pl-4 pr-3 rounded-xl border transition-all bg-white ${ownerDropdownOpen
-              ? 'border-[#cfd6e4] shadow-[0_12px_30px_rgba(17,24,39,0.10)]'
-              : 'border-[#d8dee8] shadow-[0_4px_14px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]'
-              }`}
+            className={`group flex items-center justify-between min-w-[235px] h-[50px] pl-4 pr-3 rounded-xl border transition-all bg-white ${
+              ownerDropdownOpen
+                ? 'border-[#cfd6e4] shadow-[0_12px_30px_rgba(17,24,39,0.10)]'
+                : 'border-[#d8dee8] shadow-[0_4px_14px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]'
+            }`}
           >
             <div className='flex items-center justify-center w-8 h-8 rounded-full bg-[#f3f6fb] text-[#344054] border border-[#e4e7ec]'>
               <FiUser className='text-[16px]' />
@@ -274,16 +321,18 @@ export default function Navbar() {
             </div>
 
             <FiChevronDown
-              className={`text-[18px] text-[#667085] transition-transform duration-200 ${ownerDropdownOpen ? 'rotate-180' : ''
-                }`}
+              className={`text-[18px] text-[#667085] transition-transform duration-200 ${
+                ownerDropdownOpen ? 'rotate-180' : ''
+              }`}
             />
           </button>
 
           <div
-            className={`absolute right-0 top-[58px] w-[290px] origin-top-right transition-all duration-200 z-50 ${ownerDropdownOpen
-              ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
-              : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
-              }`}
+            className={`absolute right-0 top-[58px] w-[290px] origin-top-right transition-all duration-200 z-50 ${
+              ownerDropdownOpen
+                ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
+                : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
+            }`}
           >
             <div className='rounded-2xl border border-[#dde3ec] bg-white shadow-[0_20px_45px_rgba(15,23,42,0.14)] p-3'>
               <div className='mb-3 rounded-xl border border-[#e6eaf0] bg-[#f8fafc] px-4 py-3'>
@@ -418,19 +467,21 @@ export default function Navbar() {
                       className='group relative w-[110px] pb-2 text-center'
                     >
                       <span
-                        className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/success'
-                          ? 'text-[#111827]'
-                          : 'text-[#667085] group-hover:text-[#111827]'
-                          }`}
+                        className={`text-[15px] font-semibold transition-colors duration-300 ${
+                          location.pathname === '/success'
+                            ? 'text-[#111827]'
+                            : 'text-[#667085] group-hover:text-[#111827]'
+                        }`}
                       >
                         Home
                       </span>
 
                       <span
-                        className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/success'
-                          ? 'opacity-100 scale-x-100'
-                          : 'opacity-0 scale-x-0'
-                          }`}
+                        className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
+                          location.pathname === '/success'
+                            ? 'opacity-100 scale-x-100'
+                            : 'opacity-0 scale-x-0'
+                        }`}
                       />
                     </button>
 
@@ -440,31 +491,71 @@ export default function Navbar() {
                       className='group relative w-[110px] pb-2 text-center'
                     >
                       <span
-                        className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/bookings'
-                          ? 'text-[#111827]'
-                          : 'text-[#667085] group-hover:text-[#111827]'
-                          }`}
+                        className={`text-[15px] font-semibold transition-colors duration-300 ${
+                          location.pathname === '/bookings'
+                            ? 'text-[#111827]'
+                            : 'text-[#667085] group-hover:text-[#111827]'
+                        }`}
                       >
                         My Bookings
                       </span>
 
                       <span
-                        className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/bookings'
-                          ? 'opacity-100 scale-x-100'
-                          : 'opacity-0 scale-x-0'
-                          }`}
+                        className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
+                          location.pathname === '/bookings'
+                            ? 'opacity-100 scale-x-100'
+                            : 'opacity-0 scale-x-0'
+                        }`}
                       />
                     </button>
                   </div>
                 )}
 
                 <div className='flex items-center gap-4 md:gap-4 relative shrink-0'>
-                  <button
-                    type='button'
-                    className='hidden sm:flex h-10 w-10 items-center justify-center rounded-full border border-[#e6eaf0] bg-white text-[#344054] hover:bg-[#f8fafc] transition'
-                  >
-                    <FiBell className='text-[19px]' />
-                  </button>
+                  <div className='relative' onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type='button'
+                      onClick={() => setShowNotificationDropdown((prev) => !prev)}
+                      className='hidden sm:flex relative h-10 w-10 items-center justify-center rounded-full border border-[#e6eaf0] bg-white text-[#344054] hover:bg-[#f8fafc] transition'
+                    >
+                      <FiBell className='text-[19px]' />
+                      {unreadCount > 0 && (
+                        <span className='absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[11px] font-bold text-white'>
+                          {unreadCount}
+                        </span>
+                      )}
+                    </button>
+
+                    {showNotificationDropdown && (
+                      <div className='absolute right-0 top-12 w-[360px] rounded-2xl border border-[#dde3ec] bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.14)] z-50'>
+                        <h3 className='mb-4 text-[16px] font-semibold text-[#243B63]'>
+                          Notifications
+                        </h3>
+
+                        {notifications.length === 0 ? (
+                          <div className='rounded-xl border border-dashed border-[#d8dee8] bg-[#f8fafc] px-4 py-6 text-center text-sm text-[#667085]'>
+                            No notifications
+                          </div>
+                        ) : (
+                          <div className='space-y-2 max-h-[320px] overflow-y-auto pr-1'>
+                            {notifications.map((item) => (
+                              <div
+                                key={item.id}
+                                className='rounded-xl border border-[#eef1f5] px-3 py-3 bg-white'
+                              >
+                                <p className='text-sm font-semibold text-[#111827]'>
+                                  {item.title}
+                                </p>
+                                <p className='text-xs text-[#667085] mt-1 leading-5'>
+                                  {item.message}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   <div
                     className='relative group'
@@ -488,10 +579,11 @@ export default function Navbar() {
                       fixed md:absolute top-20 md:top-12 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 md:right-0
                       w-[95%] max-w-sm md:w-[340px] rounded-2xl border border-[#dde3ec] bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.14)] z-50
                       transition-all duration-300 ease-in-out
-                      ${showCartDropdown
+                      ${
+                        showCartDropdown
                           ? 'opacity-100 visible translate-y-0'
                           : 'opacity-0 invisible translate-y-3'
-                        }
+                      }
                       md:opacity-0 md:invisible md:translate-y-3
                       md:group-hover:opacity-100 md:group-hover:visible md:group-hover:translate-y-0
                     `}
@@ -512,7 +604,8 @@ export default function Navbar() {
                               onClick={() =>
                                 navigate(`/add-services/${item.salonId}`, {
                                   state: {
-                                    bookingFor: item.customerName === user?.name ? 'myself' : 'someone',
+                                    bookingFor:
+                                      item.customerName === user?.name ? 'myself' : 'someone',
                                     customerName: item.customerName || '',
                                     bookedBy: user?.name || '',
                                   },
@@ -688,10 +781,11 @@ export default function Navbar() {
                     setAgreed(false)
                   }
                 }}
-                className={`w-full rounded-xl py-3 font-semibold transition ${agreed
-                  ? 'bg-gradient-to-r from-[#111827] to-[#1f2937] text-white'
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
+                className={`w-full rounded-xl py-3 font-semibold transition ${
+                  agreed
+                    ? 'bg-gradient-to-r from-[#111827] to-[#1f2937] text-white'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                }`}
               >
                 Continue
               </button>
