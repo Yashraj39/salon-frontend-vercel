@@ -6,10 +6,10 @@ import {
   FiChevronRight,
   FiMoreHorizontal,
   FiCalendar,
+  FiX,
 } from 'react-icons/fi'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
-//const BASE_URL = 'http://localhost:8080'
 const PAGE_SIZE = 5
 
 export default function ManageBookings() {
@@ -21,10 +21,11 @@ export default function ManageBookings() {
     }
   }, [])
 
-  const ownerId = user?.userId
+  const ownerId = user?.userId || user?.userid || ''
 
   const [loading, setLoading] = useState(true)
   const [filterLoading, setFilterLoading] = useState(false)
+  const [cancelLoading, setCancelLoading] = useState(false)
 
   const [bookings, setBookings] = useState([])
   const [salons, setSalons] = useState([])
@@ -38,6 +39,10 @@ export default function ManageBookings() {
   const [page, setPage] = useState(0)
   const [totalBookings, setTotalBookings] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
+
+  const [openActionId, setOpenActionId] = useState(null)
+  const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const [bookingToCancel, setBookingToCancel] = useState(null)
 
   const didInitialLoad = useRef(false)
 
@@ -147,6 +152,12 @@ export default function ManageBookings() {
     })
   }, [selectedSalonId, selectedDate, selectedBarberId, selectedStatus])
 
+  useEffect(() => {
+    const closeMenu = () => setOpenActionId(null)
+    window.addEventListener('click', closeMenu)
+    return () => window.removeEventListener('click', closeMenu)
+  }, [])
+
   const handleSalonChange = (e) => {
     const newSalonId = e.target.value
     setSelectedSalonId(newSalonId)
@@ -164,6 +175,59 @@ export default function ManageBookings() {
   const handlePageChange = (newPage) => {
     if (newPage < 0 || newPage >= totalPages) return
     setPage(newPage)
+  }
+
+  const openCancelModal = (booking) => {
+    setBookingToCancel(booking)
+    setCancelModalOpen(true)
+    setOpenActionId(null)
+  }
+
+  const closeCancelModal = () => {
+    if (cancelLoading) return
+    setCancelModalOpen(false)
+    setBookingToCancel(null)
+  }
+
+  const handleCancelBooking = async () => {
+    if (!bookingToCancel?.bookingId || !ownerId) return
+
+    setCancelLoading(true)
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/booking/${bookingToCancel.bookingId}/owner-cancel?ownerId=${ownerId}`,
+        {
+          method: 'POST',
+        }
+      )
+
+      const contentType = res.headers.get('content-type') || ''
+      const data = contentType.includes('application/json')
+        ? await res.json()
+        : await res.text()
+
+      if (!res.ok) {
+        throw new Error(typeof data === 'string' ? data : 'Failed to cancel booking')
+      }
+
+      toast.success('Booking cancelled successfully')
+      setCancelModalOpen(false)
+      setBookingToCancel(null)
+
+      await fetchBookings({
+        salonId: selectedSalonId,
+        date: selectedDate,
+        barberId: selectedBarberId,
+        status: selectedStatus,
+        pageNo: page,
+        showMainLoader: false,
+      })
+    } catch (err) {
+      toast.error(err.message || 'Failed to cancel booking')
+    } finally {
+      setCancelLoading(false)
+    }
   }
 
   const visiblePages = useMemo(() => {
@@ -244,6 +308,10 @@ export default function ManageBookings() {
       default:
         return 'bg-gray-100 text-gray-700 border border-gray-200'
     }
+  }
+
+  const canCancelBooking = (item) => {
+    return String(item?.status || '').toUpperCase() === 'CONFIRMED'
   }
 
   const startIndex = totalBookings === 0 ? 0 : page * PAGE_SIZE + 1
@@ -352,7 +420,7 @@ export default function ManageBookings() {
               </p>
             </div>
           ) : (
-            bookings.map((item, index) => {
+            bookings.map((item) => {
               const { date, time } = formatDateTime(
                 item.bookingDate,
                 item.startTime,
@@ -362,7 +430,7 @@ export default function ManageBookings() {
               return (
                 <div
                   key={item.bookingId}
-                  className='bg-white border border-gray-200 rounded-3xl p-4 shadow-sm'
+                  className='bg-white border border-gray-200 rounded-3xl p-4 shadow-sm relative'
                 >
                   <div className='flex items-start justify-between gap-3 mb-4'>
                     <div className='flex items-start gap-3 min-w-0'>
@@ -379,9 +447,38 @@ export default function ManageBookings() {
                       </div>
                     </div>
 
-                    <button className='w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center transition shrink-0'>
-                      <FiMoreHorizontal size={18} />
-                    </button>
+                    <div className='relative'>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenActionId((prev) =>
+                            prev === item.bookingId ? null : item.bookingId
+                          )
+                        }}
+                        className='w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center transition shrink-0'
+                      >
+                        <FiMoreHorizontal size={18} />
+                      </button>
+
+                      {openActionId === item.bookingId && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className='absolute right-0 top-12 z-20 min-w-[150px] rounded-2xl border border-gray-200 bg-white shadow-lg p-2'
+                        >
+                          <button
+                            onClick={() => openCancelModal(item)}
+                            disabled={!canCancelBooking(item)}
+                            className={`w-full text-left px-3 py-2 rounded-xl text-sm transition ${
+                              canCancelBooking(item)
+                                ? 'text-red-600 hover:bg-red-50'
+                                : 'text-gray-400 cursor-not-allowed'
+                            }`}
+                          >
+                            Cancel Booking
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className='grid grid-cols-1 xs:grid-cols-2 gap-3 text-sm'>
@@ -531,9 +628,38 @@ export default function ManageBookings() {
                         </td>
 
                         <td className='px-5 py-5 align-top'>
-                          <button className='w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center transition-all duration-300 hover:-translate-y-0.5'>
-                            <FiMoreHorizontal size={18} />
-                          </button>
+                          <div className='relative'>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setOpenActionId((prev) =>
+                                  prev === item.bookingId ? null : item.bookingId
+                                )
+                              }}
+                              className='w-10 h-10 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center transition-all duration-300 hover:-translate-y-0.5'
+                            >
+                              <FiMoreHorizontal size={18} />
+                            </button>
+
+                            {openActionId === item.bookingId && (
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                className='absolute right-0 top-12 z-20 min-w-[160px] rounded-2xl border border-gray-200 bg-white shadow-lg p-2'
+                              >
+                                <button
+                                  onClick={() => openCancelModal(item)}
+                                  disabled={!canCancelBooking(item)}
+                                  className={`w-full text-left px-3 py-2 rounded-xl text-sm transition ${
+                                    canCancelBooking(item)
+                                      ? 'text-red-600 hover:bg-red-50'
+                                      : 'text-gray-400 cursor-not-allowed'
+                                  }`}
+                                >
+                                  Cancel Booking
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )
@@ -600,6 +726,63 @@ export default function ManageBookings() {
             </button>
           </div>
         </div>
+
+        {cancelModalOpen && (
+          <div className='fixed inset-0 bg-black/25 backdrop-blur-[2px] flex items-center justify-center z-[80] p-4 animate-fadeIn'>
+            <div className='bg-white w-full max-w-md rounded-3xl p-6 shadow-xl animate-scaleIn relative'>
+              <button
+                onClick={closeCancelModal}
+                disabled={cancelLoading}
+                className='absolute top-4 right-4 w-9 h-9 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center transition'
+              >
+                <FiX size={18} />
+              </button>
+
+              <h2 className='text-2xl font-bold text-gray-950 mb-3'>Cancel Booking</h2>
+              <p className='text-sm text-gray-600 leading-6 mb-6'>
+                Are you sure you want to cancel this booking for{' '}
+                <span className='font-semibold text-gray-900'>
+                  {capitalizeWords(bookingToCancel?.customerName) || 'customer'}
+                </span>
+                ?
+              </p>
+
+              <div className='rounded-2xl border border-gray-200 bg-gray-50 p-4 mb-6'>
+                <p className='text-sm text-gray-700'>
+                  <span className='font-medium'>Salon:</span> {bookingToCancel?.salonName || '-'}
+                </p>
+                <p className='text-sm text-gray-700 mt-1'>
+                  <span className='font-medium'>Barber:</span> {bookingToCancel?.barberName || '-'}
+                </p>
+                <p className='text-sm text-gray-700 mt-1'>
+                  <span className='font-medium'>Status:</span> {capitalizeWords(bookingToCancel?.status || '-')}
+                </p>
+              </div>
+
+              <div className='flex justify-end gap-3'>
+                <button
+                  onClick={closeCancelModal}
+                  disabled={cancelLoading}
+                  className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition disabled:opacity-60'
+                >
+                  Close
+                </button>
+
+                <button
+                  onClick={handleCancelBooking}
+                  disabled={cancelLoading}
+                  className={`px-5 py-2.5 text-white rounded-2xl transition ${
+                    cancelLoading
+                      ? 'bg-red-300 cursor-not-allowed'
+                      : 'bg-red-500 hover:bg-red-600'
+                  }`}
+                >
+                  {cancelLoading ? 'Cancelling...' : 'Confirm Cancel'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <style>{`
   @keyframes fadeIn {
@@ -693,10 +876,11 @@ function PageButton({ pageNumber, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-11 h-11 rounded-2xl text-sm font-semibold transition ${active
-        ? 'bg-[#173a8f] text-white shadow-sm'
-        : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-        }`}
+      className={`w-11 h-11 rounded-2xl text-sm font-semibold transition ${
+        active
+          ? 'bg-[#173a8f] text-white shadow-sm'
+          : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+      }`}
     >
       {pageNumber + 1}
     </button>
