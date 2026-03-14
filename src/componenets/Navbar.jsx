@@ -5,13 +5,15 @@ import {
   FiMenu,
   FiChevronRight,
   FiChevronDown,
+  FiTrash2,
+  FiCheck,
+  FiClock,
 } from 'react-icons/fi'
 import { FaShoppingCart } from 'react-icons/fa'
 import React, { useEffect, useState, useRef } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
-
 const saveOwnerApplication = (userId, data) => {
   const allApps = JSON.parse(localStorage.getItem('allOwnerApplications')) || {}
   allApps[userId] = data
@@ -109,9 +111,7 @@ export default function Navbar() {
       const safe = Array.isArray(data) ? data : []
 
       setNotifications(safe)
-      setUnreadCount(
-        safe.filter((item) => !(item.isRead === true || item.read === true)).length
-      )
+      setUnreadCount(safe.filter((item) => item.isRead !== true).length)
     } catch (e) {
       console.error('Notification fetch error:', e)
     }
@@ -219,6 +219,94 @@ export default function Navbar() {
     return () => document.removeEventListener('click', handleOutside)
   }, [])
 
+  const formatNotificationTime = (dateValue) => {
+    if (!dateValue) return ''
+
+    const now = new Date()
+    const created = new Date(dateValue)
+    const diffMs = now - created
+
+    const seconds = Math.floor(diffMs / 1000)
+    const minutes = Math.floor(seconds / 60)
+    const hours = Math.floor(minutes / 60)
+    const days = Math.floor(hours / 24)
+
+    if (seconds < 60) return 'Just now'
+    if (minutes < 60) return `${minutes} min ago`
+    if (hours < 24) return `${hours} hr ago`
+    if (days === 1) return 'Yesterday'
+    if (days < 7) return `${days} days ago`
+
+    return created.toLocaleDateString()
+  }
+
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      const target = notifications.find((item) => item.id === notificationId)
+
+      if (!target || target.isRead === true) return
+
+      const res = await fetch(`${BASE_URL}/api/notifications/read/${notificationId}`, {
+        method: 'PUT',
+      })
+
+      if (!res.ok) throw new Error('Failed to mark notification as read')
+
+      setNotifications((prev) =>
+        prev.map((item) =>
+          item.id === notificationId ? { ...item, isRead: true } : item
+        )
+      )
+
+      setUnreadCount((prev) => Math.max(prev - 1, 0))
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const markAllNotificationsAsRead = async () => {
+    if (!userId) return
+
+    const hasUnread = notifications.some((item) => item.isRead !== true)
+    if (!hasUnread) return
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/notifications/read-all/${userId}`, {
+        method: 'PUT',
+      })
+
+      if (!res.ok) throw new Error('Failed to mark all notifications as read')
+
+      const data = await res.json()
+      const safe = Array.isArray(data) ? data : []
+
+      setNotifications(safe)
+      setUnreadCount(0)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const deleteNotification = async (notificationId) => {
+    try {
+      const notificationToDelete = notifications.find((item) => item.id === notificationId)
+
+      const res = await fetch(`${BASE_URL}/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) throw new Error('Failed to delete notification')
+
+      setNotifications((prev) => prev.filter((item) => item.id !== notificationId))
+
+      if (notificationToDelete && notificationToDelete.isRead !== true) {
+        setUnreadCount((prev) => Math.max(prev - 1, 0))
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   const handleOwnerApply = async () => {
     if (!currentUserId) {
       toast.error('User not logged in')
@@ -303,11 +391,10 @@ export default function Navbar() {
           <button
             type='button'
             onClick={() => setOwnerDropdownOpen((prev) => !prev)}
-            className={`group flex items-center justify-between min-w-[235px] h-[50px] pl-4 pr-3 rounded-xl border transition-all bg-white ${
-              ownerDropdownOpen
-                ? 'border-[#cfd6e4] shadow-[0_12px_30px_rgba(17,24,39,0.10)]'
-                : 'border-[#d8dee8] shadow-[0_4px_14px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]'
-            }`}
+            className={`group flex items-center justify-between min-w-[235px] h-[50px] pl-4 pr-3 rounded-xl border transition-all bg-white ${ownerDropdownOpen
+              ? 'border-[#cfd6e4] shadow-[0_12px_30px_rgba(17,24,39,0.10)]'
+              : 'border-[#d8dee8] shadow-[0_4px_14px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]'
+              }`}
           >
             <div className='flex items-center justify-center w-8 h-8 rounded-full bg-[#f3f6fb] text-[#344054] border border-[#e4e7ec]'>
               <FiUser className='text-[16px]' />
@@ -321,18 +408,16 @@ export default function Navbar() {
             </div>
 
             <FiChevronDown
-              className={`text-[18px] text-[#667085] transition-transform duration-200 ${
-                ownerDropdownOpen ? 'rotate-180' : ''
-              }`}
+              className={`text-[18px] text-[#667085] transition-transform duration-200 ${ownerDropdownOpen ? 'rotate-180' : ''
+                }`}
             />
           </button>
 
           <div
-            className={`absolute right-0 top-[58px] w-[290px] origin-top-right transition-all duration-200 z-50 ${
-              ownerDropdownOpen
-                ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
-                : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
-            }`}
+            className={`absolute right-0 top-[58px] w-[290px] origin-top-right transition-all duration-200 z-50 ${ownerDropdownOpen
+              ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
+              : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
+              }`}
           >
             <div className='rounded-2xl border border-[#dde3ec] bg-white shadow-[0_20px_45px_rgba(15,23,42,0.14)] p-3'>
               <div className='mb-3 rounded-xl border border-[#e6eaf0] bg-[#f8fafc] px-4 py-3'>
@@ -467,21 +552,19 @@ export default function Navbar() {
                       className='group relative w-[110px] pb-2 text-center'
                     >
                       <span
-                        className={`text-[15px] font-semibold transition-colors duration-300 ${
-                          location.pathname === '/success'
-                            ? 'text-[#111827]'
-                            : 'text-[#667085] group-hover:text-[#111827]'
-                        }`}
+                        className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/success'
+                          ? 'text-[#111827]'
+                          : 'text-[#667085] group-hover:text-[#111827]'
+                          }`}
                       >
                         Home
                       </span>
 
                       <span
-                        className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
-                          location.pathname === '/success'
-                            ? 'opacity-100 scale-x-100'
-                            : 'opacity-0 scale-x-0'
-                        }`}
+                        className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/success'
+                          ? 'opacity-100 scale-x-100'
+                          : 'opacity-0 scale-x-0'
+                          }`}
                       />
                     </button>
 
@@ -491,21 +574,19 @@ export default function Navbar() {
                       className='group relative w-[110px] pb-2 text-center'
                     >
                       <span
-                        className={`text-[15px] font-semibold transition-colors duration-300 ${
-                          location.pathname === '/bookings'
-                            ? 'text-[#111827]'
-                            : 'text-[#667085] group-hover:text-[#111827]'
-                        }`}
+                        className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/bookings'
+                          ? 'text-[#111827]'
+                          : 'text-[#667085] group-hover:text-[#111827]'
+                          }`}
                       >
                         My Bookings
                       </span>
 
                       <span
-                        className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
-                          location.pathname === '/bookings'
-                            ? 'opacity-100 scale-x-100'
-                            : 'opacity-0 scale-x-0'
-                        }`}
+                        className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/bookings'
+                          ? 'opacity-100 scale-x-100'
+                          : 'opacity-0 scale-x-0'
+                          }`}
                       />
                     </button>
                   </div>
@@ -515,46 +596,137 @@ export default function Navbar() {
                   <div className='relative' onClick={(e) => e.stopPropagation()}>
                     <button
                       type='button'
-                      onClick={() => setShowNotificationDropdown((prev) => !prev)}
-                      className='hidden sm:flex relative h-10 w-10 items-center justify-center rounded-full border border-[#e6eaf0] bg-white text-[#344054] hover:bg-[#f8fafc] transition'
+                      onClick={() => {
+                        setShowNotificationDropdown((prev) => {
+                          const next = !prev
+
+                          if (next && unreadCount > 0) {
+                            markAllNotificationsAsRead()
+                          }
+
+                          return next
+                        })
+                      }}
+                      className='hidden sm:flex relative h-10 w-10 items-center justify-center rounded-full border border-[#e6eaf0] bg-white text-[#344054] shadow-sm hover:bg-[#f8fafc] hover:shadow-md transition-all duration-200'
                     >
-                      <FiBell className='text-[19px]' />
+                      <FiBell className={`text-[19px] transition-transform duration-200 ${showNotificationDropdown ? 'scale-110' : ''}`} />
+
                       {unreadCount > 0 && (
-                        <span className='absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[11px] font-bold text-white'>
-                          {unreadCount}
-                        </span>
+                        <>
+                          <span className='absolute -top-1 -right-1 min-w-[20px] h-5 px-1 flex items-center justify-center rounded-full bg-red-500 text-[11px] font-bold text-white shadow-md'>
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                          </span>
+                          <span className='absolute inset-0 rounded-full animate-ping bg-red-400/20 pointer-events-none' />
+                        </>
                       )}
                     </button>
 
-                    {showNotificationDropdown && (
-                      <div className='absolute right-0 top-12 w-[360px] rounded-2xl border border-[#dde3ec] bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.14)] z-50'>
-                        <h3 className='mb-4 text-[16px] font-semibold text-[#243B63]'>
-                          Notifications
-                        </h3>
+                    <div
+                      className={`absolute right-0 top-12 w-[380px] origin-top-right rounded-3xl border border-[#e5e7eb] bg-white/95 backdrop-blur-xl shadow-[0_24px_60px_rgba(15,23,42,0.18)] z-50 overflow-hidden transition-all duration-300 ${showNotificationDropdown
+                          ? 'opacity-100 visible translate-y-0 scale-100'
+                          : 'opacity-0 invisible -translate-y-2 scale-95 pointer-events-none'
+                        }`}
+                    >
 
+                      <div className='max-h-[420px] overflow-y-auto px-3 py-3'>
                         {notifications.length === 0 ? (
-                          <div className='rounded-xl border border-dashed border-[#d8dee8] bg-[#f8fafc] px-4 py-6 text-center text-sm text-[#667085]'>
-                            No notifications
+                          <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#d8dee8] bg-[#f8fafc] px-6 py-12 text-center'>
+                            <div className='flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm border border-[#eef2f6]'>
+                              <FiBell className='text-[22px] text-[#98a2b3]' />
+                            </div>
+
+                            <h4 className='mt-4 text-sm font-semibold text-[#111827]'>
+                              No notifications yet
+                            </h4>
+
+                            <p className='mt-1 max-w-[240px] text-xs leading-5 text-[#667085]'>
+                              New booking updates and important alerts will appear here.
+                            </p>
                           </div>
                         ) : (
-                          <div className='space-y-2 max-h-[320px] overflow-y-auto pr-1'>
-                            {notifications.map((item) => (
+                          <div className='space-y-2'>
+                            {notifications.map((item, index) => (
                               <div
                                 key={item.id}
-                                className='rounded-xl border border-[#eef1f5] px-3 py-3 bg-white'
+                                onClick={() => markNotificationAsRead(item.id)}
+                                className={`group relative cursor-pointer overflow-hidden rounded-2xl border px-4 py-3 transition-all duration-200 ${item.isRead
+                                    ? 'border-[#edf1f5] bg-white hover:bg-[#fafbfc] hover:shadow-sm'
+                                    : 'border-blue-100 bg-gradient-to-r from-blue-50 to-white shadow-[0_6px_18px_rgba(59,130,246,0.08)] hover:shadow-[0_10px_24px_rgba(59,130,246,0.12)]'
+                                  }`}
+                                style={{
+                                  animation: `fadeSlideIn 220ms ease ${index * 40}ms both`,
+                                }}
                               >
-                                <p className='text-sm font-semibold text-[#111827]'>
-                                  {item.title}
-                                </p>
-                                <p className='text-xs text-[#667085] mt-1 leading-5'>
-                                  {item.message}
-                                </p>
+                                {!item.isRead && (
+                                  <div className='absolute left-0 top-0 h-full w-1 rounded-r-full bg-blue-500' />
+                                )}
+
+                                <div className='flex items-start justify-between gap-3'>
+                                  <div className='flex min-w-0 flex-1 gap-3'>
+                                    <div
+                                      className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${item.isRead
+                                          ? 'bg-[#f2f4f7] text-[#667085]'
+                                          : 'bg-blue-100 text-blue-700'
+                                        }`}
+                                    >
+                                      <FiBell className='text-[16px]' />
+                                    </div>
+
+                                    <div className='min-w-0 flex-1'>
+                                      <div className='flex items-center gap-2'>
+                                        <p className='truncate text-sm font-semibold text-[#111827]'>
+                                          {item.title}
+                                        </p>
+
+                                        {!item.isRead && (
+                                          <span className='h-2.5 w-2.5 shrink-0 rounded-full bg-red-500 shadow-[0_0_0_4px_rgba(239,68,68,0.12)]' />
+                                        )}
+                                      </div>
+
+                                      <p className='mt-1 text-xs leading-5 text-[#667085] break-words'>
+                                        {item.message}
+                                      </p>
+
+                                      <div className='mt-2 flex items-center gap-1.5 text-[11px] text-[#98a2b3]'>
+                                        <FiClock className='text-[12px]' />
+                                        <span>{formatNotificationTime(item.createdAt)}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    type='button'
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      deleteNotification(item.id)
+                                    }}
+                                    className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#98a2b3] opacity-0 transition-all duration-200 hover:bg-red-50 hover:text-red-600 group-hover:opacity-100'
+                                    title='Delete notification'
+                                  >
+                                    <FiTrash2 className='text-[15px]' />
+                                  </button>
+                                </div>
                               </div>
                             ))}
                           </div>
                         )}
                       </div>
-                    )}
+
+                      <style>
+                        {`
+                          @keyframes fadeSlideIn {
+                            from {
+                              opacity: 0;
+                              transform: translateY(8px);
+                            }
+                            to {
+                              opacity: 1;
+                              transform: translateY(0);
+                            }
+                          }
+                        `}
+                      </style>
+                    </div>
                   </div>
 
                   <div
@@ -579,11 +751,10 @@ export default function Navbar() {
                       fixed md:absolute top-20 md:top-12 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 md:right-0
                       w-[95%] max-w-sm md:w-[340px] rounded-2xl border border-[#dde3ec] bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.14)] z-50
                       transition-all duration-300 ease-in-out
-                      ${
-                        showCartDropdown
+                      ${showCartDropdown
                           ? 'opacity-100 visible translate-y-0'
                           : 'opacity-0 invisible translate-y-3'
-                      }
+                        }
                       md:opacity-0 md:invisible md:translate-y-3
                       md:group-hover:opacity-100 md:group-hover:visible md:group-hover:translate-y-0
                     `}
@@ -781,11 +952,10 @@ export default function Navbar() {
                     setAgreed(false)
                   }
                 }}
-                className={`w-full rounded-xl py-3 font-semibold transition ${
-                  agreed
-                    ? 'bg-gradient-to-r from-[#111827] to-[#1f2937] text-white'
-                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                }`}
+                className={`w-full rounded-xl py-3 font-semibold transition ${agreed
+                  ? 'bg-gradient-to-r from-[#111827] to-[#1f2937] text-white'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  }`}
               >
                 Continue
               </button>
@@ -866,7 +1036,7 @@ export default function Navbar() {
                 >
                   {aadharFile ? (
                     <img
-                      src={URL.createObjectURL(aadharFile)}
+                      src={typeof aadharFile === 'string' ? aadharFile : URL.createObjectURL(aadharFile)}
                       alt='Preview'
                       className='h-full rounded-xl object-contain'
                     />
