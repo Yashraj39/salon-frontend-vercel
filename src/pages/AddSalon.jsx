@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import OwnerLayout from '../componenets/OwnerLayout'
-import { Trash2, Plus, Image as ImageIcon } from 'lucide-react'
+import { Trash2, Plus, Image as ImageIcon, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
 
@@ -125,6 +126,18 @@ export default function ManageSalons() {
       toast.error('Salon load failed')
     }
   }
+
+  useEffect(() => {
+    if (showPopup || deleteModalOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'auto'
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto'
+    }
+  }, [showPopup, deleteModalOpen])
 
   useEffect(() => {
     if (ownerId) loadSalons()
@@ -342,7 +355,7 @@ export default function ManageSalons() {
 
   return (
     <OwnerLayout>
-      <div className='max-w-7xl mx-auto py-4 animate-fadeIn'>
+      <div className='max-w-7xl mx-auto py-4 animate-fadeIn relative'>
         <div className='mb-6'>
           <h1 className='text-2xl sm:text-[28px] font-bold text-gray-950 tracking-tight'>
             Manage Salons
@@ -375,22 +388,20 @@ export default function ManageSalons() {
                   <div
                     key={salon.id}
                     onClick={() => handleSelectSalon(salon)}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
-                      selectedSalon?.id === salon.id
-                        ? 'bg-black text-white border-black shadow-md'
-                        : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                    }`}
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${selectedSalon?.id === salon.id
+                      ? 'bg-black text-white border-black shadow-md'
+                      : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                      }`}
                     style={{ animationDelay: `${index * 40}ms` }}
                   >
                     <div className='flex justify-between gap-3'>
                       <div className='min-w-0'>
                         <h3 className='font-semibold text-base truncate'>{salon.name}</h3>
                         <p
-                          className={`text-sm mt-1 ${
-                            selectedSalon?.id === salon.id
-                              ? 'text-white/80'
-                              : 'text-gray-500'
-                          }`}
+                          className={`text-sm mt-1 ${selectedSalon?.id === salon.id
+                            ? 'text-white/80'
+                            : 'text-gray-500'
+                            }`}
                         >
                           {salon.city || 'No city'}
                         </p>
@@ -401,11 +412,10 @@ export default function ManageSalons() {
                           e.stopPropagation()
                           handleDeleteClick(salon)
                         }}
-                        className={`p-2 rounded-xl transition shrink-0 ${
-                          selectedSalon?.id === salon.id
-                            ? 'hover:bg-white/10 text-white'
-                            : 'hover:bg-red-50 text-red-500 hover:text-red-600'
-                        }`}
+                        className={`p-2 rounded-xl transition shrink-0 ${selectedSalon?.id === salon.id
+                          ? 'hover:bg-white/10 text-white'
+                          : 'hover:bg-red-50 text-red-500 hover:text-red-600'
+                          }`}
                       >
                         <Trash2 size={18} />
                       </button>
@@ -574,11 +584,10 @@ export default function ManageSalons() {
                 <button
                   onClick={handleUpdateSalon}
                   disabled={isUpdatingSalon || !hasSalonChanged}
-                  className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${
-                    isUpdatingSalon || !hasSalonChanged
-                      ? 'bg-gray-300 cursor-not-allowed'
-                      : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
-                  }`}
+                  className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${isUpdatingSalon || !hasSalonChanged
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                    }`}
                 >
                   {isUpdatingSalon ? 'Saving Changes...' : 'Save Changes'}
                 </button>
@@ -593,204 +602,231 @@ export default function ManageSalons() {
       </div>
 
       {deleteModalOpen && (
-        <div className='fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn'>
-          <div className='bg-white p-6 rounded-3xl shadow-lg w-full max-w-md animate-scaleIn'>
-            <h2 className='text-2xl font-bold mb-3 text-gray-950'>Confirm Delete</h2>
-            <p className='mb-6 text-gray-600 leading-7'>
-              Are you sure you want to delete <strong>{salonToDelete?.name}</strong>?
-            </p>
-
-            <div className='flex justify-end gap-3'>
+        <ModalPortal>
+          <div className='fixed inset-0 z-[9999] bg-black/55 backdrop-blur-[2px] flex items-center justify-center p-4 animate-fadeIn'>
+            <div className='bg-white p-6 rounded-3xl shadow-lg w-full max-w-md animate-scaleIn relative'>
               <button
                 onClick={cancelDelete}
-                className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
+                className='absolute top-4 right-4 w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center transition'
               >
-                Cancel
+                <X size={18} />
               </button>
 
-              <button
-                onClick={confirmDelete}
-                className='px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-2xl transition'
-              >
-                Delete
-              </button>
+              <h2 className='text-2xl font-bold mb-3 text-gray-950'>Confirm Delete</h2>
+              <p className='mb-6 text-gray-600 leading-7'>
+                Are you sure you want to delete <strong>{salonToDelete?.name}</strong>?
+              </p>
+
+              <div className='flex justify-end gap-3'>
+                <button
+                  onClick={cancelDelete}
+                  className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={confirmDelete}
+                  className='px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-2xl transition'
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {showPopup && (
-        <div className='fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn'>
-          <div className='bg-white w-full max-w-6xl rounded-3xl shadow-2xl p-6 sm:p-8 relative max-h-[92vh] overflow-y-auto animate-scaleIn'>
-            <div className='mb-6'>
-              <h2 className='text-2xl font-bold text-gray-950 mb-1'>Add New Salon</h2>
-              <p className='text-sm text-gray-500'>
-                Fill salon details, upload salon images, and choose one verification document.
-              </p>
-            </div>
+        <ModalPortal>
+          <div
+            className='fixed inset-0 z-[9999] bg-black/55 backdrop-blur-[2px] overflow-y-auto animate-fadeIn'
+            onClick={handleClosePopup}
+          >
+            <div className='min-h-screen flex items-start justify-center p-4 sm:p-6 lg:p-8'>
+              <div
+                className='bg-white w-full max-w-6xl rounded-3xl shadow-2xl p-6 sm:p-8 relative animate-scaleIn my-6'
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={handleClosePopup}
+                  className='absolute top-5 right-5 w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center transition'
+                >
+                  <X size={20} />
+                </button>
 
-            <h3 className='text-lg font-semibold mb-3 text-gray-950'>Basic Details</h3>
-
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-              <PopupInput
-                type='text'
-                name='name'
-                placeholder='Salon Name'
-                value={form.name}
-                onChange={handleChange}
-              />
-
-              <PopupInput
-                type='text'
-                name='city'
-                placeholder='City'
-                value={form.city}
-                onChange={handleChange}
-              />
-            </div>
-
-            <textarea
-              name='address'
-              placeholder='Salon Address'
-              value={form.address}
-              onChange={handleChange}
-              className='w-full border border-gray-200 px-4 py-3 rounded-2xl resize-none mb-4 outline-none focus:border-gray-400 transition-all duration-300'
-              rows='4'
-            />
-
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-              <PopupInput
-                type='text'
-                name='contact'
-                placeholder='Contact Number'
-                value={form.contact}
-                onChange={(e) => {
-                  const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
-                  setForm({ ...form, contact: onlyDigits })
-                }}
-              />
-
-              <PopupInput
-                type='email'
-                name='salonEmail'
-                placeholder='Salon Email'
-                value={form.salonEmail}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-              <PopupInput
-                type='time'
-                name='opentime'
-                value={form.opentime}
-                onChange={handleChange}
-              />
-
-              <PopupInput
-                type='time'
-                name='closetime'
-                value={form.closetime}
-                onChange={handleChange}
-              />
-            </div>
-
-            <PopupInput
-              type='text'
-              name='mapLink'
-              placeholder='Google Map Link'
-              value={form.mapLink}
-              onChange={handleChange}
-              className='mb-6'
-            />
-
-            <h3 className='text-lg font-semibold mb-3 text-gray-950'>Salon Images</h3>
-
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-5 mb-6'>
-              <UploadCard
-                label='Cover Image'
-                file={addCover}
-                setFile={setAddCover}
-                accept='image/*'
-                previewType='image'
-              />
-
-              <UploadCard
-                label='Interior Image'
-                file={addInterior}
-                setFile={setAddInterior}
-                accept='image/*'
-                previewType='image'
-              />
-
-              <UploadCard
-                label='Exterior Image'
-                file={addExterior}
-                setFile={setAddExterior}
-                accept='image/*'
-                previewType='image'
-              />
-
-              <UploadCard
-                label='Owner Photo'
-                file={addOwnerPhoto}
-                setFile={setAddOwnerPhoto}
-                accept='image/*'
-                previewType='image'
-              />
-            </div>
-
-            <div className='mb-6'>
-              <h3 className='text-lg font-semibold mb-3 text-gray-950'>
-                Verification Document
-              </h3>
-
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
-                <div>
-                  <label className='block mb-2 text-sm font-medium text-gray-800'>Document Type</label>
-                  <select
-                    value={documentType}
-                    onChange={(e) => setDocumentType(e.target.value)}
-                    className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400 transition-all duration-300'
-                  >
-                    <option value='GST_CERTIFICATE'>GST Certificate</option>
-                    <option value='SHOP_LICENSE'>Shop License</option>
-                    <option value='FSSAI_LICENSE'>FSSAI License</option>
-                    <option value='OTHER'>Other</option>
-                  </select>
+                <div className='mb-6 pr-12'>
+                  <h2 className='text-2xl font-bold text-gray-950 mb-1'>Add New Salon</h2>
+                  <p className='text-sm text-gray-500'>
+                    Fill salon details, upload salon images, and choose one verification document.
+                  </p>
                 </div>
 
-                <UploadCard
-                  label='Upload Document'
-                  file={addDocument}
-                  setFile={setAddDocument}
-                  previewType='file'
+                <h3 className='text-lg font-semibold mb-3 text-gray-950'>Basic Details</h3>
+
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
+                  <PopupInput
+                    type='text'
+                    name='name'
+                    placeholder='Salon Name'
+                    value={form.name}
+                    onChange={handleChange}
+                  />
+
+                  <PopupInput
+                    type='text'
+                    name='city'
+                    placeholder='City'
+                    value={form.city}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <textarea
+                  name='address'
+                  placeholder='Salon Address'
+                  value={form.address}
+                  onChange={handleChange}
+                  className='w-full border border-gray-200 px-4 py-3 rounded-2xl resize-none mb-4 outline-none focus:border-gray-400 transition-all duration-300'
+                  rows='4'
                 />
+
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
+                  <PopupInput
+                    type='text'
+                    name='contact'
+                    placeholder='Contact Number'
+                    value={form.contact}
+                    onChange={(e) => {
+                      const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
+                      setForm({ ...form, contact: onlyDigits })
+                    }}
+                  />
+
+                  <PopupInput
+                    type='email'
+                    name='salonEmail'
+                    placeholder='Salon Email'
+                    value={form.salonEmail}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
+                  <PopupInput
+                    type='time'
+                    name='opentime'
+                    value={form.opentime}
+                    onChange={handleChange}
+                  />
+
+                  <PopupInput
+                    type='time'
+                    name='closetime'
+                    value={form.closetime}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <PopupInput
+                  type='text'
+                  name='mapLink'
+                  placeholder='Google Map Link'
+                  value={form.mapLink}
+                  onChange={handleChange}
+                  className='mb-6'
+                />
+
+                <h3 className='text-lg font-semibold mb-3 text-gray-950'>Salon Images</h3>
+
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-5 mb-6'>
+                  <UploadCard
+                    label='Cover Image'
+                    file={addCover}
+                    setFile={setAddCover}
+                    accept='image/*'
+                    previewType='image'
+                  />
+
+                  <UploadCard
+                    label='Interior Image'
+                    file={addInterior}
+                    setFile={setAddInterior}
+                    accept='image/*'
+                    previewType='image'
+                  />
+
+                  <UploadCard
+                    label='Exterior Image'
+                    file={addExterior}
+                    setFile={setAddExterior}
+                    accept='image/*'
+                    previewType='image'
+                  />
+
+                  <UploadCard
+                    label='Owner Photo'
+                    file={addOwnerPhoto}
+                    setFile={setAddOwnerPhoto}
+                    accept='image/*'
+                    previewType='image'
+                  />
+                </div>
+
+                <div className='mb-6'>
+                  <h3 className='text-lg font-semibold mb-3 text-gray-950'>
+                    Verification Document
+                  </h3>
+
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
+                    <div>
+                      <label className='block mb-2 text-sm font-medium text-gray-800'>
+                        Document Type
+                      </label>
+                      <select
+                        value={documentType}
+                        onChange={(e) => setDocumentType(e.target.value)}
+                        className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400 transition-all duration-300'
+                      >
+                        <option value='GST_CERTIFICATE'>GST Certificate</option>
+                        <option value='SHOP_LICENSE'>Shop License</option>
+                        <option value='FSSAI_LICENSE'>FSSAI License</option>
+                        <option value='OTHER'>Other</option>
+                      </select>
+                    </div>
+
+                    <UploadCard
+                      label='Upload Document'
+                      file={addDocument}
+                      setFile={setAddDocument}
+                      previewType='file'
+                    />
+                  </div>
+                </div>
+
+                <div className='flex justify-end gap-3'>
+                  <button
+                    onClick={handleClosePopup}
+                    className='px-5 py-3 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={handleAddSalon}
+                    disabled={isAddingSalon}
+                    className={`px-5 py-3 text-white rounded-2xl transition-all duration-300 ${isAddingSalon
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                      }`}
+                  >
+                    {isAddingSalon ? 'Adding Salon...' : 'Add Salon'}
+                  </button>
+                </div>
               </div>
             </div>
-
-            <div className='flex justify-end gap-3'>
-              <button
-                onClick={handleClosePopup}
-                className='px-5 py-3 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleAddSalon}
-                disabled={isAddingSalon}
-                className={`px-5 py-3 text-white rounded-2xl transition-all duration-300 ${
-                  isAddingSalon
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
-                }`}
-              >
-                {isAddingSalon ? 'Adding Salon...' : 'Add Salon'}
-              </button>
-            </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       <style>{`
@@ -843,6 +879,11 @@ export default function ManageSalons() {
       `}</style>
     </OwnerLayout>
   )
+}
+
+function ModalPortal({ children }) {
+  if (typeof document === 'undefined') return null
+  return createPortal(children, document.body)
 }
 
 function InputField({ label, className = '', ...props }) {

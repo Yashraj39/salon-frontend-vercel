@@ -332,17 +332,17 @@ export default function ManageBarbers() {
       .then((data) => {
         const safe = Array.isArray(data)
           ? data.map((barber) => ({
-              ...barber,
-              workingStartTime: normalizeTime(barber.workingStartTime),
-              workingEndTime: normalizeTime(barber.workingEndTime),
-              lunchStart: normalizeTime(barber.lunchStart),
-              lunchEnd: normalizeTime(barber.lunchEnd),
-              weeklyOffDays: barber.weeklyOffDays || [],
-              leaves: normalizeLeaves(barber.leaves || []),
-              temporaryInactiveSlots: normalizeTemporaryInactiveSlots(
-                barber.temporaryInactiveSlots || []
-              ),
-            }))
+            ...barber,
+            workingStartTime: normalizeTime(barber.workingStartTime),
+            workingEndTime: normalizeTime(barber.workingEndTime),
+            lunchStart: normalizeTime(barber.lunchStart),
+            lunchEnd: normalizeTime(barber.lunchEnd),
+            weeklyOffDays: barber.weeklyOffDays || [],
+            leaves: normalizeLeaves(barber.leaves || []),
+            temporaryInactiveSlots: normalizeTemporaryInactiveSlots(
+              barber.temporaryInactiveSlots || []
+            ),
+          }))
           : []
 
         setBarbers(safe)
@@ -549,8 +549,8 @@ export default function ManageBarbers() {
             await handleTemporaryInactive(
               true,
               data?.reason ||
-                tempInactiveForm.reason ||
-                'Barber temporarily unavailable'
+              tempInactiveForm.reason ||
+              'Barber temporarily unavailable'
             )
           },
         })
@@ -850,25 +850,25 @@ export default function ManageBarbers() {
   const hasChanges =
     form && originalForm
       ? JSON.stringify({
-          active: !!form.active,
-          name: form.name || '',
-          workingStartTime: normalizeTime(form.workingStartTime),
-          workingEndTime: normalizeTime(form.workingEndTime),
-          lunchStart: normalizeTime(form.lunchStart),
-          lunchEnd: normalizeTime(form.lunchEnd),
-          weeklyOffDays: [...(form.weeklyOffDays || [])].sort(),
-          leaves: normalizeLeaves(form.leaves || []),
-        }) !==
-        JSON.stringify({
-          active: !!originalForm.active,
-          name: originalForm.name || '',
-          workingStartTime: normalizeTime(originalForm.workingStartTime),
-          workingEndTime: normalizeTime(originalForm.workingEndTime),
-          lunchStart: normalizeTime(originalForm.lunchStart),
-          lunchEnd: normalizeTime(originalForm.lunchEnd),
-          weeklyOffDays: [...(originalForm.weeklyOffDays || [])].sort(),
-          leaves: normalizeLeaves(originalForm.leaves || []),
-        })
+        active: !!form.active,
+        name: form.name || '',
+        workingStartTime: normalizeTime(form.workingStartTime),
+        workingEndTime: normalizeTime(form.workingEndTime),
+        lunchStart: normalizeTime(form.lunchStart),
+        lunchEnd: normalizeTime(form.lunchEnd),
+        weeklyOffDays: [...(form.weeklyOffDays || [])].sort(),
+        leaves: normalizeLeaves(form.leaves || []),
+      }) !==
+      JSON.stringify({
+        active: !!originalForm.active,
+        name: originalForm.name || '',
+        workingStartTime: normalizeTime(originalForm.workingStartTime),
+        workingEndTime: normalizeTime(originalForm.workingEndTime),
+        lunchStart: normalizeTime(originalForm.lunchStart),
+        lunchEnd: normalizeTime(originalForm.lunchEnd),
+        weeklyOffDays: [...(originalForm.weeklyOffDays || [])].sort(),
+        leaves: normalizeLeaves(originalForm.leaves || []),
+      })
       : false
 
   const showInactive =
@@ -938,11 +938,10 @@ export default function ManageBarbers() {
                 setShowPopup(true)
               }}
               disabled={!selectedSalonId}
-              className={`w-full text-white py-3 rounded-2xl mb-4 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-sm ${
-                selectedSalonId
+              className={`w-full text-white py-3 rounded-2xl mb-4 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-sm ${selectedSalonId
                   ? 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 hover:shadow-md'
                   : 'bg-gray-400 cursor-not-allowed'
-              }`}
+                }`}
             >
               <Plus size={18} />
               Add Barber
@@ -958,11 +957,10 @@ export default function ManageBarbers() {
                     <div
                       key={barber.id}
                       onClick={() => handleSelect(barber)}
-                      className={`group p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-0.5 ${
-                        selectedBarber?.id === barber.id
+                      className={`group p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-0.5 ${selectedBarber?.id === barber.id
                           ? 'bg-gradient-to-r from-slate-50 to-white border-slate-300 ring-2 ring-slate-200 shadow-[0_10px_30px_rgba(15,23,42,0.08)]'
                           : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 shadow-sm'
-                      }`}
+                        }`}
                       style={{ animationDelay: `${index * 40}ms` }}
                     >
                       <div className='flex justify-between items-start gap-3'>
@@ -975,22 +973,20 @@ export default function ManageBarbers() {
                                 handleDeleteClick(barber)
                               }}
                               disabled={isDeleting}
-                              className={`p-1.5 rounded-lg transition shrink-0 ${
-                                selectedBarber?.id === barber.id
+                              className={`p-1.5 rounded-lg transition shrink-0 ${selectedBarber?.id === barber.id
                                   ? 'text-slate-500 hover:bg-red-50 hover:text-red-600'
                                   : 'text-red-500 hover:bg-red-50 hover:text-red-600'
-                              } ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                } ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               <Trash2 className='w-4 h-4' />
                             </button>
                           </div>
 
                           <p
-                            className={`text-sm mt-1 ${
-                              selectedBarber?.id === barber.id
+                            className={`text-sm mt-1 ${selectedBarber?.id === barber.id
                                 ? 'text-slate-600'
                                 : 'text-gray-600'
-                            }`}
+                              }`}
                           >
                             {barber.weeklyOffDays?.length || 0} Weekly Off |{' '}
                             {barber.leaves?.length || 0} Leaves
@@ -998,11 +994,10 @@ export default function ManageBarbers() {
                         </div>
 
                         <span
-                          className={`text-xs shrink-0 px-2.5 py-1 rounded-full font-medium ${
-                            barberShowInactive
+                          className={`text-xs shrink-0 px-2.5 py-1 rounded-full font-medium ${barberShowInactive
                               ? 'bg-red-50 text-red-600 border border-red-100'
                               : 'bg-green-50 text-green-600 border border-green-100'
-                          }`}
+                            }`}
                         >
                           {barberShowInactive ? 'Inactive' : 'Active'}
                         </span>
@@ -1057,14 +1052,12 @@ export default function ManageBarbers() {
                       })
                       setTempInactiveModalOpen(true)
                     }}
-                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 ${
-                      showInactive ? 'bg-gray-300' : 'bg-green-500'
-                    }`}
+                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 ${showInactive ? 'bg-gray-300' : 'bg-green-500'
+                      }`}
                   >
                     <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-                        showInactive ? 'translate-x-1' : 'translate-x-8'
-                      }`}
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${showInactive ? 'translate-x-1' : 'translate-x-8'
+                        }`}
                     />
                   </button>
 
@@ -1149,11 +1142,10 @@ export default function ManageBarbers() {
                   {weekDays.map((day) => (
                     <label
                       key={day.value}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all duration-300 ${
-                        form.weeklyOffDays?.includes(day.value)
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all duration-300 ${form.weeklyOffDays?.includes(day.value)
                           ? 'bg-black text-white border-black'
                           : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                      }`}
+                        }`}
                     >
                       <input
                         type='checkbox'
@@ -1227,11 +1219,10 @@ export default function ManageBarbers() {
               <button
                 onClick={() => handleSave()}
                 disabled={isSaving || !hasChanges}
-                className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${
-                  isSaving || !hasChanges
+                className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${isSaving || !hasChanges
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
-                }`}
+                  }`}
               >
                 {isSaving ? 'Saving Changes...' : 'Save Changes'}
               </button>
@@ -1260,11 +1251,10 @@ export default function ManageBarbers() {
                   <button
                     onClick={confirmDelete}
                     disabled={isDeleting}
-                    className={`px-5 py-2.5 text-white rounded-2xl transition ${
-                      isDeleting
+                    className={`px-5 py-2.5 text-white rounded-2xl transition ${isDeleting
                         ? 'bg-red-300 cursor-not-allowed'
                         : 'bg-red-500 hover:bg-red-600'
-                    }`}
+                      }`}
                   >
                     {isDeleting ? 'Deleting...' : 'Delete'}
                   </button>
@@ -1424,11 +1414,10 @@ export default function ManageBarbers() {
                   <button
                     onClick={() => handleTemporaryInactive()}
                     disabled={tempInactiveLoading}
-                    className={`px-5 py-2.5 text-white rounded-2xl transition ${
-                      tempInactiveLoading
+                    className={`px-5 py-2.5 text-white rounded-2xl transition ${tempInactiveLoading
                         ? 'bg-gray-400 cursor-not-allowed'
                         : 'bg-black hover:bg-gray-800'
-                    }`}
+                      }`}
                   >
                     {tempInactiveLoading ? 'Saving...' : 'Confirm'}
                   </button>
@@ -1508,11 +1497,10 @@ export default function ManageBarbers() {
                   <button
                     onClick={() => handleVacationSubmit()}
                     disabled={vacationLoading}
-                    className={`px-5 py-2.5 text-white rounded-2xl transition ${
-                      vacationLoading
+                    className={`px-5 py-2.5 text-white rounded-2xl transition ${vacationLoading
                         ? 'bg-gray-400 cursor-not-allowed'
                         : 'bg-black hover:bg-gray-800'
-                    }`}
+                      }`}
                   >
                     {vacationLoading ? 'Saving...' : 'Add Vacation'}
                   </button>
@@ -1524,10 +1512,30 @@ export default function ManageBarbers() {
 
         {showPopup && (
           <ModalPortal>
-            <div className='fixed inset-0 z-[9999] bg-black/55 backdrop-blur-[2px] flex items-center justify-center p-4 animate-fadeIn'>
-              <div className='bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 relative animate-scaleIn max-h-[92vh] overflow-y-auto'>
-                <h2 className='text-2xl font-bold mb-1 text-gray-950'>Add New Barber</h2>
-                <p className='text-sm text-gray-500 mb-6'>
+            <div
+              className='fixed inset-0 z-[9999] bg-black/55 backdrop-blur-[2px] flex items-center justify-center p-4 animate-fadeIn'
+              onClick={() => {
+                setShowPopup(false)
+                setForm(selectedBarber ? { ...selectedBarber } : null)
+              }}
+            >
+              <div
+                className='bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 relative animate-scaleIn max-h-[92vh] overflow-y-auto'
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type='button'
+                  onClick={() => {
+                    setShowPopup(false)
+                    setForm(selectedBarber ? { ...selectedBarber } : null)
+                  }}
+                  className='absolute top-4 right-4 w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center transition'
+                >
+                  ✕
+                </button>
+
+                <h2 className='text-2xl font-bold mb-1 text-gray-950 pr-12'>Add New Barber</h2>
+                <p className='text-sm text-gray-500 mb-6 pr-12'>
                   Fill barber details, working hours, weekly offs, and leave dates.
                 </p>
 
@@ -1586,11 +1594,10 @@ export default function ManageBarbers() {
                     {weekDays.map((day) => (
                       <label
                         key={day.value}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all duration-300 ${
-                          form.weeklyOffDays?.includes(day.value)
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all duration-300 ${form.weeklyOffDays?.includes(day.value)
                             ? 'bg-black text-white border-black'
                             : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                        }`}
+                          }`}
                       >
                         <input
                           type='checkbox'
