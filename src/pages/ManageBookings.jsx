@@ -463,16 +463,15 @@ export default function ManageBookings() {
                       {openActionId === item.bookingId && (
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className='absolute right-0 top-12 z-20 min-w-[150px] rounded-2xl border border-gray-200 bg-white shadow-lg p-2'
+                          className='absolute right-0 bottom-12 z-50 min-w-[170px] rounded-2xl border border-gray-200 bg-white shadow-xl p-2'
                         >
                           <button
                             onClick={() => openCancelModal(item)}
                             disabled={!canCancelBooking(item)}
-                            className={`w-full text-left px-3 py-2 rounded-xl text-sm transition ${
-                              canCancelBooking(item)
-                                ? 'text-red-600 hover:bg-red-50'
-                                : 'text-gray-400 cursor-not-allowed'
-                            }`}
+                            className={`w-full text-left px-3 py-2 rounded-xl text-sm transition ${canCancelBooking(item)
+                              ? 'text-red-600 hover:bg-red-50'
+                              : 'text-gray-400 cursor-not-allowed'
+                              }`}
                           >
                             Cancel Booking
                           </button>
@@ -627,8 +626,8 @@ export default function ManageBookings() {
                           </span>
                         </td>
 
-                        <td className='px-5 py-5 align-top'>
-                          <div className='relative'>
+                        <td className='px-5 py-5 align-top overflow-visible'>
+                          <div className='relative overflow-visible'>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -644,16 +643,15 @@ export default function ManageBookings() {
                             {openActionId === item.bookingId && (
                               <div
                                 onClick={(e) => e.stopPropagation()}
-                                className='absolute right-0 top-12 z-20 min-w-[160px] rounded-2xl border border-gray-200 bg-white shadow-lg p-2'
+                                className='absolute right-0 bottom-12 z-50 min-w-[170px] rounded-2xl border border-gray-200 bg-white shadow-xl p-2'
                               >
                                 <button
                                   onClick={() => openCancelModal(item)}
                                   disabled={!canCancelBooking(item)}
-                                  className={`w-full text-left px-3 py-2 rounded-xl text-sm transition ${
-                                    canCancelBooking(item)
+                                  className={`w-full text-left px-3 py-2 rounded-xl text-sm transition ${canCancelBooking(item)
                                       ? 'text-red-600 hover:bg-red-50'
                                       : 'text-gray-400 cursor-not-allowed'
-                                  }`}
+                                    }`}
                                 >
                                   Cancel Booking
                                 </button>
@@ -771,11 +769,10 @@ export default function ManageBookings() {
                 <button
                   onClick={handleCancelBooking}
                   disabled={cancelLoading}
-                  className={`px-5 py-2.5 text-white rounded-2xl transition ${
-                    cancelLoading
-                      ? 'bg-red-300 cursor-not-allowed'
-                      : 'bg-red-500 hover:bg-red-600'
-                  }`}
+                  className={`px-5 py-2.5 text-white rounded-2xl transition ${cancelLoading
+                    ? 'bg-red-300 cursor-not-allowed'
+                    : 'bg-red-500 hover:bg-red-600'
+                    }`}
                 >
                   {cancelLoading ? 'Cancelling...' : 'Confirm Cancel'}
                 </button>
@@ -876,11 +873,10 @@ function PageButton({ pageNumber, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`w-11 h-11 rounded-2xl text-sm font-semibold transition ${
-        active
-          ? 'bg-[#173a8f] text-white shadow-sm'
-          : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
-      }`}
+      className={`w-11 h-11 rounded-2xl text-sm font-semibold transition ${active
+        ? 'bg-[#173a8f] text-white shadow-sm'
+        : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+        }`}
     >
       {pageNumber + 1}
     </button>

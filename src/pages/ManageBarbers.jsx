@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import OwnerLayout from '../componenets/OwnerLayout'
 import { Trash2, Plus, Plane } from 'lucide-react'
+import { createPortal } from 'react-dom'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
 
@@ -125,7 +126,10 @@ const validateBarberForm = (data, salon) => {
     const salonRange = getShiftRange(salonOpen, salonClose)
     if (!salonRange) return 'Invalid salon timing'
 
-    const barberStart = normalizeTimeForRange(workingStartTime, salonRange.startMin)
+    const barberStart = normalizeTimeForRange(
+      workingStartTime,
+      salonRange.startMin
+    )
     const barberEnd = normalizeTimeForRange(workingEndTime, salonRange.startMin)
 
     if (barberStart < salonRange.startMin) {
@@ -152,7 +156,10 @@ const validateBarberForm = (data, salon) => {
       return 'Lunch start must be before lunch end'
     }
 
-    if (lunchStartMin < barberRange.startMin || lunchEndMin > barberRange.endMin) {
+    if (
+      lunchStartMin < barberRange.startMin ||
+      lunchEndMin > barberRange.endMin
+    ) {
       return 'Lunch must be between barber working time'
     }
   }
@@ -233,6 +240,31 @@ export default function ManageBarbers() {
   }, [])
 
   useEffect(() => {
+    const isAnyModalOpen =
+      showPopup ||
+      deleteModalOpen ||
+      !!conflictModal ||
+      tempInactiveModalOpen ||
+      vacationModalOpen
+
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'auto'
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto'
+    }
+  }, [
+    showPopup,
+    deleteModalOpen,
+    conflictModal,
+    tempInactiveModalOpen,
+    vacationModalOpen,
+  ])
+
+  useEffect(() => {
     if (!ownerId) {
       toast.error('Owner not found, please login again')
       setSalons([])
@@ -271,7 +303,9 @@ export default function ManageBarbers() {
 
         const stored = localStorage.getItem('salonId')
         const storedValid =
-          stored && stored !== 'undefined' && unique.some((s) => s.sid === stored)
+          stored &&
+          stored !== 'undefined' &&
+          unique.some((s) => s.sid === stored)
 
         const initialSalonId = storedValid ? stored : unique[0].sid
 
@@ -298,17 +332,17 @@ export default function ManageBarbers() {
       .then((data) => {
         const safe = Array.isArray(data)
           ? data.map((barber) => ({
-            ...barber,
-            workingStartTime: normalizeTime(barber.workingStartTime),
-            workingEndTime: normalizeTime(barber.workingEndTime),
-            lunchStart: normalizeTime(barber.lunchStart),
-            lunchEnd: normalizeTime(barber.lunchEnd),
-            weeklyOffDays: barber.weeklyOffDays || [],
-            leaves: normalizeLeaves(barber.leaves || []),
-            temporaryInactiveSlots: normalizeTemporaryInactiveSlots(
-              barber.temporaryInactiveSlots || []
-            ),
-          }))
+              ...barber,
+              workingStartTime: normalizeTime(barber.workingStartTime),
+              workingEndTime: normalizeTime(barber.workingEndTime),
+              lunchStart: normalizeTime(barber.lunchStart),
+              lunchEnd: normalizeTime(barber.lunchEnd),
+              weeklyOffDays: barber.weeklyOffDays || [],
+              leaves: normalizeLeaves(barber.leaves || []),
+              temporaryInactiveSlots: normalizeTemporaryInactiveSlots(
+                barber.temporaryInactiveSlots || []
+              ),
+            }))
           : []
 
         setBarbers(safe)
@@ -386,7 +420,10 @@ export default function ManageBarbers() {
           conflicts: data?.conflicts || [],
           onConfirm: async () => {
             setConflictModal(null)
-            await handleSave(true, data?.reason || 'Barber schedule updated by owner')
+            await handleSave(
+              true,
+              data?.reason || 'Barber schedule updated by owner'
+            )
           },
         })
         return
@@ -421,13 +458,20 @@ export default function ManageBarbers() {
     }
   }
 
-  const handleTemporaryInactive = async (forceCancel = false, customReason = '') => {
+  const handleTemporaryInactive = async (
+    forceCancel = false,
+    customReason = ''
+  ) => {
     if (!selectedBarber?.id) {
       toast.error('No barber selected')
       return
     }
 
-    if (!tempInactiveForm.date || !tempInactiveForm.startTime || !tempInactiveForm.endTime) {
+    if (
+      !tempInactiveForm.date ||
+      !tempInactiveForm.startTime ||
+      !tempInactiveForm.endTime
+    ) {
       toast.error('Please fill date, start time and end time')
       return
     }
@@ -445,8 +489,14 @@ export default function ManageBarbers() {
       return
     }
 
-    const normalizedInactiveStart = normalizeTimeForRange(inactiveStart, barberRange.startMin)
-    const normalizedInactiveEnd = normalizeTimeForRange(inactiveEnd, barberRange.startMin)
+    const normalizedInactiveStart = normalizeTimeForRange(
+      inactiveStart,
+      barberRange.startMin
+    )
+    const normalizedInactiveEnd = normalizeTimeForRange(
+      inactiveEnd,
+      barberRange.startMin
+    )
 
     if (normalizedInactiveStart < barberRange.startMin) {
       toast.error('Inactive start time cannot be before barber start time')
@@ -471,7 +521,10 @@ export default function ManageBarbers() {
             startTime: inactiveStart,
             endTime: inactiveEnd,
             autoCancelConflictingBookings: forceCancel,
-            reason: customReason || tempInactiveForm.reason || 'Barber temporarily unavailable',
+            reason:
+              customReason ||
+              tempInactiveForm.reason ||
+              'Barber temporarily unavailable',
           }),
         }
       )
@@ -486,13 +539,18 @@ export default function ManageBarbers() {
 
         setConflictModal({
           title: 'This will cancel some bookings',
-          reason: data?.reason || tempInactiveForm.reason || 'Barber temporarily unavailable',
+          reason:
+            data?.reason ||
+            tempInactiveForm.reason ||
+            'Barber temporarily unavailable',
           conflicts: data?.conflicts || [],
           onConfirm: async () => {
             setConflictModal(null)
             await handleTemporaryInactive(
               true,
-              data?.reason || tempInactiveForm.reason || 'Barber temporarily unavailable'
+              data?.reason ||
+                tempInactiveForm.reason ||
+                'Barber temporarily unavailable'
             )
           },
         })
@@ -500,7 +558,9 @@ export default function ManageBarbers() {
       }
 
       if (!res.ok) {
-        throw new Error(typeof data === 'string' ? data : 'Failed to update availability')
+        throw new Error(
+          typeof data === 'string' ? data : 'Failed to update availability'
+        )
       }
 
       const updated = {
@@ -790,25 +850,25 @@ export default function ManageBarbers() {
   const hasChanges =
     form && originalForm
       ? JSON.stringify({
-        active: !!form.active,
-        name: form.name || '',
-        workingStartTime: normalizeTime(form.workingStartTime),
-        workingEndTime: normalizeTime(form.workingEndTime),
-        lunchStart: normalizeTime(form.lunchStart),
-        lunchEnd: normalizeTime(form.lunchEnd),
-        weeklyOffDays: [...(form.weeklyOffDays || [])].sort(),
-        leaves: normalizeLeaves(form.leaves || []),
-      }) !==
-      JSON.stringify({
-        active: !!originalForm.active,
-        name: originalForm.name || '',
-        workingStartTime: normalizeTime(originalForm.workingStartTime),
-        workingEndTime: normalizeTime(originalForm.workingEndTime),
-        lunchStart: normalizeTime(originalForm.lunchStart),
-        lunchEnd: normalizeTime(originalForm.lunchEnd),
-        weeklyOffDays: [...(originalForm.weeklyOffDays || [])].sort(),
-        leaves: normalizeLeaves(originalForm.leaves || []),
-      })
+          active: !!form.active,
+          name: form.name || '',
+          workingStartTime: normalizeTime(form.workingStartTime),
+          workingEndTime: normalizeTime(form.workingEndTime),
+          lunchStart: normalizeTime(form.lunchStart),
+          lunchEnd: normalizeTime(form.lunchEnd),
+          weeklyOffDays: [...(form.weeklyOffDays || [])].sort(),
+          leaves: normalizeLeaves(form.leaves || []),
+        }) !==
+        JSON.stringify({
+          active: !!originalForm.active,
+          name: originalForm.name || '',
+          workingStartTime: normalizeTime(originalForm.workingStartTime),
+          workingEndTime: normalizeTime(originalForm.workingEndTime),
+          lunchStart: normalizeTime(originalForm.lunchStart),
+          lunchEnd: normalizeTime(originalForm.lunchEnd),
+          weeklyOffDays: [...(originalForm.weeklyOffDays || [])].sort(),
+          leaves: normalizeLeaves(originalForm.leaves || []),
+        })
       : false
 
   const showInactive =
@@ -878,10 +938,11 @@ export default function ManageBarbers() {
                 setShowPopup(true)
               }}
               disabled={!selectedSalonId}
-              className={`w-full text-white py-3 rounded-2xl mb-4 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-sm ${selectedSalonId
-                ? 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 hover:shadow-md'
-                : 'bg-gray-400 cursor-not-allowed'
-                }`}
+              className={`w-full text-white py-3 rounded-2xl mb-4 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-sm ${
+                selectedSalonId
+                  ? 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 hover:shadow-md'
+                  : 'bg-gray-400 cursor-not-allowed'
+              }`}
             >
               <Plus size={18} />
               Add Barber
@@ -897,10 +958,11 @@ export default function ManageBarbers() {
                     <div
                       key={barber.id}
                       onClick={() => handleSelect(barber)}
-                      className={`group p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-0.5 ${selectedBarber?.id === barber.id
-                        ? 'bg-gradient-to-r from-slate-50 to-white border-slate-300 ring-2 ring-slate-200 shadow-[0_10px_30px_rgba(15,23,42,0.08)]'
-                        : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 shadow-sm'
-                        }`}
+                      className={`group p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-0.5 ${
+                        selectedBarber?.id === barber.id
+                          ? 'bg-gradient-to-r from-slate-50 to-white border-slate-300 ring-2 ring-slate-200 shadow-[0_10px_30px_rgba(15,23,42,0.08)]'
+                          : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 shadow-sm'
+                      }`}
                       style={{ animationDelay: `${index * 40}ms` }}
                     >
                       <div className='flex justify-between items-start gap-3'>
@@ -913,20 +975,22 @@ export default function ManageBarbers() {
                                 handleDeleteClick(barber)
                               }}
                               disabled={isDeleting}
-                              className={`p-1.5 rounded-lg transition shrink-0 ${selectedBarber?.id === barber.id
-                                ? 'text-slate-500 hover:bg-red-50 hover:text-red-600'
-                                : 'text-red-500 hover:bg-red-50 hover:text-red-600'
-                                } ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              className={`p-1.5 rounded-lg transition shrink-0 ${
+                                selectedBarber?.id === barber.id
+                                  ? 'text-slate-500 hover:bg-red-50 hover:text-red-600'
+                                  : 'text-red-500 hover:bg-red-50 hover:text-red-600'
+                              } ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               <Trash2 className='w-4 h-4' />
                             </button>
                           </div>
 
                           <p
-                            className={`text-sm mt-1 ${selectedBarber?.id === barber.id
-                              ? 'text-slate-600'
-                              : 'text-gray-600'
-                              }`}
+                            className={`text-sm mt-1 ${
+                              selectedBarber?.id === barber.id
+                                ? 'text-slate-600'
+                                : 'text-gray-600'
+                            }`}
                           >
                             {barber.weeklyOffDays?.length || 0} Weekly Off |{' '}
                             {barber.leaves?.length || 0} Leaves
@@ -934,10 +998,11 @@ export default function ManageBarbers() {
                         </div>
 
                         <span
-                          className={`text-xs shrink-0 px-2.5 py-1 rounded-full font-medium ${barberShowInactive
+                          className={`text-xs shrink-0 px-2.5 py-1 rounded-full font-medium ${
+                            barberShowInactive
                               ? 'bg-red-50 text-red-600 border border-red-100'
                               : 'bg-green-50 text-green-600 border border-green-100'
-                            }`}
+                          }`}
                         >
                           {barberShowInactive ? 'Inactive' : 'Active'}
                         </span>
@@ -992,12 +1057,14 @@ export default function ManageBarbers() {
                       })
                       setTempInactiveModalOpen(true)
                     }}
-                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 ${showInactive ? 'bg-gray-300' : 'bg-green-500'
-                      }`}
+                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 ${
+                      showInactive ? 'bg-gray-300' : 'bg-green-500'
+                    }`}
                   >
                     <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${showInactive ? 'translate-x-1' : 'translate-x-8'
-                        }`}
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+                        showInactive ? 'translate-x-1' : 'translate-x-8'
+                      }`}
                     />
                   </button>
 
@@ -1082,10 +1149,11 @@ export default function ManageBarbers() {
                   {weekDays.map((day) => (
                     <label
                       key={day.value}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all duration-300 ${form.weeklyOffDays?.includes(day.value)
-                        ? 'bg-black text-white border-black'
-                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                        }`}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all duration-300 ${
+                        form.weeklyOffDays?.includes(day.value)
+                          ? 'bg-black text-white border-black'
+                          : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                      }`}
                     >
                       <input
                         type='checkbox'
@@ -1159,10 +1227,11 @@ export default function ManageBarbers() {
               <button
                 onClick={() => handleSave()}
                 disabled={isSaving || !hasChanges}
-                className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${isSaving || !hasChanges
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
-                  }`}
+                className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${
+                  isSaving || !hasChanges
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                }`}
               >
                 {isSaving ? 'Saving Changes...' : 'Save Changes'}
               </button>
@@ -1171,418 +1240,441 @@ export default function ManageBarbers() {
         </div>
 
         {deleteModalOpen && (
-          <div className='fixed inset-0 bg-black/75 backdrop-blur-[2px] flex items-center justify-center z-[60] p-4 animate-fadeIn'>
-            <div className='bg-white p-6 rounded-3xl shadow-lg w-full max-w-md animate-scaleIn'>
-              <h2 className='text-2xl font-bold mb-4 text-gray-950'>Confirm Delete</h2>
-              <p className='mb-6 text-gray-600 leading-7'>
-                Are you sure you want to delete <strong>{barberToDelete?.name}</strong>?
-              </p>
+          <ModalPortal>
+            <div className='fixed inset-0 z-[9999] bg-black/55 backdrop-blur-[2px] flex items-center justify-center p-4 animate-fadeIn'>
+              <div className='bg-white p-6 rounded-3xl shadow-lg w-full max-w-md animate-scaleIn'>
+                <h2 className='text-2xl font-bold mb-4 text-gray-950'>Confirm Delete</h2>
+                <p className='mb-6 text-gray-600 leading-7'>
+                  Are you sure you want to delete <strong>{barberToDelete?.name}</strong>?
+                </p>
 
-              <div className='flex justify-end gap-3'>
-                <button
-                  onClick={cancelDelete}
-                  disabled={isDeleting}
-                  className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
-                >
-                  Cancel
-                </button>
+                <div className='flex justify-end gap-3'>
+                  <button
+                    onClick={cancelDelete}
+                    disabled={isDeleting}
+                    className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
+                  >
+                    Cancel
+                  </button>
 
-                <button
-                  onClick={confirmDelete}
-                  disabled={isDeleting}
-                  className={`px-5 py-2.5 text-white rounded-2xl transition ${isDeleting
-                    ? 'bg-red-300 cursor-not-allowed'
-                    : 'bg-red-500 hover:bg-red-600'
+                  <button
+                    onClick={confirmDelete}
+                    disabled={isDeleting}
+                    className={`px-5 py-2.5 text-white rounded-2xl transition ${
+                      isDeleting
+                        ? 'bg-red-300 cursor-not-allowed'
+                        : 'bg-red-500 hover:bg-red-600'
                     }`}
-                >
-                  {isDeleting ? 'Deleting...' : 'Delete'}
-                </button>
+                  >
+                    {isDeleting ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </ModalPortal>
         )}
 
         {conflictModal && (
-          <div className='fixed inset-0 bg-black/30 backdrop-blur-[2px] flex items-center justify-center z-[70] p-4 animate-fadeIn'>
-            <div className='bg-white w-full max-w-2xl rounded-3xl p-6 shadow-xl animate-scaleIn'>
-              <h2 className='text-2xl font-bold text-gray-950 mb-3'>{conflictModal.title}</h2>
-              <p className='text-sm text-gray-600 mb-4'>
-                These bookings will be cancelled if you continue.
-              </p>
+          <ModalPortal>
+            <div className='fixed inset-0 z-[9999] bg-black/45 backdrop-blur-[2px] flex items-center justify-center p-4 animate-fadeIn'>
+              <div className='bg-white w-full max-w-2xl rounded-3xl p-6 shadow-xl animate-scaleIn'>
+                <h2 className='text-2xl font-bold text-gray-950 mb-3'>
+                  {conflictModal.title}
+                </h2>
+                <p className='text-sm text-gray-600 mb-4'>
+                  These bookings will be cancelled if you continue.
+                </p>
 
-              <div className='rounded-2xl border border-gray-200 max-h-72 overflow-y-auto'>
-                {conflictModal.conflicts?.length > 0 ? (
-                  conflictModal.conflicts.map((item) => (
-                    <div
-                      key={item.bookingId}
-                      className='p-4 border-b border-gray-100 last:border-b-0'
-                    >
-                      <div className='font-semibold text-gray-900'>
-                        {item.customerName || 'Customer'}
+                <div className='rounded-2xl border border-gray-200 max-h-72 overflow-y-auto'>
+                  {conflictModal.conflicts?.length > 0 ? (
+                    conflictModal.conflicts.map((item) => (
+                      <div
+                        key={item.bookingId}
+                        className='p-4 border-b border-gray-100 last:border-b-0'
+                      >
+                        <div className='font-semibold text-gray-900'>
+                          {item.customerName || 'Customer'}
+                        </div>
+                        <div className='text-sm text-gray-600 mt-1'>
+                          {item.bookingDate} | {formatTime12Hour(item.startTime)} -{' '}
+                          {formatTime12Hour(item.endTime)}
+                        </div>
                       </div>
-                      <div className='text-sm text-gray-600 mt-1'>
-                        {item.bookingDate} | {formatTime12Hour(item.startTime)} - {formatTime12Hour(item.endTime)}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className='p-4 text-sm text-gray-500'>No conflict details found</div>
-                )}
-              </div>
+                    ))
+                  ) : (
+                    <div className='p-4 text-sm text-gray-500'>No conflict details found</div>
+                  )}
+                </div>
 
-              <div className='flex justify-end gap-3 mt-5'>
-                <button
-                  onClick={() => setConflictModal(null)}
-                  className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
-                >
-                  Close
-                </button>
+                <div className='flex justify-end gap-3 mt-5'>
+                  <button
+                    onClick={() => setConflictModal(null)}
+                    className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
+                  >
+                    Close
+                  </button>
 
-                <button
-                  onClick={conflictModal.onConfirm}
-                  className='px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-2xl transition'
-                >
-                  Cancel Bookings & Continue
-                </button>
+                  <button
+                    onClick={conflictModal.onConfirm}
+                    className='px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-2xl transition'
+                  >
+                    Cancel Bookings & Continue
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </ModalPortal>
         )}
 
         {tempInactiveModalOpen && (
-          <div className='fixed inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-[60] p-4 animate-fadeIn'>
-            <div className='bg-white w-full max-w-lg rounded-3xl p-6 shadow-xl animate-scaleIn'>
-              <h2 className='text-2xl font-bold text-gray-950 mb-2'>Temporary Inactive</h2>
-              <p className='text-sm text-gray-600 mb-5'>
-                Select the time range during which this barber will be unavailable.
-              </p>
+          <ModalPortal>
+            <div className='fixed inset-0 z-[9999] bg-black/55 backdrop-blur-[2px] flex items-center justify-center p-4 animate-fadeIn'>
+              <div className='bg-white w-full max-w-lg rounded-3xl p-6 shadow-xl animate-scaleIn'>
+                <h2 className='text-2xl font-bold text-gray-950 mb-2'>Temporary Inactive</h2>
+                <p className='text-sm text-gray-600 mb-5'>
+                  Select the time range during which this barber will be unavailable.
+                </p>
 
-              <div className='space-y-4'>
-                <div>
-                  <label className='block mb-2 text-sm font-medium text-gray-800'>Date</label>
-                  <input
-                    type='date'
-                    min={todayDateString()}
-                    value={tempInactiveForm.date}
-                    onChange={(e) =>
-                      setTempInactiveForm({ ...tempInactiveForm, date: e.target.value })
-                    }
-                    className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400'
-                  />
-                </div>
-
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <div className='space-y-4'>
                   <div>
-                    <label className='block mb-2 text-sm font-medium text-gray-800'>Start Time</label>
+                    <label className='block mb-2 text-sm font-medium text-gray-800'>Date</label>
                     <input
-                      type='time'
-                      value={tempInactiveForm.startTime}
+                      type='date'
+                      min={todayDateString()}
+                      value={tempInactiveForm.date}
                       onChange={(e) =>
-                        setTempInactiveForm({ ...tempInactiveForm, startTime: e.target.value })
+                        setTempInactiveForm({ ...tempInactiveForm, date: e.target.value })
                       }
                       className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400'
                     />
-                    {tempInactiveForm.startTime ? (
-                      <p className='text-xs text-gray-500 mt-2'>
-                        {formatTime12Hour(tempInactiveForm.startTime)}
-                      </p>
-                    ) : null}
+                  </div>
+
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div>
+                      <label className='block mb-2 text-sm font-medium text-gray-800'>Start Time</label>
+                      <input
+                        type='time'
+                        value={tempInactiveForm.startTime}
+                        onChange={(e) =>
+                          setTempInactiveForm({
+                            ...tempInactiveForm,
+                            startTime: e.target.value,
+                          })
+                        }
+                        className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400'
+                      />
+                      {tempInactiveForm.startTime ? (
+                        <p className='text-xs text-gray-500 mt-2'>
+                          {formatTime12Hour(tempInactiveForm.startTime)}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div>
+                      <label className='block mb-2 text-sm font-medium text-gray-800'>End Time</label>
+                      <input
+                        type='time'
+                        value={tempInactiveForm.endTime}
+                        onChange={(e) =>
+                          setTempInactiveForm({
+                            ...tempInactiveForm,
+                            endTime: e.target.value,
+                          })
+                        }
+                        className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400'
+                      />
+                      {tempInactiveForm.endTime ? (
+                        <p className='text-xs text-gray-500 mt-2'>
+                          {formatTime12Hour(tempInactiveForm.endTime)}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
 
                   <div>
-                    <label className='block mb-2 text-sm font-medium text-gray-800'>End Time</label>
-                    <input
-                      type='time'
-                      value={tempInactiveForm.endTime}
+                    <label className='block mb-2 text-sm font-medium text-gray-800'>Reason</label>
+                    <textarea
+                      rows='3'
+                      value={tempInactiveForm.reason}
                       onChange={(e) =>
-                        setTempInactiveForm({ ...tempInactiveForm, endTime: e.target.value })
+                        setTempInactiveForm({ ...tempInactiveForm, reason: e.target.value })
                       }
-                      className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400'
+                      placeholder='Reason for temporary inactivity'
+                      className='w-full border border-gray-200 px-4 py-3 rounded-2xl resize-none outline-none focus:border-gray-400'
                     />
-                    {tempInactiveForm.endTime ? (
-                      <p className='text-xs text-gray-500 mt-2'>
-                        {formatTime12Hour(tempInactiveForm.endTime)}
-                      </p>
-                    ) : null}
                   </div>
                 </div>
 
-                <div>
-                  <label className='block mb-2 text-sm font-medium text-gray-800'>Reason</label>
-                  <textarea
-                    rows='3'
-                    value={tempInactiveForm.reason}
-                    onChange={(e) =>
-                      setTempInactiveForm({ ...tempInactiveForm, reason: e.target.value })
-                    }
-                    placeholder='Reason for temporary inactivity'
-                    className='w-full border border-gray-200 px-4 py-3 rounded-2xl resize-none outline-none focus:border-gray-400'
-                  />
-                </div>
-              </div>
+                <div className='flex justify-end gap-3 mt-6'>
+                  <button
+                    onClick={() => {
+                      setTempInactiveModalOpen(false)
+                      setTempInactiveForm({
+                        date: '',
+                        startTime: '',
+                        endTime: '',
+                        reason: '',
+                      })
+                    }}
+                    className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
+                  >
+                    Cancel
+                  </button>
 
-              <div className='flex justify-end gap-3 mt-6'>
-                <button
-                  onClick={() => {
-                    setTempInactiveModalOpen(false)
-                    setTempInactiveForm({
-                      date: '',
-                      startTime: '',
-                      endTime: '',
-                      reason: '',
-                    })
-                  }}
-                  className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={() => handleTemporaryInactive()}
-                  disabled={tempInactiveLoading}
-                  className={`px-5 py-2.5 text-white rounded-2xl transition ${tempInactiveLoading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-black hover:bg-gray-800'
+                  <button
+                    onClick={() => handleTemporaryInactive()}
+                    disabled={tempInactiveLoading}
+                    className={`px-5 py-2.5 text-white rounded-2xl transition ${
+                      tempInactiveLoading
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-black hover:bg-gray-800'
                     }`}
-                >
-                  {tempInactiveLoading ? 'Saving...' : 'Confirm'}
-                </button>
+                  >
+                    {tempInactiveLoading ? 'Saving...' : 'Confirm'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </ModalPortal>
         )}
 
         {vacationModalOpen && (
-          <div className='fixed inset-0 bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-[60] p-4 animate-fadeIn'>
-            <div className='bg-white w-full max-w-lg rounded-3xl p-6 shadow-xl animate-scaleIn'>
-              <h2 className='text-2xl font-bold text-gray-950 mb-2'>Add Vacation</h2>
-              <p className='text-sm text-gray-600 mb-5'>
-                Select a date range for barber vacation.
-              </p>
+          <ModalPortal>
+            <div className='fixed inset-0 z-[9999] bg-black/55 backdrop-blur-[2px] flex items-center justify-center p-4 animate-fadeIn'>
+              <div className='bg-white w-full max-w-lg rounded-3xl p-6 shadow-xl animate-scaleIn'>
+                <h2 className='text-2xl font-bold text-gray-950 mb-2'>Add Vacation</h2>
+                <p className='text-sm text-gray-600 mb-5'>
+                  Select a date range for barber vacation.
+                </p>
 
-              <div className='space-y-4'>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div>
-                    <label className='block mb-2 text-sm font-medium text-gray-800'>Start Date</label>
-                    <input
-                      type='date'
-                      min={todayDateString()}
-                      value={vacationForm.startDate}
-                      onChange={(e) =>
-                        setVacationForm({ ...vacationForm, startDate: e.target.value })
-                      }
-                      className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400'
-                    />
+                <div className='space-y-4'>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div>
+                      <label className='block mb-2 text-sm font-medium text-gray-800'>Start Date</label>
+                      <input
+                        type='date'
+                        min={todayDateString()}
+                        value={vacationForm.startDate}
+                        onChange={(e) =>
+                          setVacationForm({ ...vacationForm, startDate: e.target.value })
+                        }
+                        className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400'
+                      />
+                    </div>
+
+                    <div>
+                      <label className='block mb-2 text-sm font-medium text-gray-800'>End Date</label>
+                      <input
+                        type='date'
+                        min={vacationForm.startDate || todayDateString()}
+                        value={vacationForm.endDate}
+                        onChange={(e) =>
+                          setVacationForm({ ...vacationForm, endDate: e.target.value })
+                        }
+                        className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400'
+                      />
+                    </div>
                   </div>
 
                   <div>
-                    <label className='block mb-2 text-sm font-medium text-gray-800'>End Date</label>
-                    <input
-                      type='date'
-                      min={vacationForm.startDate || todayDateString()}
-                      value={vacationForm.endDate}
+                    <label className='block mb-2 text-sm font-medium text-gray-800'>Reason</label>
+                    <textarea
+                      rows='3'
+                      value={vacationForm.reason}
                       onChange={(e) =>
-                        setVacationForm({ ...vacationForm, endDate: e.target.value })
+                        setVacationForm({ ...vacationForm, reason: e.target.value })
                       }
-                      className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400'
+                      placeholder='Reason for vacation'
+                      className='w-full border border-gray-200 px-4 py-3 rounded-2xl resize-none outline-none focus:border-gray-400'
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className='block mb-2 text-sm font-medium text-gray-800'>Reason</label>
-                  <textarea
-                    rows='3'
-                    value={vacationForm.reason}
-                    onChange={(e) =>
-                      setVacationForm({ ...vacationForm, reason: e.target.value })
-                    }
-                    placeholder='Reason for vacation'
-                    className='w-full border border-gray-200 px-4 py-3 rounded-2xl resize-none outline-none focus:border-gray-400'
-                  />
-                </div>
-              </div>
+                <div className='flex justify-end gap-3 mt-6'>
+                  <button
+                    onClick={() => {
+                      setVacationModalOpen(false)
+                      setVacationForm({
+                        startDate: '',
+                        endDate: '',
+                        reason: '',
+                      })
+                    }}
+                    className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
+                  >
+                    Cancel
+                  </button>
 
-              <div className='flex justify-end gap-3 mt-6'>
-                <button
-                  onClick={() => {
-                    setVacationModalOpen(false)
-                    setVacationForm({
-                      startDate: '',
-                      endDate: '',
-                      reason: '',
-                    })
-                  }}
-                  className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={() => handleVacationSubmit()}
-                  disabled={vacationLoading}
-                  className={`px-5 py-2.5 text-white rounded-2xl transition ${vacationLoading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-black hover:bg-gray-800'
+                  <button
+                    onClick={() => handleVacationSubmit()}
+                    disabled={vacationLoading}
+                    className={`px-5 py-2.5 text-white rounded-2xl transition ${
+                      vacationLoading
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-black hover:bg-gray-800'
                     }`}
-                >
-                  {vacationLoading ? 'Saving...' : 'Add Vacation'}
-                </button>
+                  >
+                    {vacationLoading ? 'Saving...' : 'Add Vacation'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </ModalPortal>
         )}
 
         {showPopup && (
-          <div className='fixed inset-0 bg-black/25 backdrop-blur-[2px] flex items-center justify-center z-[60] p-4 animate-fadeIn'>
-            <div className='bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 relative animate-scaleIn max-h-[92vh] overflow-y-auto'>
-              <h2 className='text-2xl font-bold mb-1 text-gray-950'>Add New Barber</h2>
-              <p className='text-sm text-gray-500 mb-6'>
-                Fill barber details, working hours, weekly offs, and leave dates.
-              </p>
+          <ModalPortal>
+            <div className='fixed inset-0 z-[9999] bg-black/55 backdrop-blur-[2px] flex items-center justify-center p-4 animate-fadeIn'>
+              <div className='bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-6 sm:p-8 relative animate-scaleIn max-h-[92vh] overflow-y-auto'>
+                <h2 className='text-2xl font-bold mb-1 text-gray-950'>Add New Barber</h2>
+                <p className='text-sm text-gray-500 mb-6'>
+                  Fill barber details, working hours, weekly offs, and leave dates.
+                </p>
 
-              <div className='mb-4'>
-                <label className='block mb-2 text-sm font-medium text-gray-800'>
-                  Barber Name *
-                </label>
-                <input
-                  type='text'
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400 transition-all duration-300'
-                  placeholder='Enter barber name'
-                />
-              </div>
+                <div className='mb-4'>
+                  <label className='block mb-2 text-sm font-medium text-gray-800'>
+                    Barber Name *
+                  </label>
+                  <input
+                    type='text'
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400 transition-all duration-300'
+                    placeholder='Enter barber name'
+                  />
+                </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-                <TimeField
-                  label='Start Time *'
-                  value={form.workingStartTime}
-                  onChange={(e) =>
-                    setForm({ ...form, workingStartTime: e.target.value })
-                  }
-                />
-                <TimeField
-                  label='End Time *'
-                  value={form.workingEndTime}
-                  onChange={(e) =>
-                    setForm({ ...form, workingEndTime: e.target.value })
-                  }
-                />
-              </div>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
+                  <TimeField
+                    label='Start Time *'
+                    value={form.workingStartTime}
+                    onChange={(e) =>
+                      setForm({ ...form, workingStartTime: e.target.value })
+                    }
+                  />
+                  <TimeField
+                    label='End Time *'
+                    value={form.workingEndTime}
+                    onChange={(e) =>
+                      setForm({ ...form, workingEndTime: e.target.value })
+                    }
+                  />
+                </div>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
-                <TimeField
-                  label='Lunch Start'
-                  value={form.lunchStart}
-                  onChange={(e) =>
-                    setForm({ ...form, lunchStart: e.target.value })
-                  }
-                />
-                <TimeField
-                  label='Lunch End'
-                  value={form.lunchEnd}
-                  onChange={(e) =>
-                    setForm({ ...form, lunchEnd: e.target.value })
-                  }
-                />
-              </div>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'>
+                  <TimeField
+                    label='Lunch Start'
+                    value={form.lunchStart}
+                    onChange={(e) =>
+                      setForm({ ...form, lunchStart: e.target.value })
+                    }
+                  />
+                  <TimeField
+                    label='Lunch End'
+                    value={form.lunchEnd}
+                    onChange={(e) =>
+                      setForm({ ...form, lunchEnd: e.target.value })
+                    }
+                  />
+                </div>
 
-              <div className='mb-4'>
-                <label className='block mb-3 text-sm font-medium text-gray-800'>
-                  Weekly Off Days
-                </label>
-                <div className='flex gap-3 flex-wrap'>
-                  {weekDays.map((day) => (
-                    <label
-                      key={day.value}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all duration-300 ${form.weeklyOffDays?.includes(day.value)
-                        ? 'bg-black text-white border-black'
-                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                <div className='mb-4'>
+                  <label className='block mb-3 text-sm font-medium text-gray-800'>
+                    Weekly Off Days
+                  </label>
+                  <div className='flex gap-3 flex-wrap'>
+                    {weekDays.map((day) => (
+                      <label
+                        key={day.value}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all duration-300 ${
+                          form.weeklyOffDays?.includes(day.value)
+                            ? 'bg-black text-white border-black'
+                            : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                         }`}
+                      >
+                        <input
+                          type='checkbox'
+                          checked={form.weeklyOffDays?.includes(day.value)}
+                          onChange={(e) => {
+                            const currentDays = form.weeklyOffDays || []
+                            const updated = e.target.checked
+                              ? [...currentDays, day.value]
+                              : currentDays.filter((d) => d !== day.value)
+
+                            setForm({ ...form, weeklyOffDays: updated })
+                          }}
+                          className='hidden'
+                        />
+                        {day.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className='mb-6'>
+                  <label className='block mb-3 text-sm font-medium text-gray-800'>
+                    Leave Dates
+                  </label>
+
+                  {form.leaves?.map((date, index) => (
+                    <div
+                      key={index}
+                      className='flex gap-2 mb-3 items-center rounded-2xl border border-gray-200 bg-gray-50 p-3 animate-fadeIn'
                     >
                       <input
-                        type='checkbox'
-                        checked={form.weeklyOffDays?.includes(day.value)}
+                        type='date'
+                        min={todayDateString()}
+                        value={date}
                         onChange={(e) => {
-                          const currentDays = form.weeklyOffDays || []
-                          const updated = e.target.checked
-                            ? [...currentDays, day.value]
-                            : currentDays.filter((d) => d !== day.value)
-
-                          setForm({ ...form, weeklyOffDays: updated })
+                          const updated = [...(form.leaves || [])]
+                          updated[index] = e.target.value
+                          setForm({ ...form, leaves: updated })
                         }}
-                        className='hidden'
+                        className='border border-gray-200 px-3 py-2 rounded-xl w-full bg-white outline-none focus:border-gray-400'
                       />
-                      {day.label}
-                    </label>
+                      <button
+                        onClick={() => {
+                          const updated = (form.leaves || []).filter((_, i) => i !== index)
+                          setForm({ ...form, leaves: updated })
+                        }}
+                        className='text-red-500 px-2'
+                      >
+                        🗑
+                      </button>
+                    </div>
                   ))}
+
+                  <button
+                    onClick={() =>
+                      setForm({ ...form, leaves: [...(form.leaves || []), ''] })
+                    }
+                    className='text-sm text-black font-medium hover:underline'
+                  >
+                    + Add Date
+                  </button>
+                </div>
+
+                <div className='flex justify-end gap-3'>
+                  <button
+                    onClick={() => {
+                      setShowPopup(false)
+                      setForm(selectedBarber ? { ...selectedBarber } : null)
+                    }}
+                    className='px-5 py-3 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={() => handleAddBarber()}
+                    className='px-5 py-3 bg-black hover:bg-gray-800 hover:-translate-y-0.5 text-white rounded-2xl transition-all duration-300 shadow-sm hover:shadow-md'
+                  >
+                    Create Barber
+                  </button>
                 </div>
               </div>
-
-              <div className='mb-6'>
-                <label className='block mb-3 text-sm font-medium text-gray-800'>
-                  Leave Dates
-                </label>
-
-                {form.leaves?.map((date, index) => (
-                  <div
-                    key={index}
-                    className='flex gap-2 mb-3 items-center rounded-2xl border border-gray-200 bg-gray-50 p-3 animate-fadeIn'
-                  >
-                    <input
-                      type='date'
-                      min={todayDateString()}
-                      value={date}
-                      onChange={(e) => {
-                        const updated = [...(form.leaves || [])]
-                        updated[index] = e.target.value
-                        setForm({ ...form, leaves: updated })
-                      }}
-                      className='border border-gray-200 px-3 py-2 rounded-xl w-full bg-white outline-none focus:border-gray-400'
-                    />
-                    <button
-                      onClick={() => {
-                        const updated = (form.leaves || []).filter((_, i) => i !== index)
-                        setForm({ ...form, leaves: updated })
-                      }}
-                      className='text-red-500 px-2'
-                    >
-                      🗑
-                    </button>
-                  </div>
-                ))}
-
-                <button
-                  onClick={() =>
-                    setForm({ ...form, leaves: [...(form.leaves || []), ''] })
-                  }
-                  className='text-sm text-black font-medium hover:underline'
-                >
-                  + Add Date
-                </button>
-              </div>
-
-              <div className='flex justify-end gap-3'>
-                <button
-                  onClick={() => {
-                    setShowPopup(false)
-                    setForm(selectedBarber ? { ...selectedBarber } : null)
-                  }}
-                  className='px-5 py-3 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={() => handleAddBarber()}
-                  className='px-5 py-3 bg-black hover:bg-gray-800 hover:-translate-y-0.5 text-white rounded-2xl transition-all duration-300 shadow-sm hover:shadow-md'
-                >
-                  Create Barber
-                </button>
-              </div>
             </div>
-          </div>
+          </ModalPortal>
         )}
 
         <style>{`
@@ -1636,6 +1728,11 @@ export default function ManageBarbers() {
       </div>
     </OwnerLayout>
   )
+}
+
+function ModalPortal({ children }) {
+  if (typeof document === 'undefined') return null
+  return createPortal(children, document.body)
 }
 
 function TimeField({ label, value, onChange }) {

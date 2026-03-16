@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi'
@@ -45,6 +46,21 @@ export default function ServicesPage() {
     time: '',
     image: null,
   })
+
+  useEffect(() => {
+    const isAnyModalOpen =
+      showCategoryModal || showServiceModal || showDeleteModal
+
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'auto'
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto'
+    }
+  }, [showCategoryModal, showServiceModal, showDeleteModal])
 
   useEffect(() => {
     if (!ownerId) {
@@ -676,46 +692,48 @@ export default function ServicesPage() {
         )}
 
         {showDeleteModal && (
-          <div className='fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn'>
-            <div
-              className='absolute inset-0 bg-black/40 backdrop-blur-sm'
-              onClick={() => setShowDeleteModal(false)}
-            ></div>
+          <ModalPortal>
+            <div className='fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fadeIn'>
+              <div
+                className='absolute inset-0 bg-black/55 backdrop-blur-[2px]'
+                onClick={() => setShowDeleteModal(false)}
+              ></div>
 
-            <div className='relative bg-white w-[92%] sm:w-full max-w-[420px] p-5 sm:p-6 rounded-3xl shadow-2xl animate-scaleIn'>
-              <h2 className='text-lg font-semibold mb-4 text-black'>
-                Confirm Delete
-              </h2>
+              <div className='relative bg-white w-[92%] sm:w-full max-w-[420px] p-5 sm:p-6 rounded-3xl shadow-2xl animate-scaleIn'>
+                <h2 className='text-lg font-semibold mb-4 text-black'>
+                  Confirm Delete
+                </h2>
 
-              <p className='text-sm sm:text-base text-gray-600 mb-6 leading-7'>
-                Are you sure you want to delete this{' '}
-                {deleteType === 'category' ? 'category' : 'service'}?
-                <br />
-                This action cannot be undone.
-              </p>
+                <p className='text-sm sm:text-base text-gray-600 mb-6 leading-7'>
+                  Are you sure you want to delete this{' '}
+                  {deleteType === 'category' ? 'category' : 'service'}?
+                  <br />
+                  This action cannot be undone.
+                </p>
 
-              <div className='flex flex-col-reverse sm:flex-row justify-end gap-3'>
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  disabled={isDeleting}
-                  className='px-4 py-2.5 border border-gray-200 rounded-2xl w-full sm:w-auto hover:bg-gray-50 transition'
-                >
-                  Cancel
-                </button>
+                <div className='flex flex-col-reverse sm:flex-row justify-end gap-3'>
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    disabled={isDeleting}
+                    className='px-4 py-2.5 border border-gray-200 rounded-2xl w-full sm:w-auto hover:bg-gray-50 transition'
+                  >
+                    Cancel
+                  </button>
 
-                <button
-                  onClick={handleConfirmDelete}
-                  disabled={isDeleting}
-                  className={`px-4 py-2.5 rounded-2xl text-white w-full sm:w-auto transition ${isDeleting
-                    ? 'bg-red-300 cursor-not-allowed'
-                    : 'bg-red-600 hover:bg-red-700'
-                    }`}
-                >
-                  {isDeleting ? 'Deleting...' : 'Yes, Delete'}
-                </button>
+                  <button
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleting}
+                    className={`px-4 py-2.5 rounded-2xl text-white w-full sm:w-auto transition ${isDeleting
+                      ? 'bg-red-300 cursor-not-allowed'
+                      : 'bg-red-600 hover:bg-red-700'
+                      }`}
+                  >
+                    {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </ModalPortal>
         )}
 
         <style>{`
@@ -781,53 +799,60 @@ function Modal({
   isSubmitting = false,
 }) {
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center px-3 py-6 sm:px-4 sm:py-8 animate-fadeIn'>
-      <div
-        className='absolute inset-0 bg-black/40 backdrop-blur-sm'
-        onClick={onClose}
-      ></div>
+    <ModalPortal>
+      <div className='fixed inset-0 z-[9999] flex items-center justify-center px-3 py-6 sm:px-4 sm:py-8 animate-fadeIn'>
+        <div
+          className='absolute inset-0 bg-black/55 backdrop-blur-[2px]'
+          onClick={onClose}
+        ></div>
 
-      <div className='relative w-full max-w-md sm:max-w-lg max-h-[80vh] bg-white rounded-[28px] shadow-2xl animate-scaleIn flex flex-col'>
-        <div className='flex justify-between items-center px-5 sm:px-6 py-4 sm:py-5 border-b border-gray-100'>
-          <h2 className='text-xl sm:text-2xl font-semibold text-gray-950'>
-            {title}
-          </h2>
+        <div className='relative w-full max-w-md sm:max-w-lg max-h-[80vh] bg-white rounded-[28px] shadow-2xl animate-scaleIn flex flex-col'>
+          <div className='flex justify-between items-center px-5 sm:px-6 py-4 sm:py-5 border-b border-gray-100'>
+            <h2 className='text-xl sm:text-2xl font-semibold text-gray-950'>
+              {title}
+            </h2>
 
-          <button
-            onClick={onClose}
-            className='w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 text-2xl flex items-center justify-center transition shrink-0'
-          >
-            ✕
-          </button>
-        </div>
+            <button
+              onClick={onClose}
+              className='w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 text-2xl flex items-center justify-center transition shrink-0'
+            >
+              ✕
+            </button>
+          </div>
 
-        <div className='flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4'>
-          {children}
-        </div>
+          <div className='flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4'>
+            {children}
+          </div>
 
-        <div className='flex flex-col-reverse sm:flex-row justify-end gap-3 px-5 sm:px-6 py-4 border-t border-gray-100 bg-white rounded-b-[28px]'>
-          <button
-            onClick={onClose}
-            disabled={isSubmitting}
-            className='px-5 py-3 border border-gray-200 rounded-2xl w-full sm:w-auto hover:bg-gray-50 transition'
-          >
-            Cancel
-          </button>
+          <div className='flex flex-col-reverse sm:flex-row justify-end gap-3 px-5 sm:px-6 py-4 border-t border-gray-100 bg-white rounded-b-[28px]'>
+            <button
+              onClick={onClose}
+              disabled={isSubmitting}
+              className='px-5 py-3 border border-gray-200 rounded-2xl w-full sm:w-auto hover:bg-gray-50 transition'
+            >
+              Cancel
+            </button>
 
-          <button
-            onClick={onSubmit}
-            disabled={isSubmitting}
-            className={`px-5 py-3 rounded-2xl text-white w-full sm:w-auto transition-all duration-300 ${isSubmitting
-                ? 'bg-green-300 cursor-not-allowed'
-                : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
-              }`}
-          >
-            {isSubmitting ? loadingText : submitText}
-          </button>
+            <button
+              onClick={onSubmit}
+              disabled={isSubmitting}
+              className={`px-5 py-3 rounded-2xl text-white w-full sm:w-auto transition-all duration-300 ${isSubmitting
+                  ? 'bg-green-300 cursor-not-allowed'
+                  : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                }`}
+            >
+              {isSubmitting ? loadingText : submitText}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   )
+}
+
+function ModalPortal({ children }) {
+  if (typeof document === 'undefined') return null
+  return createPortal(children, document.body)
 }
 
 function Input({ label, value, onChange, type = 'text' }) {
