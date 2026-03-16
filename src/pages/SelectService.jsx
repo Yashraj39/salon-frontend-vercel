@@ -305,7 +305,7 @@ export default function SelectService() {
       )
 
       const res = await fetch(
-        'https://gemini-cuj7.onrender.com/api/gemini/suggest-with-images',
+        'https://render-qs89.onrender.com/api/gemini/suggest-with-images',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

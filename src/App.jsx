@@ -14,6 +14,8 @@ import SelectService from './pages/SelectService'
 // import ProtectedRoute from "./pages/ProtectedRoute";
 import Profile from './pages/Profile'
 import ConfirmBooking from './pages/ConfirmBooking'
+import AboutUs from './pages/AboutUs'
+import ContactUs from './pages/ContactUs'
 
 import OwnerDashboard from './OwnerDashboard'
 
@@ -75,6 +77,8 @@ export default function App() {
         <Route path='/services' element={<ServicesPage />} />
         <Route path='/bookings' element={<Bookings />} />
         <Route path='/manage-bookings' element={<ManageBookings />} />
+        <Route path='/about' element={<AboutUs />} />
+        <Route path='/contact' element={<ContactUs />} />
 
         {/* 404 */}
         <Route

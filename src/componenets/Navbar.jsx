@@ -14,6 +14,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
+
 const saveOwnerApplication = (userId, data) => {
   const allApps = JSON.parse(localStorage.getItem('allOwnerApplications')) || {}
   allApps[userId] = data
@@ -515,11 +516,11 @@ export default function Navbar() {
       />
 
       <header className='sticky top-0 z-50 w-full border-b border-[#e7eaf0] bg-white/95 backdrop-blur-md'>
-        <div className='mx-auto relative max-w-7xl px-4 py-4 sm:px-6 md:px-2'>
-          <div className='flex items-center justify-between'>
+        <div className='mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8'>
+          <div className='flex items-center justify-between gap-6'>
             <div
               onClick={() => navigate('/success')}
-              className='flex items-center gap-3 cursor-pointer'
+              className='flex items-center gap-3 cursor-pointer shrink-0'
             >
               <div className='h-9 w-9 rounded-xl bg-black shadow-sm' />
               <span className='text-[18px] font-semibold tracking-[0.2px] text-[#111827]'>
@@ -545,54 +546,100 @@ export default function Navbar() {
             ) : (
               <>
                 {!isOwnerPanel && (
-                  <div className='hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-8'>
-                    <button
-                      type='button'
-                      onClick={() => navigate('/success')}
-                      className='group relative w-[110px] pb-2 text-center'
-                    >
-                      <span
-                        className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/success'
-                          ? 'text-[#111827]'
-                          : 'text-[#667085] group-hover:text-[#111827]'
-                          }`}
+                  <div className='hidden lg:flex flex-1 items-center justify-center'>
+                    <div className='flex items-center gap-8 xl:gap-10'>
+                      <button
+                        type='button'
+                        onClick={() => navigate('/success')}
+                        className='group relative pb-2 text-center'
                       >
-                        Home
-                      </span>
+                        <span
+                          className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/success' || location.pathname === '/home'
+                            ? 'text-[#111827]'
+                            : 'text-[#667085] group-hover:text-[#111827]'
+                            }`}
+                        >
+                          Home
+                        </span>
 
-                      <span
-                        className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/success'
-                          ? 'opacity-100 scale-x-100'
-                          : 'opacity-0 scale-x-0'
-                          }`}
-                      />
-                    </button>
+                        <span
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/success' || location.pathname === '/home'
+                            ? 'opacity-100 scale-x-100'
+                            : 'opacity-0 scale-x-0'
+                            }`}
+                        />
+                      </button>
 
-                    <button
-                      type='button'
-                      onClick={() => navigate('/bookings')}
-                      className='group relative w-[110px] pb-2 text-center'
-                    >
-                      <span
-                        className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/bookings'
-                          ? 'text-[#111827]'
-                          : 'text-[#667085] group-hover:text-[#111827]'
-                          }`}
+                      <button
+                        type='button'
+                        onClick={() => navigate('/about')}
+                        className='group relative pb-2 text-center'
                       >
-                        My Bookings
-                      </span>
+                        <span
+                          className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/about'
+                            ? 'text-[#111827]'
+                            : 'text-[#667085] group-hover:text-[#111827]'
+                            }`}
+                        >
+                          About
+                        </span>
 
-                      <span
-                        className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/bookings'
-                          ? 'opacity-100 scale-x-100'
-                          : 'opacity-0 scale-x-0'
-                          }`}
-                      />
-                    </button>
+                        <span
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/about'
+                            ? 'opacity-100 scale-x-100'
+                            : 'opacity-0 scale-x-0'
+                            }`}
+                        />
+                      </button>
+
+                      <button
+                        type='button'
+                        onClick={() => navigate('/contact')}
+                        className='group relative pb-2 text-center'
+                      >
+                        <span
+                          className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/contact'
+                            ? 'text-[#111827]'
+                            : 'text-[#667085] group-hover:text-[#111827]'
+                            }`}
+                        >
+                          Contact
+                        </span>
+
+                        <span
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/contact'
+                            ? 'opacity-100 scale-x-100'
+                            : 'opacity-0 scale-x-0'
+                            }`}
+                        />
+                      </button>
+
+                      <button
+                        type='button'
+                        onClick={() => navigate('/bookings')}
+                        className='group relative pb-2 text-center'
+                      >
+                        <span
+                          className={`text-[15px] font-semibold whitespace-nowrap transition-colors duration-300 ${location.pathname === '/bookings'
+                            ? 'text-[#111827]'
+                            : 'text-[#667085] group-hover:text-[#111827]'
+                            }`}
+                        >
+                          My Bookings
+                        </span>
+
+                        <span
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/bookings'
+                            ? 'opacity-100 scale-x-100'
+                            : 'opacity-0 scale-x-0'
+                            }`}
+                        />
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                <div className='flex items-center gap-4 md:gap-4 relative shrink-0'>
+                <div className='flex items-center gap-3 md:gap-4 shrink-0'>
                   <div className='relative' onClick={(e) => e.stopPropagation()}>
                     <button
                       type='button'
@@ -623,10 +670,34 @@ export default function Navbar() {
 
                     <div
                       className={`absolute right-0 top-12 w-[380px] origin-top-right rounded-3xl border border-[#e5e7eb] bg-white/95 backdrop-blur-xl shadow-[0_24px_60px_rgba(15,23,42,0.18)] z-50 overflow-hidden transition-all duration-300 ${showNotificationDropdown
-                          ? 'opacity-100 visible translate-y-0 scale-100'
-                          : 'opacity-0 invisible -translate-y-2 scale-95 pointer-events-none'
+                        ? 'opacity-100 visible translate-y-0 scale-100'
+                        : 'opacity-0 invisible -translate-y-2 scale-95 pointer-events-none'
                         }`}
                     >
+                      <div className='border-b border-[#eef2f6] bg-gradient-to-r from-[#f8fafc] to-white px-5 py-4'>
+                        <div className='flex items-center justify-between'>
+
+
+                          {notifications.length > 0 && (
+                            <div className='flex items-center gap-2'>
+                              {unreadCount > 0 && (
+                                <span className='rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-600 border border-red-100'>
+                                  {unreadCount} new
+                                </span>
+                              )}
+
+                              <button
+                                type='button'
+                                onClick={markAllNotificationsAsRead}
+                                className='inline-flex items-center gap-1.5 rounded-full border border-[#dbe3ec] bg-white px-3 py-1.5 text-[12px] font-medium text-[#344054] hover:bg-[#f8fafc] transition'
+                              >
+                                <FiCheck className='text-[13px]' />
+                                Mark all read
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
                       <div className='max-h-[420px] overflow-y-auto px-3 py-3'>
                         {notifications.length === 0 ? (
@@ -650,8 +721,8 @@ export default function Navbar() {
                                 key={item.id}
                                 onClick={() => markNotificationAsRead(item.id)}
                                 className={`group relative cursor-pointer overflow-hidden rounded-2xl border px-4 py-3 transition-all duration-200 ${item.isRead
-                                    ? 'border-[#edf1f5] bg-white hover:bg-[#fafbfc] hover:shadow-sm'
-                                    : 'border-blue-100 bg-gradient-to-r from-blue-50 to-white shadow-[0_6px_18px_rgba(59,130,246,0.08)] hover:shadow-[0_10px_24px_rgba(59,130,246,0.12)]'
+                                  ? 'border-[#edf1f5] bg-white hover:bg-[#fafbfc] hover:shadow-sm'
+                                  : 'border-blue-100 bg-gradient-to-r from-blue-50 to-white shadow-[0_6px_18px_rgba(59,130,246,0.08)] hover:shadow-[0_10px_24px_rgba(59,130,246,0.12)]'
                                   }`}
                                 style={{
                                   animation: `fadeSlideIn 220ms ease ${index * 40}ms both`,
@@ -665,8 +736,8 @@ export default function Navbar() {
                                   <div className='flex min-w-0 flex-1 gap-3'>
                                     <div
                                       className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${item.isRead
-                                          ? 'bg-[#f2f4f7] text-[#667085]'
-                                          : 'bg-blue-100 text-blue-700'
+                                        ? 'bg-[#f2f4f7] text-[#667085]'
+                                        : 'bg-blue-100 text-blue-700'
                                         }`}
                                     >
                                       <FiBell className='text-[16px]' />
@@ -819,11 +890,11 @@ export default function Navbar() {
                     )}
                   </button>
 
-                  <div className='hidden md:block'>{ownerButton()}</div>
+                  <div className='hidden lg:block'>{ownerButton()}</div>
 
                   <button
                     type='button'
-                    className='md:hidden flex h-10 w-10 items-center justify-center rounded-full border border-[#e6eaf0] bg-white text-[#344054]'
+                    className='lg:hidden flex h-10 w-10 items-center justify-center rounded-full border border-[#e6eaf0] bg-white text-[#344054]'
                     onClick={() => setMobileMenu(!mobileMenu)}
                   >
                     <FiMenu className='text-[22px]' />
@@ -835,16 +906,42 @@ export default function Navbar() {
         </div>
 
         {mobileMenu && isLoggedIn && (
-          <div className='md:hidden border-t border-[#eef1f5] bg-white px-5 py-5 space-y-4 shadow-sm'>
+          <div className='lg:hidden border-t border-[#eef1f5] bg-white px-5 py-5 space-y-3 shadow-sm'>
             <div
-              onClick={() => navigate('/success')}
-              className='flex items-center gap-3 cursor-pointer shrink-0 min-w-[190px]'
+              onClick={() => {
+                navigate('/success')
+                setMobileMenu(false)
+              }}
+              className='rounded-xl px-3 py-2.5 text-[15px] font-medium text-[#243B63] hover:bg-[#f8fafc] cursor-pointer'
             >
               Home
             </div>
 
             <div
-              onClick={() => navigate('/bookings')}
+              onClick={() => {
+                navigate('/about')
+                setMobileMenu(false)
+              }}
+              className='rounded-xl px-3 py-2.5 text-[15px] font-medium text-[#243B63] hover:bg-[#f8fafc] cursor-pointer'
+            >
+              About
+            </div>
+
+            <div
+              onClick={() => {
+                navigate('/contact')
+                setMobileMenu(false)
+              }}
+              className='rounded-xl px-3 py-2.5 text-[15px] font-medium text-[#243B63] hover:bg-[#f8fafc] cursor-pointer'
+            >
+              Contact
+            </div>
+
+            <div
+              onClick={() => {
+                navigate('/bookings')
+                setMobileMenu(false)
+              }}
               className='rounded-xl px-3 py-2.5 text-[15px] font-medium text-[#243B63] hover:bg-[#f8fafc] cursor-pointer'
             >
               My Bookings
@@ -858,14 +955,20 @@ export default function Navbar() {
               ) : ownerStatus === 'APPROVED' ? (
                 isOwnerPanel ? (
                   <div
-                    onClick={() => navigate('/success')}
+                    onClick={() => {
+                      navigate('/success')
+                      setMobileMenu(false)
+                    }}
                     className='rounded-xl border border-[#3c3c3c] bg-gradient-to-r from-[#242424] via-[#343434] to-[#464646] px-4 py-3 text-sm font-semibold text-white cursor-pointer'
                   >
                     Switch to User
                   </div>
                 ) : (
                   <div
-                    onClick={() => navigate('/owner-dashboard')}
+                    onClick={() => {
+                      navigate('/owner-dashboard')
+                      setMobileMenu(false)
+                    }}
                     className='rounded-xl border border-[#159947] bg-gradient-to-r from-[#16a34a] to-[#22c55e] px-4 py-3 text-sm font-semibold text-white cursor-pointer'
                   >
                     Switch to Owner
@@ -873,7 +976,10 @@ export default function Navbar() {
                 )
               ) : (
                 <div
-                  onClick={() => setShowOwnerModal(true)}
+                  onClick={() => {
+                    setShowOwnerModal(true)
+                    setMobileMenu(false)
+                  }}
                   className='rounded-xl border border-[#d8dee8] bg-white px-4 py-3 text-sm font-semibold text-[#243B63] cursor-pointer'
                 >
                   Become an Owner
