@@ -257,8 +257,7 @@ export default function SelectService() {
     ?.toLowerCase()
     .includes('haircut')
 
-  const GEMINI_BASE_URL =
-    import.meta.env.VITE_GEMINI_BASE_URL || 'http://localhost:8080'
+  const GEMINI_BASE_URL = 'https://gemini-cuj7.onrender.com'
 
   const handleAiSuggest = async () => {
     if (!aiImage) {
