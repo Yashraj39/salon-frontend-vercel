@@ -40,6 +40,10 @@ export default function SelectService() {
   const [aiServices, setAiServices] = useState([])
   const [aiModalOpen, setAiModalOpen] = useState(false)
   const [cartCount, setCartCount] = useState(0)
+  const [preferredLength, setPreferredLength] = useState('')
+  const [maintenanceLevel, setMaintenanceLevel] = useState('')
+  const [hasBeard, setHasBeard] = useState(false)
+  const [stylePreference, setStylePreference] = useState('')
 
   const [navbarCart, setNavbarCart] = useState([])
   const [navbarOpen, setNavbarOpen] = useState(false)
@@ -253,6 +257,9 @@ export default function SelectService() {
     ?.toLowerCase()
     .includes('haircut')
 
+  const GEMINI_BASE_URL =
+    import.meta.env.VITE_GEMINI_BASE_URL || 'http://localhost:8080'
+
   const handleAiSuggest = async () => {
     if (!aiImage) {
       toast.error('Please upload your photo')
@@ -273,67 +280,37 @@ export default function SelectService() {
       setAiLoading(true)
       setAiSuggestions([])
 
+      const filteredHairstyles = aiServices.filter(
+        (s) => s.genderCategory?.toLowerCase() === aiGender.toLowerCase()
+      )
+
+      if (filteredHairstyles.length === 0) {
+        toast.error('No matching hairstyles found for selected gender')
+        return
+      }
+
       const fd = new FormData()
       fd.append('file', aiImage)
+      fd.append('gender', aiGender)
+      fd.append('hairstyles', JSON.stringify(filteredHairstyles))
 
-      const uploadRes = await fetch(
-        'https://render-qs89.onrender.com/api/upload/image',
+      const res = await fetch(
+        `${GEMINI_BASE_URL}/api/gemini/suggest-with-images`,
         {
           method: 'POST',
           body: fd,
         }
       )
 
-      if (!uploadRes.ok) {
-        toast.error('Image upload failed')
-        return
-      }
-
-      const uploadJson = await uploadRes.json()
-
-      if (
-        !uploadJson ||
-        typeof uploadJson.imageUrl !== 'string' ||
-        !uploadJson.imageUrl.startsWith('http')
-      ) {
-        toast.error('Invalid image upload response')
-        return
-      }
-
-      const filteredHairstyles = aiServices.filter(
-        (s) => s.genderCategory?.toLowerCase() === aiGender.toLowerCase()
-      )
-
-      const res = await fetch(
-        'https://gemini-cuj7.onrender.com/api/gemini/suggest-with-images',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imageUrl: uploadJson.imageUrl,
-            gender: aiGender,
-            hairstyles: filteredHairstyles,
-          }),
-        }
-      )
-
       const data = await res.json()
 
-      if (data.error) {
-        toast.error(data.error)
-        return
-      }
-
-      if (!res.ok || data.error) {
-        toast.error(data.error || 'AI could not suggest hairstyle')
+      if (!res.ok) {
+        toast.error(data?.message || data?.error || 'AI could not suggest hairstyle')
         setAiSuggestions([])
         return
       }
 
-      if (
-        !Array.isArray(data.geminiResponse) ||
-        data.geminiResponse.length === 0
-      ) {
+      if (!Array.isArray(data?.geminiResponse) || data.geminiResponse.length === 0) {
         toast.error('No suitable hairstyle found')
         setAiSuggestions([])
         return
@@ -343,6 +320,7 @@ export default function SelectService() {
     } catch (err) {
       console.error(err)
       toast.error('AI suggestion failed')
+      setAiSuggestions([])
     } finally {
       setAiLoading(false)
     }
@@ -555,7 +533,12 @@ export default function SelectService() {
         <div className='fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center px-4 animate-[fadeIn_.2s_ease]'>
           <div className='bg-white w-full max-w-4xl rounded-3xl p-5 sm:p-6 relative shadow-2xl border border-white/50 max-h-[90vh] overflow-y-auto animate-[scaleIn_.2s_ease]'>
             <button
-              onClick={() => setAiModalOpen(false)}
+              onClick={() => {
+                setAiModalOpen(false)
+                setAiImage(null)
+                setAiGender('')
+                setAiSuggestions([])
+              }}
               className='absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 text-lg transition cursor-pointer flex items-center justify-center'
             >
               ✕
@@ -604,12 +587,27 @@ export default function SelectService() {
                       alt={s.name}
                       className='h-40 w-full rounded-xl object-cover'
                     />
-                    <h4 className='mt-3 font-semibold text-sm text-gray-900'>
-                      {s.name}
-                    </h4>
-                    <p className='text-xs text-gray-500 mt-1 leading-5'>
+
+                    <div className='mt-3 flex items-start justify-between gap-3'>
+                      <h4 className='font-semibold text-sm text-gray-900'>
+                        {s.name}
+                      </h4>
+                      {s.confidence && (
+                        <span className='text-[10px] px-2 py-1 rounded-full bg-black text-white'>
+                          {s.confidence}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className='text-xs text-gray-500 mt-2 leading-5'>
                       {s.description}
                     </p>
+
+                    <div className='mt-3 space-y-1 text-[11px] text-gray-600'>
+                      {typeof s.score !== 'undefined' && <p>Score: {s.score}</p>}
+                      {s.faceShape && <p>Face Shape: {s.faceShape}</p>}
+                      {s.hairDensity && <p>Hair Density: {s.hairDensity}</p>}
+                    </div>
                   </div>
                 ))}
               </div>
