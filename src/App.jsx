@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import AdminLogin from './pages/AdminLogin'
 
 // Auth Pages
 import AuthPage from './pages/AuthPage'
@@ -79,6 +80,8 @@ export default function App() {
         <Route path='/manage-bookings' element={<ManageBookings />} />
         <Route path='/about' element={<AboutUs />} />
         <Route path='/contact' element={<ContactUs />} />
+        <Route path='/admin/login' element={<AdminLogin />} />
+        
 
         {/* 404 */}
         <Route
