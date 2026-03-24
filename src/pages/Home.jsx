@@ -26,6 +26,20 @@ export default function Home() {
 
   const [openCity, setOpenCity] = useState(true)
   const [openService, setOpenService] = useState(true)
+  const [cities, setCities] = useState([])
+
+  const fetchCities = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/city/owner/active`)
+      if (!res.ok) throw new Error()
+
+      const data = await res.json()
+      setCities(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error(err)
+      setCities([])
+    }
+  }
 
   useEffect(() => {
     const fetchSalons = async () => {
@@ -45,6 +59,7 @@ export default function Home() {
     }
 
     fetchSalons()
+    fetchCities()
   }, [])
 
   useEffect(() => {
@@ -70,15 +85,8 @@ export default function Home() {
   }, [search, selectedCity, selectedService, salons])
 
   const cityOptions = useMemo(() => {
-    const cities = salons
-      .map((s) => s.city)
-      .filter(Boolean)
-      .filter((city, index, arr) => arr.indexOf(city) === index)
-
-    return cities.length > 0
-      ? cities
-      : ['Surat', 'Ahmedabad', 'Rajkot', 'Vadodara']
-  }, [salons])
+    return cities.map((city) => city.name).filter(Boolean)
+  }, [cities])
 
   const serviceOptions = useMemo(() => {
     const allServices = salons.flatMap((s) =>

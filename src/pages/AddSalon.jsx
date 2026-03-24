@@ -90,6 +90,23 @@ export default function ManageSalons() {
   const [isAddingSalon, setIsAddingSalon] = useState(false)
   const [isUpdatingSalon, setIsUpdatingSalon] = useState(false)
   const [originalForm, setOriginalForm] = useState(emptyForm)
+  const [cities, setCities] = useState([])
+
+  const loadCities = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/city/owner/active`)
+      if (!res.ok) {
+        const errorText = await res.text()
+        throw new Error(errorText || 'Add salon failed')
+      }
+
+      const data = await res.json()
+      setCities(Array.isArray(data) ? data : [])
+    } catch {
+      setCities([])
+      toast.error('City list load failed')
+    }
+  }
 
   const loadSalons = async (preferredSalonId = null) => {
     try {
@@ -140,6 +157,7 @@ export default function ManageSalons() {
   }, [showPopup, deleteModalOpen])
 
   useEffect(() => {
+    loadCities()
     if (ownerId) loadSalons()
   }, [ownerId])
 
@@ -226,14 +244,17 @@ export default function ManageSalons() {
         body: formData,
       })
 
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const errorText = await res.text()
+        throw new Error(errorText || 'Add salon failed')
+      }
 
       toast.success('Salon Added')
       setShowPopup(false)
       resetPopupForm()
       await loadSalons()
-    } catch {
-      toast.error('Add salon failed')
+    } catch (error) {
+      toast.error(error.message || 'Add salon failed')
     } finally {
       setIsAddingSalon(false)
     }
@@ -457,13 +478,22 @@ export default function ManageSalons() {
                     placeholder='Enter salon name'
                   />
 
-                  <InputField
-                    label='City'
-                    name='city'
-                    value={form.city}
-                    onChange={handleChange}
-                    placeholder='Enter city'
-                  />
+                  <div>
+                    <label className='block mb-2 text-sm font-medium text-gray-800'>City</label>
+                    <select
+                      name='city'
+                      value={form.city}
+                      onChange={handleChange}
+                      className='border border-gray-200 px-4 py-3 rounded-2xl w-full outline-none focus:border-gray-400 transition-all duration-300'
+                    >
+                      <option value=''>Select City</option>
+                      {cities.map((city) => (
+                        <option key={city.id} value={city.name}>
+                          {city.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className='mb-5'>
@@ -673,13 +703,19 @@ export default function ManageSalons() {
                     onChange={handleChange}
                   />
 
-                  <PopupInput
-                    type='text'
+                  <select
                     name='city'
-                    placeholder='City'
                     value={form.city}
                     onChange={handleChange}
-                  />
+                    className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400 transition-all duration-300'
+                  >
+                    <option value=''>Select City</option>
+                    {cities.map((city) => (
+                      <option key={city.id} value={city.name}>
+                        {city.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <textarea
@@ -816,8 +852,8 @@ export default function ManageSalons() {
                     onClick={handleAddSalon}
                     disabled={isAddingSalon}
                     className={`px-5 py-3 text-white rounded-2xl transition-all duration-300 ${isAddingSalon
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
                       }`}
                   >
                     {isAddingSalon ? 'Adding Salon...' : 'Add Salon'}
