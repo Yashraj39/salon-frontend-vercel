@@ -10,7 +10,7 @@ import {
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 
-const BASE_URL = 'http://localhost:8080'
+const BASE_URL = 'https://render-qs89.onrender.com'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
