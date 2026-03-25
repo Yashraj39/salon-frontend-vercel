@@ -89,7 +89,7 @@ export default function AdminLogin() {
 
       localStorage.setItem('user', JSON.stringify(data))
       toast.success('Admin login successful')
-      navigate('/admin/dashboard')
+      navigate('/admin-layout')
     } catch (error) {
       toast.error(error.message || 'Admin login failed')
     } finally {

@@ -30,6 +30,7 @@ import OwnerLayout from './componenets/OwnerLayout'
 import ServicesPage from './pages/ServicesPage'
 import Bookings from './pages/Bookings'
 import ManageBookings from './pages/ManageBookings'
+import AdminLayout from './componenets/AdminLayout'
 
 export default function App() {
   return (
@@ -81,7 +82,7 @@ export default function App() {
         <Route path='/about' element={<AboutUs />} />
         <Route path='/contact' element={<ContactUs />} />
         <Route path='/admin/login' element={<AdminLogin />} />
-        
+        <Route path='/admin-layout' element={<AdminLayout />} />
 
         {/* 404 */}
         <Route
