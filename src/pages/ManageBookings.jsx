@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import toast from 'react-hot-toast'
 import OwnerLayout from '../componenets/OwnerLayout'
 import {
@@ -104,6 +105,18 @@ export default function ManageBookings() {
   }
 
   useEffect(() => {
+    if (cancelModalOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'auto'
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto'
+    }
+  }, [cancelModalOpen])
+
+  useEffect(() => {
     if (!ownerId) return
 
     setSelectedSalonId('')
@@ -157,6 +170,18 @@ export default function ManageBookings() {
     window.addEventListener('click', closeMenu)
     return () => window.removeEventListener('click', closeMenu)
   }, [])
+
+  useEffect(() => {
+    if (cancelModalOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'auto'
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto'
+    }
+  }, [cancelModalOpen])
 
   const handleSalonChange = (e) => {
     const newSalonId = e.target.value
@@ -649,8 +674,8 @@ export default function ManageBookings() {
                                   onClick={() => openCancelModal(item)}
                                   disabled={!canCancelBooking(item)}
                                   className={`w-full text-left px-3 py-2 rounded-xl text-sm transition ${canCancelBooking(item)
-                                      ? 'text-red-600 hover:bg-red-50'
-                                      : 'text-gray-400 cursor-not-allowed'
+                                    ? 'text-red-600 hover:bg-red-50'
+                                    : 'text-gray-400 cursor-not-allowed'
                                     }`}
                                 >
                                   Cancel Booking
@@ -726,59 +751,82 @@ export default function ManageBookings() {
         </div>
 
         {cancelModalOpen && (
-          <div className='fixed inset-0 bg-black/25 backdrop-blur-[2px] flex items-center justify-center z-[80] p-4 animate-fadeIn'>
-            <div className='bg-white w-full max-w-md rounded-3xl p-6 shadow-xl animate-scaleIn relative'>
-              <button
+          <ModalPortal>
+            <div className='fixed inset-0 z-[9999] flex items-center justify-center px-3 py-6 sm:px-4 sm:py-8 animate-fadeIn'>
+              <div
+                className='absolute inset-0 bg-black/55 backdrop-blur-[2px]'
                 onClick={closeCancelModal}
-                disabled={cancelLoading}
-                className='absolute top-4 right-4 w-9 h-9 rounded-xl hover:bg-gray-100 text-gray-500 flex items-center justify-center transition'
-              >
-                <FiX size={18} />
-              </button>
+              ></div>
 
-              <h2 className='text-2xl font-bold text-gray-950 mb-3'>Cancel Booking</h2>
-              <p className='text-sm text-gray-600 leading-6 mb-6'>
-                Are you sure you want to cancel this booking for{' '}
-                <span className='font-semibold text-gray-900'>
-                  {capitalizeWords(bookingToCancel?.customerName) || 'customer'}
-                </span>
-                ?
-              </p>
+              <div className='relative w-full max-w-md sm:max-w-lg bg-white rounded-[28px] shadow-2xl animate-scaleIn flex flex-col'>
+                <div className='flex justify-between items-center px-5 sm:px-6 py-4 sm:py-5 border-b border-gray-100'>
+                  <h2 className='text-xl sm:text-2xl font-semibold text-gray-950'>
+                    Cancel Booking
+                  </h2>
 
-              <div className='rounded-2xl border border-gray-200 bg-gray-50 p-4 mb-6'>
-                <p className='text-sm text-gray-700'>
-                  <span className='font-medium'>Salon:</span> {bookingToCancel?.salonName || '-'}
-                </p>
-                <p className='text-sm text-gray-700 mt-1'>
-                  <span className='font-medium'>Barber:</span> {bookingToCancel?.barberName || '-'}
-                </p>
-                <p className='text-sm text-gray-700 mt-1'>
-                  <span className='font-medium'>Status:</span> {capitalizeWords(bookingToCancel?.status || '-')}
-                </p>
-              </div>
+                  <button
+                    onClick={closeCancelModal}
+                    disabled={cancelLoading}
+                    className='w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center transition shrink-0'
+                  >
+                    <FiX size={20} />
+                  </button>
+                </div>
 
-              <div className='flex justify-end gap-3'>
-                <button
-                  onClick={closeCancelModal}
-                  disabled={cancelLoading}
-                  className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition disabled:opacity-60'
-                >
-                  Close
-                </button>
+                <div className='px-5 sm:px-6 py-4 space-y-4'>
+                  <p className='text-sm sm:text-base text-gray-600 leading-7'>
+                    Are you sure you want to cancel this booking for{' '}
+                    <span className='font-semibold text-gray-900'>
+                      {capitalizeWords(bookingToCancel?.customerName) || 'customer'}
+                    </span>
+                    ?
+                  </p>
 
-                <button
-                  onClick={handleCancelBooking}
-                  disabled={cancelLoading}
-                  className={`px-5 py-2.5 text-white rounded-2xl transition ${cancelLoading
-                    ? 'bg-red-300 cursor-not-allowed'
-                    : 'bg-red-500 hover:bg-red-600'
-                    }`}
-                >
-                  {cancelLoading ? 'Cancelling...' : 'Confirm Cancel'}
-                </button>
+                  <div className='rounded-2xl border border-gray-200 bg-gray-50 p-4 space-y-2'>
+                    <p className='text-sm text-gray-700 break-words'>
+                      <span className='font-medium text-gray-900'>Salon:</span>{' '}
+                      {bookingToCancel?.salonName || '-'}
+                    </p>
+                    <p className='text-sm text-gray-700 break-words'>
+                      <span className='font-medium text-gray-900'>Barber:</span>{' '}
+                      {bookingToCancel?.barberName || '-'}
+                    </p>
+                    <p className='text-sm text-gray-700'>
+                      <span className='font-medium text-gray-900'>Status:</span>{' '}
+                      {capitalizeWords(bookingToCancel?.status || '-')}
+                    </p>
+                  </div>
+
+                  <div className='rounded-2xl border border-red-100 bg-red-50 px-4 py-3'>
+                    <p className='text-sm text-red-700 leading-6'>
+                      This action will cancel the booking and cannot be undone.
+                    </p>
+                  </div>
+                </div>
+
+                <div className='flex flex-col-reverse sm:flex-row justify-end gap-3 px-5 sm:px-6 py-4 border-t border-gray-100 bg-white rounded-b-[28px]'>
+                  <button
+                    onClick={closeCancelModal}
+                    disabled={cancelLoading}
+                    className='px-5 py-3 border border-gray-200 rounded-2xl w-full sm:w-auto hover:bg-gray-50 transition disabled:opacity-60'
+                  >
+                    Close
+                  </button>
+
+                  <button
+                    onClick={handleCancelBooking}
+                    disabled={cancelLoading}
+                    className={`px-5 py-3 rounded-2xl text-white w-full sm:w-auto transition-all duration-300 ${cancelLoading
+                      ? 'bg-red-300 cursor-not-allowed'
+                      : 'bg-red-600 hover:bg-red-700 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                      }`}
+                  >
+                    {cancelLoading ? 'Cancelling...' : 'Confirm Cancel'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          </ModalPortal>
         )}
       </div>
       <style>{`
@@ -900,4 +948,9 @@ function capitalizeWords(value) {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+function ModalPortal({ children }) {
+  if (typeof document === 'undefined') return null
+  return createPortal(children, document.body)
 }
