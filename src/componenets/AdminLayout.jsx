@@ -9,12 +9,10 @@ export default function AdminLayout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const menuItems = [
-    { name: 'Add City', path: '/' },
-    { name: 'Salons', path: '/' },
-    { name: 'Barbers', path: '/' },
-    { name: 'Services', path: '/' },
-    
-    
+    { name: 'City', path: '/admin/city' },
+    { name: 'Category Service', path: '/admin/category-service' },
+    { name: 'Approve Owner', path: '/admin/approve-owner' },
+    { name: 'Approve Salon', path: '/admin/approve-salon' },
   ]
 
   return (

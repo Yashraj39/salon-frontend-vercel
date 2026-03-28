@@ -1,0 +1,763 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import toast from 'react-hot-toast'
+import {
+  FiBox,
+  FiEdit2,
+  FiFileText,
+  FiPlus,
+  FiRefreshCw,
+  FiSearch,
+  FiTrash2,
+  FiX,
+} from 'react-icons/fi'
+import AdminLayout from '../componenets/AdminLayout'
+
+const BASE_URL = 'http://localhost:8080'
+
+export default function AdminCategoryServicePage() {
+  const admin = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('admin')
+      if (!raw) return {}
+      return JSON.parse(raw)
+    } catch {
+      return {}
+    }
+  }, [])
+
+  const adminId =
+    admin?.adminId ||
+    admin?.userId ||
+    admin?.userid ||
+    admin?.id ||
+    admin?._id ||
+    ''
+
+  const [categories, setCategories] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [actionLoadingId, setActionLoadingId] = useState('')
+
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+  })
+
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState(null)
+
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+  })
+
+  useEffect(() => {
+    fetchCategories()
+  }, [])
+
+  useEffect(() => {
+    if (editModalOpen || deleteModalOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'auto'
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto'
+    }
+  }, [editModalOpen, deleteModalOpen])
+
+  const fetchCategories = async () => {
+    try {
+      setLoading(true)
+
+      const res = await fetch(`${BASE_URL}/api/admin/service-category/all`)
+      if (!res.ok) throw new Error('Failed to load categories')
+
+      const data = await res.json()
+      setCategories(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to load categories')
+      setCategories([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateCategory = async (e) => {
+    e.preventDefault()
+
+    if (!formData.name.trim()) {
+      toast.error('Category name is required')
+      return
+    }
+
+    try {
+      setSaving(true)
+
+      const res = await fetch(`${BASE_URL}/api/admin/service-category/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          description: formData.description.trim(),
+        }),
+      })
+
+      const contentType = res.headers.get('content-type') || ''
+      const data = contentType.includes('application/json')
+        ? await res.json()
+        : await res.text()
+
+      if (!res.ok) {
+        throw new Error(typeof data === 'string' ? data : 'Failed to create category')
+      }
+
+      toast.success('Category created successfully')
+      setFormData({
+        name: '',
+        description: '',
+      })
+      fetchCategories()
+    } catch (err) {
+      console.error(err)
+      toast.error(err.message || 'Failed to create category')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const openEditModal = (category) => {
+    setSelectedCategory(category)
+    setEditForm({
+      name: category?.name || '',
+      description: category?.description || '',
+    })
+    setEditModalOpen(true)
+  }
+
+  const closeEditModal = () => {
+    if (actionLoadingId) return
+    setEditModalOpen(false)
+    setSelectedCategory(null)
+    setEditForm({
+      name: '',
+      description: '',
+    })
+  }
+
+  const openDeleteModal = (category) => {
+    setSelectedCategory(category)
+    setDeleteModalOpen(true)
+  }
+
+  const closeDeleteModal = () => {
+    if (actionLoadingId) return
+    setDeleteModalOpen(false)
+    setSelectedCategory(null)
+  }
+
+  const handleUpdateCategory = async () => {
+    if (!selectedCategory?.id) return
+
+    if (!editForm.name.trim()) {
+      toast.error('Category name is required')
+      return
+    }
+
+    try {
+      setActionLoadingId(selectedCategory.id)
+
+      const res = await fetch(
+        `${BASE_URL}/api/admin/service-category/update/${selectedCategory.id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: editForm.name.trim(),
+            description: editForm.description.trim(),
+          }),
+        }
+      )
+
+      const contentType = res.headers.get('content-type') || ''
+      const data = contentType.includes('application/json')
+        ? await res.json()
+        : await res.text()
+
+      if (!res.ok) {
+        throw new Error(typeof data === 'string' ? data : 'Failed to update category')
+      }
+
+      toast.success('Category updated successfully')
+      setEditModalOpen(false)
+      setSelectedCategory(null)
+      fetchCategories()
+    } catch (err) {
+      console.error(err)
+      toast.error(err.message || 'Failed to update category')
+    } finally {
+      setActionLoadingId('')
+    }
+  }
+
+  const handleDeleteCategory = async () => {
+    if (!selectedCategory?.id) return
+
+    try {
+      setActionLoadingId(selectedCategory.id)
+
+      const res = await fetch(
+        `${BASE_URL}/api/admin/service-category/delete/${selectedCategory.id}`,
+        {
+          method: 'DELETE',
+        }
+      )
+
+      const contentType = res.headers.get('content-type') || ''
+      const data = contentType.includes('application/json')
+        ? await res.json()
+        : await res.text()
+
+      if (!res.ok) {
+        throw new Error(typeof data === 'string' ? data : 'Failed to delete category')
+      }
+
+      toast.success('Category deleted successfully')
+      setDeleteModalOpen(false)
+      setSelectedCategory(null)
+      fetchCategories()
+    } catch (err) {
+      console.error(err)
+      toast.error(err.message || 'Failed to delete category')
+    } finally {
+      setActionLoadingId('')
+    }
+  }
+
+  const filteredCategories = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
+    if (!term) return categories
+
+    return categories.filter((category) => {
+      const name = String(category?.name || '').toLowerCase()
+      const description = String(category?.description || '').toLowerCase()
+      return name.includes(term) || description.includes(term)
+    })
+  }, [categories, searchTerm])
+
+  return (
+    <AdminLayout>
+      <div className='max-w-7xl mx-auto py-2 animate-fadeIn'>
+        <div className='mb-6'>
+          <h1 className='text-2xl sm:text-[30px] font-bold text-gray-950 tracking-tight'>
+            Category Service Management
+          </h1>
+          <p className='text-sm text-gray-500 mt-1'>
+            Create and manage master service categories for the platform.
+          </p>
+        </div>
+
+        <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-5'>
+          <StatsCard title='Total Categories' value={categories.length} />
+          <StatsCard
+            title='With Description'
+            value={categories.filter((item) => String(item?.description || '').trim()).length}
+          />
+          <StatsCard
+            title='Without Description'
+            value={categories.filter((item) => !String(item?.description || '').trim()).length}
+          />
+        </div>
+
+        <div className='grid grid-cols-1 xl:grid-cols-[380px_minmax(0,1fr)] gap-5'>
+          <div className='bg-white border border-gray-200 rounded-3xl shadow-sm p-5 animate-slideUp'>
+            <div className='flex items-center gap-3 mb-5'>
+              <div className='w-11 h-11 rounded-2xl bg-[#0f172a] text-white flex items-center justify-center text-lg'>
+                <FiPlus />
+              </div>
+              <div>
+                <h2 className='text-lg font-semibold text-gray-950'>Add New Category</h2>
+                <p className='text-sm text-gray-500'>
+                  Create a master category for salon services.
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleCreateCategory} className='space-y-4'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Category Name
+                </label>
+                <div className='relative'>
+                  <input
+                    type='text'
+                    placeholder='Enter category name'
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, name: e.target.value }))
+                    }
+                    className='w-full h-[54px] rounded-2xl border border-gray-200 bg-white px-4 pr-11 text-gray-900 outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition'
+                  />
+                  <div className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400'>
+                    <FiBox size={18} />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-2'>
+                  Description
+                </label>
+                <div className='relative'>
+                  <textarea
+                    rows='4'
+                    placeholder='Enter category description'
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, description: e.target.value }))
+                    }
+                    className='w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none resize-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition'
+                  />
+                </div>
+              </div>
+
+              <button
+                type='submit'
+                disabled={saving}
+                className={`w-full h-[52px] rounded-2xl text-white font-semibold transition-all duration-300 ${
+                  saving
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-[#0f172a] hover:bg-black hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                }`}
+              >
+                {saving ? 'Creating Category...' : 'Create Category'}
+              </button>
+            </form>
+          </div>
+
+          <div className='bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden animate-slideUp-delayed'>
+            <div className='p-5 border-b border-gray-100'>
+              <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3'>
+                <div>
+                  <h2 className='text-lg font-semibold text-gray-950'>All Categories</h2>
+                  <p className='text-sm text-gray-500 mt-1'>
+                    Search, edit and delete master categories.
+                  </p>
+                </div>
+
+                <div className='flex flex-col sm:flex-row gap-3'>
+                  <div className='relative min-w-0 sm:min-w-[260px]'>
+                    <input
+                      type='text'
+                      placeholder='Search category...'
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className='w-full h-[46px] rounded-2xl border border-gray-200 bg-white px-4 pr-11 text-sm text-gray-900 outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition'
+                    />
+                    <div className='absolute right-4 top-1/2 -translate-y-1/2 text-gray-400'>
+                      <FiSearch size={16} />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={fetchCategories}
+                    disabled={loading}
+                    className='h-[46px] px-4 rounded-2xl border border-gray-200 bg-white text-gray-700 font-medium hover:bg-gray-50 transition disabled:opacity-60 flex items-center justify-center gap-2'
+                  >
+                    <FiRefreshCw className={loading ? 'animate-spin' : ''} />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className='lg:hidden p-4 space-y-3'>
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className='border border-gray-200 rounded-2xl p-4 animate-pulse'
+                  >
+                    <div className='h-24 rounded-2xl bg-gray-100' />
+                  </div>
+                ))
+              ) : filteredCategories.length === 0 ? (
+                <EmptyState />
+              ) : (
+                filteredCategories.map((category, index) => (
+                  <div
+                    key={category.id}
+                    className='border border-gray-200 rounded-2xl p-4 bg-gray-50 animate-fadeIn'
+                    style={{ animationDelay: `${index * 35}ms` }}
+                  >
+                    <div className='flex items-start justify-between gap-3'>
+                      <div className='min-w-0'>
+                        <p className='text-base font-semibold text-gray-950 break-words'>
+                          {category.name || '-'}
+                        </p>
+                        <p className='text-sm text-gray-500 mt-1 break-words'>
+                          {category.description || 'No description added'}
+                        </p>
+                      </div>
+
+                      <div className='flex items-center gap-2 shrink-0'>
+                        <button
+                          onClick={() => openEditModal(category)}
+                          disabled={actionLoadingId === category.id}
+                          className='w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition disabled:opacity-60'
+                        >
+                          <FiEdit2 size={16} className='text-gray-700' />
+                        </button>
+
+                        <button
+                          onClick={() => openDeleteModal(category)}
+                          disabled={actionLoadingId === category.id}
+                          className='w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center hover:bg-red-100 transition disabled:opacity-60'
+                        >
+                          <FiTrash2 size={16} className='text-red-600' />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className='hidden lg:block overflow-x-auto'>
+              <table className='w-full min-w-[820px]'>
+                <thead>
+                  <tr className='bg-white border-b border-gray-100'>
+                    <th className='text-left px-5 py-4 text-sm font-semibold text-gray-600'>
+                      Category
+                    </th>
+                    <th className='text-left px-5 py-4 text-sm font-semibold text-gray-600'>
+                      Description
+                    </th>
+                    <th className='text-left px-5 py-4 text-sm font-semibold text-gray-600'>
+                      Created For
+                    </th>
+                    <th className='text-left px-5 py-4 text-sm font-semibold text-gray-600'>
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {loading ? (
+                    [...Array(6)].map((_, i) => (
+                      <tr key={i} className='border-b border-gray-100'>
+                        <td className='px-5 py-5'>
+                          <div className='h-10 rounded-xl bg-gray-100 animate-pulse' />
+                        </td>
+                        <td className='px-5 py-5'>
+                          <div className='h-10 rounded-xl bg-gray-100 animate-pulse' />
+                        </td>
+                        <td className='px-5 py-5'>
+                          <div className='h-10 rounded-xl bg-gray-100 animate-pulse' />
+                        </td>
+                        <td className='px-5 py-5'>
+                          <div className='h-10 rounded-xl bg-gray-100 animate-pulse' />
+                        </td>
+                      </tr>
+                    ))
+                  ) : filteredCategories.length === 0 ? (
+                    <tr>
+                      <td colSpan='4' className='px-5 py-16'>
+                        <EmptyState />
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCategories.map((category, index) => (
+                      <tr
+                        key={category.id}
+                        className='border-b border-gray-100 hover:bg-gray-50/70 transition animate-fadeIn'
+                        style={{ animationDelay: `${index * 35}ms` }}
+                      >
+                        <td className='px-5 py-5 align-top'>
+                          <div className='flex items-center gap-3'>
+                            <div className='w-11 h-11 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-700'>
+                              <FiBox />
+                            </div>
+                            <div>
+                              <p className='text-[15px] font-semibold text-gray-950'>
+                                {category.name || '-'}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className='px-5 py-5 align-top'>
+                          <p className='text-sm text-gray-600 leading-6 max-w-[360px] break-words'>
+                            {category.description || 'No description added'}
+                          </p>
+                        </td>
+
+                        <td className='px-5 py-5 align-top'>
+                          <span className='inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-semibold border bg-blue-100 text-blue-700 border-blue-200'>
+                            Master Category
+                          </span>
+                        </td>
+
+                        <td className='px-5 py-5 align-top'>
+                          <div className='flex items-center gap-3'>
+                            <button
+                              onClick={() => openEditModal(category)}
+                              disabled={actionLoadingId === category.id}
+                              className='h-11 px-4 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-60 flex items-center gap-2'
+                            >
+                              <FiEdit2 size={16} />
+                              Edit
+                            </button>
+
+                            <button
+                              onClick={() => openDeleteModal(category)}
+                              disabled={actionLoadingId === category.id}
+                              className='h-11 px-4 rounded-2xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 font-medium transition disabled:opacity-60 flex items-center gap-2'
+                            >
+                              <FiTrash2 size={16} />
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {editModalOpen && (
+          <ModalPortal>
+            <div className='fixed inset-0 z-[9999] flex items-center justify-center px-3 py-6 sm:px-4 sm:py-8 animate-fadeIn'>
+              <div
+                className='absolute inset-0 bg-black/55 backdrop-blur-[2px]'
+                onClick={closeEditModal}
+              ></div>
+
+              <div className='relative w-full max-w-lg bg-white rounded-[28px] shadow-2xl animate-scaleIn flex flex-col'>
+                <div className='flex justify-between items-center px-5 sm:px-6 py-4 border-b border-gray-100'>
+                  <h2 className='text-xl font-semibold text-gray-950'>Edit Category</h2>
+
+                  <button
+                    onClick={closeEditModal}
+                    disabled={!!actionLoadingId}
+                    className='w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center transition'
+                  >
+                    <FiX size={20} />
+                  </button>
+                </div>
+
+                <div className='px-5 sm:px-6 py-5 space-y-4'>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-2'>
+                      Category Name
+                    </label>
+                    <input
+                      type='text'
+                      value={editForm.name}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({ ...prev, name: e.target.value }))
+                      }
+                      className='w-full h-[52px] rounded-2xl border border-gray-200 bg-white px-4 text-gray-900 outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition'
+                    />
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-2'>
+                      Description
+                    </label>
+                    <textarea
+                      rows='4'
+                      value={editForm.description}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
+                      className='w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-900 outline-none resize-none focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition'
+                    />
+                  </div>
+                </div>
+
+                <div className='flex flex-col-reverse sm:flex-row justify-end gap-3 px-5 sm:px-6 py-4 border-t border-gray-100'>
+                  <button
+                    onClick={closeEditModal}
+                    disabled={!!actionLoadingId}
+                    className='px-5 py-3 border border-gray-200 rounded-2xl w-full sm:w-auto hover:bg-gray-50 transition disabled:opacity-60'
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={handleUpdateCategory}
+                    disabled={!!actionLoadingId}
+                    className={`px-5 py-3 rounded-2xl text-white w-full sm:w-auto transition ${
+                      actionLoadingId
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-[#0f172a] hover:bg-black'
+                    }`}
+                  >
+                    {actionLoadingId ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </ModalPortal>
+        )}
+
+        {deleteModalOpen && (
+          <ModalPortal>
+            <div className='fixed inset-0 z-[9999] flex items-center justify-center px-3 py-6 sm:px-4 sm:py-8 animate-fadeIn'>
+              <div
+                className='absolute inset-0 bg-black/55 backdrop-blur-[2px]'
+                onClick={closeDeleteModal}
+              ></div>
+
+              <div className='relative w-full max-w-md bg-white rounded-[28px] shadow-2xl animate-scaleIn flex flex-col'>
+                <div className='flex justify-between items-center px-5 sm:px-6 py-4 border-b border-gray-100'>
+                  <h2 className='text-xl font-semibold text-gray-950'>Delete Category</h2>
+
+                  <button
+                    onClick={closeDeleteModal}
+                    disabled={!!actionLoadingId}
+                    className='w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center transition'
+                  >
+                    <FiX size={20} />
+                  </button>
+                </div>
+
+                <div className='px-5 sm:px-6 py-5 space-y-4'>
+                  <p className='text-sm sm:text-base text-gray-600 leading-7'>
+                    Are you sure you want to delete{' '}
+                    <span className='font-semibold text-gray-900'>
+                      {selectedCategory?.name || 'this category'}
+                    </span>
+                    ?
+                  </p>
+
+                  <div className='rounded-2xl border border-red-100 bg-red-50 px-4 py-3'>
+                    <p className='text-sm text-red-700 leading-6'>
+                      This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+
+                <div className='flex flex-col-reverse sm:flex-row justify-end gap-3 px-5 sm:px-6 py-4 border-t border-gray-100'>
+                  <button
+                    onClick={closeDeleteModal}
+                    disabled={!!actionLoadingId}
+                    className='px-5 py-3 border border-gray-200 rounded-2xl w-full sm:w-auto hover:bg-gray-50 transition disabled:opacity-60'
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={handleDeleteCategory}
+                    disabled={!!actionLoadingId}
+                    className={`px-5 py-3 rounded-2xl text-white w-full sm:w-auto transition ${
+                      actionLoadingId
+                        ? 'bg-red-300 cursor-not-allowed'
+                        : 'bg-red-600 hover:bg-red-700'
+                    }`}
+                  >
+                    {actionLoadingId ? 'Deleting...' : 'Delete Category'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </ModalPortal>
+        )}
+
+        <style>{`
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+            }
+            to {
+              opacity: 1;
+            }
+          }
+
+          @keyframes slideUp {
+            from {
+              opacity: 0;
+              transform: translateY(18px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          @keyframes scaleIn {
+            from {
+              opacity: 0;
+              transform: scale(0.96);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+
+          .animate-fadeIn {
+            animation: fadeIn 0.35s ease both;
+          }
+
+          .animate-slideUp {
+            animation: slideUp 0.45s ease both;
+          }
+
+          .animate-slideUp-delayed {
+            animation: slideUp 0.6s ease 0.08s both;
+          }
+
+          .animate-scaleIn {
+            animation: scaleIn 0.25s ease both;
+          }
+        `}</style>
+      </div>
+    </AdminLayout>
+  )
+}
+
+function StatsCard({ title, value }) {
+  return (
+    <div className='bg-white border border-gray-200 rounded-3xl shadow-sm p-5 animate-fadeIn'>
+      <p className='text-sm text-gray-500'>{title}</p>
+      <h3 className='text-3xl font-bold text-gray-950 mt-2'>{value}</h3>
+    </div>
+  )
+}
+
+function EmptyState() {
+  return (
+    <div className='text-center py-8'>
+      <div className='w-16 h-16 mx-auto rounded-2xl bg-gray-100 flex items-center justify-center text-2xl mb-4'>
+        🗂️
+      </div>
+      <h3 className='text-lg font-semibold text-gray-900'>No categories found</h3>
+      <p className='text-sm text-gray-500 mt-2'>
+        Create a category or try changing the search.
+      </p>
+    </div>
+  )
+}
+
+function ModalPortal({ children }) {
+  if (typeof document === 'undefined') return null
+  return createPortal(children, document.body)
+}

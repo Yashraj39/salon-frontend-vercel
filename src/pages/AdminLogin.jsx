@@ -78,6 +78,7 @@ export default function AdminLogin() {
       })
 
       const data = await res.json()
+      console.log('Admin login response:', data)
 
       if (!res.ok) {
         throw new Error(data?.message || 'Login failed')
@@ -87,9 +88,10 @@ export default function AdminLogin() {
         throw new Error('Access denied. Admin account required.')
       }
 
-      localStorage.setItem('user', JSON.stringify(data))
+      localStorage.setItem('admin', JSON.stringify(data))
+      console.log('saved admin in localStorage:', localStorage.getItem('admin'))
       toast.success('Admin login successful')
-      navigate('/admin-layout')
+      navigate('/admin/city')
     } catch (error) {
       toast.error(error.message || 'Admin login failed')
     } finally {
@@ -186,11 +188,10 @@ export default function AdminLogin() {
             <button
               type='submit'
               disabled={loading}
-              className={`group inline-flex h-13 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-white transition-all duration-300 ${
-                loading
+              className={`group inline-flex h-13 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-white transition-all duration-300 ${loading
                   ? 'bg-slate-400 cursor-not-allowed'
                   : 'bg-slate-900 hover:bg-slate-800 hover:-translate-y-0.5 shadow-sm hover:shadow-lg'
-              }`}
+                }`}
             >
               {loading ? 'Signing in...' : 'Login'}
               {!loading && (
