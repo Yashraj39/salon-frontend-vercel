@@ -380,7 +380,11 @@ export default function SalonDetails() {
       <footer className='border-t bg-white/80 backdrop-blur-sm'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-6 flex flex-col md:flex-row items-center justify-between text-sm text-gray-500 gap-4'>
           <div className='flex items-center gap-3'>
-            <div className='w-6 h-6 bg-black rounded-md' />
+            <img
+              src="/logo.jpeg"
+              alt="logo"
+              className="h-8 w-8 rounded-xl object-cover"
+            />
             <span className='font-semibold text-gray-800'>SlotMyStyle</span>
           </div>
           <p>© 2025 SlotMyStyle Inc. All rights reserved.</p>

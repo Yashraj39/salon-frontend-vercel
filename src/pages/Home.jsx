@@ -412,7 +412,11 @@ export default function Home() {
       <footer className='mt-14 border-t border-slate-200 bg-white'>
         <div className='max-w-[1600px] mx-auto px-6 lg:px-10 py-6 flex flex-col md:flex-row items-center justify-between gap-4'>
           <div className='flex items-center gap-3'>
-            <div className='h-8 w-8 rounded-xl bg-slate-900' />
+            <img
+              src="/logo.jpeg"
+              alt="logo"
+              className="h-8 w-8 rounded-xl object-cover"
+            />
             <span className='font-semibold text-slate-900'>SlotMyStyle</span>
           </div>
 
