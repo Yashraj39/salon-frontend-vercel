@@ -522,7 +522,12 @@ export default function Navbar() {
               onClick={() => navigate('/success')}
               className='flex items-center gap-3 cursor-pointer shrink-0'
             >
-              <div className='h-9 w-9 rounded-xl bg-black shadow-sm' />
+              <img
+                src="/logo.jpeg"   // 👈 put your logo file here
+                alt="logo"
+                className="h-9 w-9 rounded-xl object-contain"
+              />
+
               <span className='text-[18px] font-semibold tracking-[0.2px] text-[#111827]'>
                 SlotMyStyle
               </span>
