@@ -45,9 +45,10 @@ export default function App() {
       <Toaster
         position='top-center'
         reverseOrder={false}
+        gutter={8}
         containerStyle={{ zIndex: 2147483647 }}
         toastOptions={{
-          duration: 3000,
+          duration: 2500,
           style: {
             padding: '16px',
             color: 'black',
