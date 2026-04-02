@@ -36,11 +36,14 @@ export default function AuthPage({ defaultMode = 'login' }) {
             return
         }
 
+        let loadingToastId
+
         try {
             setLoginLoading(true)
+            loadingToastId = toast.loading('Logging in...')
 
             const res = await api.post('/login', {
-                email: loginEmail,
+                email: loginEmail.trim(),
                 password: loginPassword,
             })
 
@@ -54,12 +57,17 @@ export default function AuthPage({ defaultMode = 'login' }) {
                 })
             )
 
+            toast.dismiss(loadingToastId)
             toast.success('Login successful!')
-            navigate('/')
+
+            setTimeout(() => {
+                navigate('/')
+            }, 800)
         } catch (err) {
             const msg = getErrorMessage(err, 'Login failed!')
+            console.log('Login error:', err)
             console.log('Toast message:', msg)
-            toast.dismiss()
+            if (loadingToastId) toast.dismiss(loadingToastId)
             toast.error(msg)
         } finally {
             setLoginLoading(false)
@@ -72,26 +80,45 @@ export default function AuthPage({ defaultMode = 'login' }) {
             return
         }
 
+        if (!isStrongPassword(registerPassword)) {
+            toast.error(
+                'Password must be at least 8 characters and include uppercase, lowercase, and one symbol'
+            )
+            return
+        }
+
+        let loadingToastId
+
         try {
             setRegisterLoading(true)
+            loadingToastId = toast.loading('Creating account...')
 
             await api.post('/register', {
                 id: Date.now().toString(),
-                name,
-                email: registerEmail,
+                name: name.trim(),
+                email: registerEmail.trim(),
                 password: registerPassword,
             })
 
+            toast.dismiss(loadingToastId)
             toast.success('OTP sent successfully!')
-            navigate('/otp', { state: { email: registerEmail } })
+
+            setTimeout(() => {
+                navigate('/otp', { state: { email: registerEmail.trim() } })
+            }, 900)
         } catch (error) {
             const msg = getErrorMessage(error, 'Registration failed!')
+            console.log('Register error:', error)
             console.log('Toast message:', msg)
-            toast.dismiss()
+            if (loadingToastId) toast.dismiss(loadingToastId)
             toast.error(msg)
         } finally {
             setRegisterLoading(false)
         }
+    }
+
+    const isStrongPassword = (password) => {
+        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,}$/.test(password)
     }
 
     const isLoginFormValid =
@@ -121,6 +148,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                         <div className='flex h-full items-start justify-center rounded-[28px] bg-white px-10 py-8'>
                             <div className='w-full max-w-md'>
                                 <button
+                                    type='button'
                                     onClick={() => navigate('/')}
                                     className='group inline-flex items-center gap-3 text-left'
                                 >
@@ -166,10 +194,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                         className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
                                                         value={loginEmail}
                                                         onChange={(e) => setLoginEmail(e.target.value)}
-                                                        onInput={(e) => setLoginEmail(e.target.value)}
-                                                        onKeyDown={(e) =>
-                                                            e.key === 'Enter' && handleLogin()
-                                                        }
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                                                     />
                                                 </div>
                                             </div>
@@ -198,35 +223,28 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                         className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
                                                         value={loginPassword}
                                                         onChange={(e) => setLoginPassword(e.target.value)}
-                                                        onInput={(e) => setLoginPassword(e.target.value)}
-                                                        onKeyDown={(e) =>
-                                                            e.key === 'Enter' && handleLogin()
-                                                        }
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                                                     />
                                                     <button
                                                         type='button'
-                                                        onClick={() =>
-                                                            setShowLoginPassword((prev) => !prev)
-                                                        }
+                                                        onClick={() => setShowLoginPassword((prev) => !prev)}
                                                         className='text-slate-400 transition hover:text-slate-800'
                                                     >
-                                                        {showLoginPassword ? (
-                                                            <FiEyeOff size={18} />
-                                                        ) : (
-                                                            <FiEye size={18} />
-                                                        )}
+                                                        {showLoginPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                                                     </button>
                                                 </div>
                                             </div>
 
                                             <div className='grid grid-cols-2 gap-3 pt-2'>
                                                 <button
+                                                    type='button'
                                                     onClick={() => setIsRegister(true)}
                                                     className='inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-900 hover:text-slate-900'
                                                 >
                                                     Create account
                                                 </button>
                                                 <button
+                                                    type='button'
                                                     onClick={handleLogin}
                                                     disabled={loginLoading || !isLoginFormValid}
                                                     className='group inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.25)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-70'
@@ -275,10 +293,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                         className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
                                                         value={name}
                                                         onChange={(e) => setName(e.target.value)}
-                                                        onInput={(e) => setName(e.target.value)}
-                                                        onKeyDown={(e) =>
-                                                            e.key === 'Enter' && handleRegister()
-                                                        }
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleRegister()}
                                                     />
                                                 </div>
                                             </div>
@@ -296,10 +311,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                         className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
                                                         value={registerEmail}
                                                         onChange={(e) => setRegisterEmail(e.target.value)}
-                                                        onInput={(e) => setRegisterEmail(e.target.value)}
-                                                        onKeyDown={(e) =>
-                                                            e.key === 'Enter' && handleRegister()
-                                                        }
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleRegister()}
                                                     />
                                                 </div>
                                             </div>
@@ -328,37 +340,28 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                         className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400'
                                                         value={registerPassword}
                                                         onChange={(e) => setRegisterPassword(e.target.value)}
-                                                        onInput={(e) =>
-                                                            setRegisterPassword(e.target.value)
-                                                        }
-                                                        onKeyDown={(e) =>
-                                                            e.key === 'Enter' && handleRegister()
-                                                        }
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleRegister()}
                                                     />
                                                     <button
                                                         type='button'
-                                                        onClick={() =>
-                                                            setShowRegisterPassword((prev) => !prev)
-                                                        }
+                                                        onClick={() => setShowRegisterPassword((prev) => !prev)}
                                                         className='text-slate-400 transition hover:text-slate-800'
                                                     >
-                                                        {showRegisterPassword ? (
-                                                            <FiEyeOff size={18} />
-                                                        ) : (
-                                                            <FiEye size={18} />
-                                                        )}
+                                                        {showRegisterPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                                                     </button>
                                                 </div>
                                             </div>
 
                                             <div className='grid grid-cols-2 gap-3 pt-2'>
                                                 <button
+                                                    type='button'
                                                     onClick={() => setIsRegister(false)}
                                                     className='inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-900 hover:text-slate-900'
                                                 >
                                                     Log in
                                                 </button>
                                                 <button
+                                                    type='button'
                                                     onClick={handleRegister}
                                                     disabled={registerLoading || !isRegisterFormValid}
                                                     className='group inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.25)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-black disabled:cursor-not-allowed disabled:opacity-70'
@@ -460,6 +463,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                     <div className='overflow-hidden rounded-[28px] border border-white/60 bg-white/75 p-6 shadow-[0_20px_70px_rgba(15,23,42,0.12)] backdrop-blur-xl'>
                         <div className='w-full'>
                             <button
+                                type='button'
                                 onClick={() => navigate('/')}
                                 className='group inline-flex items-center gap-3 text-left'
                             >
@@ -504,10 +508,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                     className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
                                                     value={loginEmail}
                                                     onChange={(e) => setLoginEmail(e.target.value)}
-                                                    onInput={(e) => setLoginEmail(e.target.value)}
-                                                    onKeyDown={(e) =>
-                                                        e.key === 'Enter' && handleLogin()
-                                                    }
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                                                 />
                                             </div>
                                         </div>
@@ -536,10 +537,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                     className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
                                                     value={loginPassword}
                                                     onChange={(e) => setLoginPassword(e.target.value)}
-                                                    onInput={(e) => setLoginPassword(e.target.value)}
-                                                    onKeyDown={(e) =>
-                                                        e.key === 'Enter' && handleLogin()
-                                                    }
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                                                 />
                                                 <button
                                                     type='button'
@@ -553,6 +551,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
 
                                         <div className='grid grid-cols-2 gap-3'>
                                             <button
+                                                type='button'
                                                 onClick={() => setIsRegister(true)}
                                                 className='order-1 inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-800'
                                             >
@@ -560,6 +559,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                             </button>
 
                                             <button
+                                                type='button'
                                                 onClick={handleLogin}
                                                 disabled={loginLoading || !isLoginFormValid}
                                                 className='order-2 inline-flex h-12 items-center justify-center rounded-2xl bg-slate-900 px-6 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70'
@@ -597,10 +597,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                     className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
                                                     value={name}
                                                     onChange={(e) => setName(e.target.value)}
-                                                    onInput={(e) => setName(e.target.value)}
-                                                    onKeyDown={(e) =>
-                                                        e.key === 'Enter' && handleRegister()
-                                                    }
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleRegister()}
                                                 />
                                             </div>
                                         </div>
@@ -618,10 +615,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                     className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
                                                     value={registerEmail}
                                                     onChange={(e) => setRegisterEmail(e.target.value)}
-                                                    onInput={(e) => setRegisterEmail(e.target.value)}
-                                                    onKeyDown={(e) =>
-                                                        e.key === 'Enter' && handleRegister()
-                                                    }
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleRegister()}
                                                 />
                                             </div>
                                         </div>
@@ -639,18 +633,11 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                                     className='h-full w-full bg-transparent px-3 text-sm text-slate-900 outline-none'
                                                     value={registerPassword}
                                                     onChange={(e) => setRegisterPassword(e.target.value)}
-                                                    onInput={(e) =>
-                                                        setRegisterPassword(e.target.value)
-                                                    }
-                                                    onKeyDown={(e) =>
-                                                        e.key === 'Enter' && handleRegister()
-                                                    }
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleRegister()}
                                                 />
                                                 <button
                                                     type='button'
-                                                    onClick={() =>
-                                                        setShowRegisterPassword((prev) => !prev)
-                                                    }
+                                                    onClick={() => setShowRegisterPassword((prev) => !prev)}
                                                     className='text-slate-400'
                                                 >
                                                     {showRegisterPassword ? <FiEyeOff /> : <FiEye />}
@@ -660,12 +647,14 @@ export default function AuthPage({ defaultMode = 'login' }) {
 
                                         <div className='grid grid-cols-2 gap-3'>
                                             <button
+                                                type='button'
                                                 onClick={() => setIsRegister(false)}
                                                 className='inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-800'
                                             >
                                                 Log in
                                             </button>
                                             <button
+                                                type='button'
                                                 onClick={handleRegister}
                                                 disabled={registerLoading || !isRegisterFormValid}
                                                 className='inline-flex h-12 items-center justify-center rounded-2xl bg-slate-900 px-6 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70'
@@ -682,15 +671,15 @@ export default function AuthPage({ defaultMode = 'login' }) {
             </div>
 
             <style>{`
-                input:-webkit-autofill,
-                input:-webkit-autofill:hover,
-                input:-webkit-autofill:focus,
-                input:-webkit-autofill:active {
-                    -webkit-box-shadow: 0 0 0 1000px white inset !important;
-                    -webkit-text-fill-color: #0f172a !important;
-                    transition: background-color 5000s ease-in-out 0s;
-                }
-            `}</style>
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px white inset !important;
+          -webkit-text-fill-color: #0f172a !important;
+          transition: background-color 5000s ease-in-out 0s;
+        }
+      `}</style>
         </div>
     )
 }

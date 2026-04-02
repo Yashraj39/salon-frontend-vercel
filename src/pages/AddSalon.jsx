@@ -76,7 +76,8 @@ export default function ManageSalons() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [salonToDelete, setSalonToDelete] = useState(null)
 
-  const [form, setForm] = useState(emptyForm)
+  const [editForm, setEditForm] = useState(emptyForm)
+  const [addForm, setAddForm] = useState(emptyForm)
   const [documentType, setDocumentType] = useState('GST_CERTIFICATE')
 
   const [editCover, setEditCover] = useState(null)
@@ -97,22 +98,26 @@ export default function ManageSalons() {
       const res = await fetch(`${BASE_URL}/api/city/owner/active`)
       if (!res.ok) {
         const errorText = await res.text()
-        throw new Error(errorText || 'Add salon failed')
+        throw new Error(errorText || 'City list load failed')
       }
 
       const data = await res.json()
       setCities(Array.isArray(data) ? data : [])
-    } catch {
+    } catch (error) {
       setCities([])
-      toast.error('City list load failed')
+      toast.error(error.message || 'City list load failed')
     }
   }
 
   const loadSalons = async (preferredSalonId = null) => {
     try {
       const res = await fetch(`${BASE_URL}/api/salon/get-salon-by-owner/${ownerId}`)
-      const data = await res.json()
+      if (!res.ok) {
+        const errorText = await res.text()
+        throw new Error(errorText || 'Salon load failed')
+      }
 
+      const data = await res.json()
       const safeData = Array.isArray(data) ? data : []
       setSalons(safeData)
 
@@ -132,15 +137,15 @@ export default function ManageSalons() {
         }
 
         setSelectedSalon(salonToSelect)
-        setForm(salonFormData)
+        setEditForm(salonFormData)
         setOriginalForm(salonFormData)
       } else {
         setSelectedSalon(null)
-        setForm(emptyForm)
+        setEditForm(emptyForm)
         setOriginalForm(emptyForm)
       }
-    } catch {
-      toast.error('Salon load failed')
+    } catch (error) {
+      toast.error(error.message || 'Salon load failed')
     }
   }
 
@@ -174,17 +179,21 @@ export default function ManageSalons() {
     }
 
     setSelectedSalon(salon)
-    setForm(salonFormData)
+    setEditForm(salonFormData)
     setOriginalForm(salonFormData)
     setEditCover(null)
   }
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
+  const handleEditChange = (e) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value })
+  }
+
+  const handleAddChange = (e) => {
+    setAddForm({ ...addForm, [e.target.name]: e.target.value })
   }
 
   const resetPopupForm = () => {
-    setForm(emptyForm)
+    setAddForm(emptyForm)
     setDocumentType('GST_CERTIFICATE')
     setAddCover(null)
     setAddInterior(null)
@@ -201,15 +210,11 @@ export default function ManageSalons() {
   const handleClosePopup = () => {
     setShowPopup(false)
     resetPopupForm()
-
-    if (selectedSalon) {
-      handleSelectSalon(selectedSalon)
-    }
   }
 
   const handleAddSalon = async () => {
     const validationError = validateSalonForm({
-      form,
+      form: addForm,
       requireDocument: true,
       requireCover: true,
       addDocument,
@@ -229,8 +234,8 @@ export default function ManageSalons() {
       formData.append('ownerId', ownerId)
       formData.append('documentType', documentType)
 
-      Object.keys(form).forEach((key) => {
-        formData.append(key, form[key])
+      Object.keys(addForm).forEach((key) => {
+        formData.append(key, addForm[key])
       })
 
       if (addCover) formData.append('cover', addCover)
@@ -249,10 +254,12 @@ export default function ManageSalons() {
         throw new Error(errorText || 'Add salon failed')
       }
 
-      toast.success('Salon Added')
+      const createdSalon = await res.json()
+
+      toast.success('Salon added successfully')
       setShowPopup(false)
       resetPopupForm()
-      await loadSalons()
+      await loadSalons(createdSalon?.id || null)
     } catch (error) {
       toast.error(error.message || 'Add salon failed')
     } finally {
@@ -269,7 +276,7 @@ export default function ManageSalons() {
     if (!hasSalonChanged) return
 
     const validationError = validateSalonForm({
-      form,
+      form: editForm,
       requireDocument: false,
       requireCover: false,
       addDocument: null,
@@ -288,8 +295,8 @@ export default function ManageSalons() {
 
       formData.append('ownerId', ownerId)
 
-      Object.keys(form).forEach((key) => {
-        formData.append(key, form[key])
+      Object.keys(editForm).forEach((key) => {
+        formData.append(key, editForm[key])
       })
 
       if (editCover) formData.append('cover', editCover)
@@ -329,7 +336,10 @@ export default function ManageSalons() {
         }
       )
 
-      if (!response.ok) throw new Error('Delete failed')
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Delete failed')
+      }
 
       const updatedSalons = salons.filter((s) => s.id !== salonToDelete.id)
       setSalons(updatedSalons)
@@ -339,13 +349,14 @@ export default function ManageSalons() {
           handleSelectSalon(updatedSalons[0])
         } else {
           setSelectedSalon(null)
-          setForm(emptyForm)
+          setEditForm(emptyForm)
+          setOriginalForm(emptyForm)
         }
       }
 
       toast.success('Salon deleted successfully')
-    } catch {
-      toast.error('Failed to delete salon')
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete salon')
     } finally {
       setDeleteModalOpen(false)
       setSalonToDelete(null)
@@ -370,7 +381,8 @@ export default function ManageSalons() {
     selectedSalon?.image ||
     ''
 
-  const hasFormChanged = JSON.stringify(form) !== JSON.stringify(originalForm)
+  const hasFormChanged =
+    JSON.stringify(editForm) !== JSON.stringify(originalForm)
 
   const hasSalonChanged = hasFormChanged || !!editCover
 
@@ -396,6 +408,7 @@ export default function ManageSalons() {
             </div>
 
             <button
+              type='button'
               onClick={handleOpenAddPopup}
               className='w-full bg-black hover:bg-gray-800 hover:-translate-y-0.5 text-white py-3 rounded-2xl mb-4 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-sm hover:shadow-md'
             >
@@ -409,34 +422,38 @@ export default function ManageSalons() {
                   <div
                     key={salon.id}
                     onClick={() => handleSelectSalon(salon)}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${selectedSalon?.id === salon.id
-                      ? 'bg-black text-white border-black shadow-md'
-                      : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                      }`}
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
+                      selectedSalon?.id === salon.id
+                        ? 'bg-black text-white border-black shadow-md'
+                        : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                    }`}
                     style={{ animationDelay: `${index * 40}ms` }}
                   >
                     <div className='flex justify-between gap-3'>
                       <div className='min-w-0'>
                         <h3 className='font-semibold text-base truncate'>{salon.name}</h3>
                         <p
-                          className={`text-sm mt-1 ${selectedSalon?.id === salon.id
-                            ? 'text-white/80'
-                            : 'text-gray-500'
-                            }`}
+                          className={`text-sm mt-1 ${
+                            selectedSalon?.id === salon.id
+                              ? 'text-white/80'
+                              : 'text-gray-500'
+                          }`}
                         >
                           {salon.city || 'No city'}
                         </p>
                       </div>
 
                       <button
+                        type='button'
                         onClick={(e) => {
                           e.stopPropagation()
                           handleDeleteClick(salon)
                         }}
-                        className={`p-2 rounded-xl transition shrink-0 ${selectedSalon?.id === salon.id
-                          ? 'hover:bg-white/10 text-white'
-                          : 'hover:bg-red-50 text-red-500 hover:text-red-600'
-                          }`}
+                        className={`p-2 rounded-xl transition shrink-0 ${
+                          selectedSalon?.id === salon.id
+                            ? 'hover:bg-white/10 text-white'
+                            : 'hover:bg-red-50 text-red-500 hover:text-red-600'
+                        }`}
                       >
                         <Trash2 size={18} />
                       </button>
@@ -473,8 +490,8 @@ export default function ManageSalons() {
                   <InputField
                     label='Salon Name'
                     name='name'
-                    value={form.name}
-                    onChange={handleChange}
+                    value={editForm.name}
+                    onChange={handleEditChange}
                     placeholder='Enter salon name'
                   />
 
@@ -482,8 +499,8 @@ export default function ManageSalons() {
                     <label className='block mb-2 text-sm font-medium text-gray-800'>City</label>
                     <select
                       name='city'
-                      value={form.city}
-                      onChange={handleChange}
+                      value={editForm.city}
+                      onChange={handleEditChange}
                       className='border border-gray-200 px-4 py-3 rounded-2xl w-full outline-none focus:border-gray-400 transition-all duration-300'
                     >
                       <option value=''>Select City</option>
@@ -502,8 +519,8 @@ export default function ManageSalons() {
                   </label>
                   <textarea
                     name='address'
-                    value={form.address}
-                    onChange={handleChange}
+                    value={editForm.address}
+                    onChange={handleEditChange}
                     rows='4'
                     className='border border-gray-200 px-4 py-3 rounded-2xl w-full resize-none outline-none focus:border-gray-400 transition-all duration-300'
                     placeholder='Enter salon address'
@@ -514,10 +531,10 @@ export default function ManageSalons() {
                   <InputField
                     label='Contact'
                     name='contact'
-                    value={form.contact}
+                    value={editForm.contact}
                     onChange={(e) => {
                       const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
-                      setForm({ ...form, contact: onlyDigits })
+                      setEditForm({ ...editForm, contact: onlyDigits })
                     }}
                     placeholder='Enter contact number'
                   />
@@ -526,8 +543,8 @@ export default function ManageSalons() {
                     label='Salon Email'
                     name='salonEmail'
                     type='email'
-                    value={form.salonEmail}
-                    onChange={handleChange}
+                    value={editForm.salonEmail}
+                    onChange={handleEditChange}
                     placeholder='Enter salon email'
                   />
                 </div>
@@ -537,16 +554,16 @@ export default function ManageSalons() {
                     label='Open Time'
                     name='opentime'
                     type='time'
-                    value={form.opentime}
-                    onChange={handleChange}
+                    value={editForm.opentime}
+                    onChange={handleEditChange}
                   />
 
                   <InputField
                     label='Close Time'
                     name='closetime'
                     type='time'
-                    value={form.closetime}
-                    onChange={handleChange}
+                    value={editForm.closetime}
+                    onChange={handleEditChange}
                   />
                 </div>
 
@@ -554,8 +571,8 @@ export default function ManageSalons() {
                   <InputField
                     label='Google Map Link'
                     name='mapLink'
-                    value={form.mapLink}
-                    onChange={handleChange}
+                    value={editForm.mapLink}
+                    onChange={handleEditChange}
                     placeholder='Paste Google Map link'
                   />
                 </div>
@@ -612,12 +629,14 @@ export default function ManageSalons() {
                 </div>
 
                 <button
+                  type='button'
                   onClick={handleUpdateSalon}
                   disabled={isUpdatingSalon || !hasSalonChanged}
-                  className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${isUpdatingSalon || !hasSalonChanged
-                    ? 'bg-gray-300 cursor-not-allowed'
-                    : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
-                    }`}
+                  className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${
+                    isUpdatingSalon || !hasSalonChanged
+                      ? 'bg-gray-300 cursor-not-allowed'
+                      : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                  }`}
                 >
                   {isUpdatingSalon ? 'Saving Changes...' : 'Save Changes'}
                 </button>
@@ -636,6 +655,7 @@ export default function ManageSalons() {
           <div className='fixed inset-0 z-[9999] bg-black/55 backdrop-blur-[2px] flex items-center justify-center p-4 animate-fadeIn'>
             <div className='bg-white p-6 rounded-3xl shadow-lg w-full max-w-md animate-scaleIn relative'>
               <button
+                type='button'
                 onClick={cancelDelete}
                 className='absolute top-4 right-4 w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center transition'
               >
@@ -649,6 +669,7 @@ export default function ManageSalons() {
 
               <div className='flex justify-end gap-3'>
                 <button
+                  type='button'
                   onClick={cancelDelete}
                   className='px-5 py-2.5 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
                 >
@@ -656,6 +677,7 @@ export default function ManageSalons() {
                 </button>
 
                 <button
+                  type='button'
                   onClick={confirmDelete}
                   className='px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-2xl transition'
                 >
@@ -679,6 +701,7 @@ export default function ManageSalons() {
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
+                  type='button'
                   onClick={handleClosePopup}
                   className='absolute top-5 right-5 w-10 h-10 rounded-full hover:bg-gray-100 text-gray-500 flex items-center justify-center transition'
                 >
@@ -699,14 +722,14 @@ export default function ManageSalons() {
                     type='text'
                     name='name'
                     placeholder='Salon Name'
-                    value={form.name}
-                    onChange={handleChange}
+                    value={addForm.name}
+                    onChange={handleAddChange}
                   />
 
                   <select
                     name='city'
-                    value={form.city}
-                    onChange={handleChange}
+                    value={addForm.city}
+                    onChange={handleAddChange}
                     className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400 transition-all duration-300'
                   >
                     <option value=''>Select City</option>
@@ -721,8 +744,8 @@ export default function ManageSalons() {
                 <textarea
                   name='address'
                   placeholder='Salon Address'
-                  value={form.address}
-                  onChange={handleChange}
+                  value={addForm.address}
+                  onChange={handleAddChange}
                   className='w-full border border-gray-200 px-4 py-3 rounded-2xl resize-none mb-4 outline-none focus:border-gray-400 transition-all duration-300'
                   rows='4'
                 />
@@ -732,10 +755,10 @@ export default function ManageSalons() {
                     type='text'
                     name='contact'
                     placeholder='Contact Number'
-                    value={form.contact}
+                    value={addForm.contact}
                     onChange={(e) => {
                       const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 10)
-                      setForm({ ...form, contact: onlyDigits })
+                      setAddForm({ ...addForm, contact: onlyDigits })
                     }}
                   />
 
@@ -743,8 +766,8 @@ export default function ManageSalons() {
                     type='email'
                     name='salonEmail'
                     placeholder='Salon Email'
-                    value={form.salonEmail}
-                    onChange={handleChange}
+                    value={addForm.salonEmail}
+                    onChange={handleAddChange}
                   />
                 </div>
 
@@ -752,15 +775,15 @@ export default function ManageSalons() {
                   <PopupInput
                     type='time'
                     name='opentime'
-                    value={form.opentime}
-                    onChange={handleChange}
+                    value={addForm.opentime}
+                    onChange={handleAddChange}
                   />
 
                   <PopupInput
                     type='time'
                     name='closetime'
-                    value={form.closetime}
-                    onChange={handleChange}
+                    value={addForm.closetime}
+                    onChange={handleAddChange}
                   />
                 </div>
 
@@ -768,8 +791,8 @@ export default function ManageSalons() {
                   type='text'
                   name='mapLink'
                   placeholder='Google Map Link'
-                  value={form.mapLink}
-                  onChange={handleChange}
+                  value={addForm.mapLink}
+                  onChange={handleAddChange}
                   className='mb-6'
                 />
 
@@ -842,6 +865,7 @@ export default function ManageSalons() {
 
                 <div className='flex justify-end gap-3'>
                   <button
+                    type='button'
                     onClick={handleClosePopup}
                     className='px-5 py-3 border border-gray-200 rounded-2xl hover:bg-gray-50 transition'
                   >
@@ -849,12 +873,14 @@ export default function ManageSalons() {
                   </button>
 
                   <button
+                    type='button'
                     onClick={handleAddSalon}
                     disabled={isAddingSalon}
-                    className={`px-5 py-3 text-white rounded-2xl transition-all duration-300 ${isAddingSalon
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
-                      }`}
+                    className={`px-5 py-3 text-white rounded-2xl transition-all duration-300 ${
+                      isAddingSalon
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                    }`}
                   >
                     {isAddingSalon ? 'Adding Salon...' : 'Add Salon'}
                   </button>
