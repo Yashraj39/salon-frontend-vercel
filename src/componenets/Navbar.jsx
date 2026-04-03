@@ -13,7 +13,7 @@ import { FaShoppingCart } from 'react-icons/fa'
 import React, { useEffect, useState, useRef } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
-const BASE_URL = 'https://render-qs89.onrender.com'
+const BASE_URL = 'http://localhost:8080' // Change this to your actual backend URL
 
 const saveOwnerApplication = (userId, data) => {
   const allApps = JSON.parse(localStorage.getItem('allOwnerApplications')) || {}
@@ -69,6 +69,10 @@ export default function Navbar() {
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
+  const [phoneError, setPhoneError] = useState('')
+  const [emailError, setEmailError] = useState('')
+  const [fileError, setFileError] = useState('')
+
   useEffect(() => {
     if (!currentUserId) return
     const currentUserApp = getOwnerApplication(currentUserId)
@@ -105,7 +109,7 @@ export default function Navbar() {
     if (!userId) return
 
     try {
-      const res = await fetch(`${BASE_URL}/api/notifications/user/${userId}`)
+      const res = await fetch(`${BASE_URL}/api/notifications/user/${userId}?audience=USER`)
       if (!res.ok) return
 
       const data = await res.json()
@@ -156,17 +160,28 @@ export default function Navbar() {
   }, [userId])
 
   useEffect(() => {
-    const interval = setInterval(async () => {
-      if (!currentUserId) return
+    if (!currentUserId) return
 
+    if (ownerStatus !== 'PENDING') return
+
+    const checkOwnerApplication = async () => {
       try {
         const res = await fetch(
           `${BASE_URL}/api/owner/application?userId=${currentUserId}`
         )
 
-        if (!res.ok) {
+        if (res.status === 404) {
           removeOwnerApplication(currentUserId)
           setOwnerStatus(null)
+          setPhone('')
+          setEmail('')
+          setAadharFile(null)
+          return
+        }
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => '')
+          console.error('Failed to fetch owner application:', res.status, text)
           return
         }
 
@@ -181,16 +196,18 @@ export default function Navbar() {
         if (data?.status && data.status !== ownerStatus) {
           setOwnerStatus(data.status)
 
-          toast.success(
-            data.status === 'APPROVED'
-              ? 'Your owner application has been approved!'
-              : 'Your application is pending.'
-          )
+          if (data.status === 'APPROVED') {
+            toast.success('Your owner application has been approved!')
+          }
         }
       } catch (e) {
-        console.error(e)
+        console.error('Owner application polling error:', e)
       }
-    }, 2000)
+    }
+
+    checkOwnerApplication()
+
+    const interval = setInterval(checkOwnerApplication, 5000)
 
     return () => clearInterval(interval)
   }, [currentUserId, ownerStatus])
@@ -272,7 +289,7 @@ export default function Navbar() {
     if (!hasUnread) return
 
     try {
-      const res = await fetch(`${BASE_URL}/api/notifications/read-all/${userId}`, {
+      const res = await fetch(`${BASE_URL}/api/notifications/read-all/${userId}?audience=USER`, {
         method: 'PUT',
       })
 
@@ -308,18 +325,60 @@ export default function Navbar() {
     }
   }
 
+  const validatePhone = (value) => {
+    const cleanPhone = value.replace(/\D/g, '')
+    const phoneRegex = /^[6-9]\d{9}$/
+    return phoneRegex.test(cleanPhone)
+  }
+
+  const validateGmail = (value) => {
+    const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/
+    return gmailRegex.test(value.trim())
+  }
+
   const handleOwnerApply = async () => {
     if (!currentUserId) {
       toast.error('User not logged in')
       return
     }
-    if (!phone || !email || !aadharFile) {
-      toast.error('Please fill all fields')
+
+    let isValid = true
+
+    setPhoneError('')
+    setEmailError('')
+    setFileError('')
+
+    const cleanPhone = phone.replace(/\D/g, '')
+
+    if (!cleanPhone) {
+      setPhoneError('Mobile number is required')
+      isValid = false
+    } else if (!validatePhone(cleanPhone)) {
+      setPhoneError('Enter valid 10 digit mobile number')
+      isValid = false
+    }
+
+    if (!email.trim()) {
+      setEmailError('Gmail is required')
+      isValid = false
+    } else if (!validateGmail(email)) {
+      setEmailError('Enter valid Gmail address')
+      isValid = false
+    }
+
+    if (!aadharFile) {
+      setFileError('Document upload is required')
+      isValid = false
+    }
+
+    if (!isValid) {
+      toast.error('Please provide all required information in correct format')
       return
     }
 
     try {
       setLoading(true)
+
       const formData = new FormData()
       formData.append('file', aadharFile)
 
@@ -327,23 +386,76 @@ export default function Navbar() {
         method: 'POST',
         body: formData,
       })
-      if (!uploadRes.ok) throw new Error('Image upload failed')
-      const uploadData = await uploadRes.json()
-      const imageUrl = uploadData.imageUrl
+
+      let uploadData = null
+      let uploadText = ''
+
+      try {
+        uploadData = await uploadRes.json()
+      } catch (e) {
+        try {
+          uploadText = await uploadRes.text()
+        } catch {
+          uploadText = ''
+        }
+      }
+
+      if (!uploadRes.ok) {
+        throw new Error(
+          uploadData?.message ||
+          uploadData?.error ||
+          uploadText ||
+          `Image upload failed (${uploadRes.status})`
+        )
+      }
+
+      const imageUrl = uploadData?.imageUrl
+
+      if (!imageUrl) {
+        throw new Error('Uploaded document URL not found')
+      }
+
+      const payload = {
+        userId: currentUserId,
+        phone: cleanPhone,
+        email: email.trim(),
+        aadhaarUrl: imageUrl,
+        termsAccepted: true,
+      }
+
+      console.log('OWNER APPLY PAYLOAD:', payload)
 
       const applyRes = await fetch(`${BASE_URL}/api/owner/apply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUserId,
-          phone,
-          email,
-          aadhaarUrl: imageUrl,
-          termsAccepted: true,
-        }),
+        body: JSON.stringify(payload),
       })
-      if (!applyRes.ok) throw new Error('Application failed')
-      const applyData = await applyRes.json()
+
+      let applyData = null
+      let applyText = ''
+
+      try {
+        applyData = await applyRes.json()
+      } catch (e) {
+        try {
+          applyText = await applyRes.text()
+        } catch {
+          applyText = ''
+        }
+      }
+
+      console.log('OWNER APPLY STATUS:', applyRes.status)
+      console.log('OWNER APPLY RESPONSE JSON:', applyData)
+      console.log('OWNER APPLY RESPONSE TEXT:', applyText)
+
+      if (!applyRes.ok) {
+        throw new Error(
+          applyData?.message ||
+          applyData?.error ||
+          applyText ||
+          `Application failed (${applyRes.status})`
+        )
+      }
 
       saveOwnerApplication(currentUserId, applyData)
       setOwnerStatus(applyData.status)
@@ -523,7 +635,7 @@ export default function Navbar() {
               className='flex items-center gap-3 cursor-pointer shrink-0'
             >
               <img
-                src="/logo.jpeg"   // 👈 put your logo file here
+                src="/logo.png"   // 👈 put your logo file here
                 alt="logo"
                 className="h-9 w-9 rounded-xl object-contain"
               />
@@ -1104,17 +1216,45 @@ export default function Navbar() {
                 Submit your details and Aadhaar document to apply
               </p>
 
-              <div className='mt-6'>
-                <label className='mb-2 block text-sm font-semibold text-[#344054]'>
-                  Phone Number
-                </label>
-                <input
-                  type='text'
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className='w-full rounded-xl border border-[#d8dee8] px-4 py-3 outline-none focus:border-[#243B63]'
-                />
-              </div>
+              <input
+                type="tel"
+                value={phone}
+                maxLength={10}
+                onChange={(e) => {
+                  let value = e.target.value
+
+                  // allow only numbers
+                  value = value.replace(/[^0-9]/g, '')
+
+                  // limit to 10 digits
+                  if (value.length > 10) return
+
+                  setPhone(value)
+
+                  // live validation
+                  if (!value) {
+                    setPhoneError('Mobile number is required')
+                  } else if (value.length < 10) {
+                    setPhoneError('Must be 10 digits')
+                  } else if (!/^[6-9]\d{9}$/.test(value)) {
+                    setPhoneError('Invalid Indian mobile number')
+                  } else {
+                    setPhoneError('')
+                  }
+                }}
+                onKeyDown={(e) => {
+                  // block non-numeric keys except control keys
+                  if (
+                    !/[0-9]/.test(e.key) &&
+                    !['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab', 'Delete'].includes(e.key)
+                  ) {
+                    e.preventDefault()
+                  }
+                }}
+                className={`w-full rounded-xl border px-4 py-3 outline-none focus:border-[#243B63] ${phoneError ? 'border-red-500' : 'border-[#d8dee8]'
+                  }`}
+                placeholder="Enter 10 digit mobile number"
+              />
 
               <div className='mt-4'>
                 <label className='mb-2 block text-sm font-semibold text-[#344054]'>

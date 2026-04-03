@@ -152,8 +152,14 @@ export default function AuthPage({ defaultMode = 'login' }) {
                                     onClick={() => navigate('/')}
                                     className='group inline-flex items-center gap-3 text-left'
                                 >
-                                    <div className='flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white shadow-lg shadow-black/10 transition-transform duration-300 group-hover:scale-105'>
-                                        <FiScissors className='text-base' />
+                                    <div className='flex h-11 w-11 items-center justify-center rounded-2xl bg-black text-white shadow-lg shadow-black/10 transition-transform duration-300 group-hover:scale-105 overflow-hidden'>
+
+                                        <img
+                                            src='/logo.png'   // put your logo path here
+                                            alt='Logo'
+                                            className='h-full w-full object-cover'
+                                        />
+
                                     </div>
                                     <div>
                                         <h1 className='text-xl font-bold tracking-tight text-slate-900'>

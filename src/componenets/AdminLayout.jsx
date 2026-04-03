@@ -16,8 +16,7 @@ export default function AdminLayout({ children }) {
   ]
 
   return (
-    <div className='min-h-screen bg-[#f5f7fb] flex'>
-      {/* Overlay for mobile */}
+    <div className='min-h-screen bg-[#f5f7fb]'>
       {mobileMenuOpen && (
         <div
           className='fixed inset-0 bg-black/40 z-30 md:hidden'
@@ -25,18 +24,16 @@ export default function AdminLayout({ children }) {
         />
       )}
 
-      {/* Sidebar */}
       <div
         className={`
-          fixed md:static top-0 left-0 z-40 h-screen w-64
+          fixed top-0 left-0 z-40 h-screen w-64
           bg-gradient-to-b from-[#07153A] via-[#091842] to-[#0C1D4E]
-          text-white px-6 py-6
+          text-white px-6 py-6 overflow-y-auto
           transform transition-transform duration-300
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
           md:translate-x-0
         `}
       >
-        {/* Logo */}
         <div className='flex items-center justify-between mb-10'>
           <h2 className='text-[18px] font-semibold'>SlotMyStyle</h2>
 
@@ -48,7 +45,6 @@ export default function AdminLayout({ children }) {
           </button>
         </div>
 
-        {/* Menu */}
         <ul className='space-y-3'>
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path
@@ -73,9 +69,7 @@ export default function AdminLayout({ children }) {
         </ul>
       </div>
 
-      {/* Main Content */}
-      <div className='flex-1 w-full'>
-        {/* Mobile Menu Button (since navbar removed) */}
+      <div className='w-full md:pl-64'>
         <div className='md:hidden p-4'>
           <FiMenu
             className='text-2xl cursor-pointer'
@@ -83,7 +77,6 @@ export default function AdminLayout({ children }) {
           />
         </div>
 
-        {/* Page Content */}
         <div className='p-6 md:p-8'>
           {children || (
             <h1 className='text-2xl font-bold'>Admin Dashboard ✅</h1>

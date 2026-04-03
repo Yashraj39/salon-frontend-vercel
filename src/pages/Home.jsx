@@ -413,7 +413,7 @@ export default function Home() {
         <div className='max-w-[1600px] mx-auto px-6 lg:px-10 py-6 flex flex-col md:flex-row items-center justify-between gap-4'>
           <div className='flex items-center gap-3'>
             <img
-              src="/logo.jpeg"
+              src="/logo.png"
               alt="logo"
               className="h-8 w-8 rounded-xl object-cover"
             />

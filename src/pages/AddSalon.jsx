@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import OwnerLayout from '../componenets/OwnerLayout'
-import { Trash2, Plus, Image as ImageIcon, X } from 'lucide-react'
+import {
+  Trash2,
+  Plus,
+  Image as ImageIcon,
+  X,
+  Clock3,
+  BadgeCheck,
+} from 'lucide-react'
 import { createPortal } from 'react-dom'
 
-const BASE_URL = 'https://render-qs89.onrender.com'
+const BASE_URL = 'http://localhost:8080' // Change this to your actual backend URL
 
 const emptyForm = {
   name: '',
@@ -422,22 +429,50 @@ export default function ManageSalons() {
                   <div
                     key={salon.id}
                     onClick={() => handleSelectSalon(salon)}
-                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
-                      selectedSalon?.id === salon.id
+                    className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${selectedSalon?.id === salon.id
                         ? 'bg-black text-white border-black shadow-md'
                         : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                    }`}
+                      }`}
                     style={{ animationDelay: `${index * 40}ms` }}
                   >
                     <div className='flex justify-between gap-3'>
                       <div className='min-w-0'>
-                        <h3 className='font-semibold text-base truncate'>{salon.name}</h3>
+                        <div className='flex items-center gap-2'>
+                          <h3 className='font-semibold text-base truncate'>{salon.name}</h3>
+
+                          <div className='relative group shrink-0'>
+                            {String(salon?.verificationStatus || '').toUpperCase() === 'APPROVED' ? (
+                              <BadgeCheck
+                                size={16}
+                                className={`${selectedSalon?.id === salon.id ? 'text-emerald-300' : 'text-emerald-600'
+                                  }`}
+                              />
+                            ) : (
+                              <Clock3
+                                size={16}
+                                className={`${selectedSalon?.id === salon.id ? 'text-amber-300' : 'text-amber-500'
+                                  }`}
+                              />
+                            )}
+
+                            <div
+                              className={`pointer-events-none absolute left-1/2 top-[-38px] -translate-x-1/2 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-medium shadow-md opacity-0 group-hover:opacity-100 transition ${selectedSalon?.id === salon.id
+                                  ? 'bg-white text-gray-900'
+                                  : 'bg-gray-900 text-white'
+                                }`}
+                            >
+                              {String(salon?.verificationStatus || '').toUpperCase() === 'APPROVED'
+                                ? 'Approved'
+                                : 'Pending'}
+                            </div>
+                          </div>
+                        </div>
+
                         <p
-                          className={`text-sm mt-1 ${
-                            selectedSalon?.id === salon.id
+                          className={`text-sm mt-1 ${selectedSalon?.id === salon.id
                               ? 'text-white/80'
                               : 'text-gray-500'
-                          }`}
+                            }`}
                         >
                           {salon.city || 'No city'}
                         </p>
@@ -449,11 +484,10 @@ export default function ManageSalons() {
                           e.stopPropagation()
                           handleDeleteClick(salon)
                         }}
-                        className={`p-2 rounded-xl transition shrink-0 ${
-                          selectedSalon?.id === salon.id
+                        className={`p-2 rounded-xl transition shrink-0 ${selectedSalon?.id === salon.id
                             ? 'hover:bg-white/10 text-white'
                             : 'hover:bg-red-50 text-red-500 hover:text-red-600'
-                        }`}
+                          }`}
                       >
                         <Trash2 size={18} />
                       </button>
@@ -632,11 +666,10 @@ export default function ManageSalons() {
                   type='button'
                   onClick={handleUpdateSalon}
                   disabled={isUpdatingSalon || !hasSalonChanged}
-                  className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${
-                    isUpdatingSalon || !hasSalonChanged
+                  className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${isUpdatingSalon || !hasSalonChanged
                       ? 'bg-gray-300 cursor-not-allowed'
                       : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
-                  }`}
+                    }`}
                 >
                   {isUpdatingSalon ? 'Saving Changes...' : 'Save Changes'}
                 </button>
@@ -876,11 +909,10 @@ export default function ManageSalons() {
                     type='button'
                     onClick={handleAddSalon}
                     disabled={isAddingSalon}
-                    className={`px-5 py-3 text-white rounded-2xl transition-all duration-300 ${
-                      isAddingSalon
+                    className={`px-5 py-3 text-white rounded-2xl transition-all duration-300 ${isAddingSalon
                         ? 'bg-gray-400 cursor-not-allowed'
                         : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
-                    }`}
+                      }`}
                   >
                     {isAddingSalon ? 'Adding Salon...' : 'Add Salon'}
                   </button>
