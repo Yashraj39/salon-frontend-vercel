@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import api from '../axiosConfig'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import {
   FiArrowLeft,
   FiMail,

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { IoArrowBack, IoTimeOutline } from 'react-icons/io5'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import Navbar from '../componenets/Navbar'
 
 export default function AddServices() {

@@ -1,6 +1,6 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Toaster } from 'react-hot-toast'
+import { Toaster } from 'sonner'
 import AdminLogin from './pages/AdminLogin'
 
 // Auth Pages
@@ -42,19 +42,26 @@ export default function App() {
   return (
     <BrowserRouter>
       {/* Toast */}
+
       <Toaster
         position='top-center'
-        reverseOrder={false}
-        gutter={8}
-        containerStyle={{ zIndex: 2147483647 }}
+        closeButton
+        expand={false}
+        richColors={false}
+        visibleToasts={3}
+        duration={2400}
+        offset={16}
         toastOptions={{
-          duration: 2500,
-          style: {
-            padding: '16px',
-            color: 'black',
-            fontWeight: 'bold',
-            borderRadius: '8px',
-            zIndex: 2147483647,
+          classNames: {
+            toast: 'slot-toast',
+            title: 'slot-toast-title',
+            description: 'slot-toast-description',
+            closeButton: 'slot-toast-close',
+            success: 'slot-toast-success',
+            error: 'slot-toast-error',
+            warning: 'slot-toast-warning',
+            info: 'slot-toast-info',
+            loading: 'slot-toast-loading',
           },
         }}
       />

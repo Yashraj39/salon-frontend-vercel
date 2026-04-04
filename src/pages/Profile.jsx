@@ -15,7 +15,7 @@ import {
   FiX,
   FiAlertTriangle,
 } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import Navbar from '../componenets/Navbar'
 
 const BASE_URL = 'https://render-qs89.onrender.com'

@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   Headphones,
 } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
 

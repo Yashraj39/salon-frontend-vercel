@@ -11,7 +11,7 @@ import {
 } from 'react-icons/fi'
 import { FaShoppingCart } from 'react-icons/fa'
 import React, { useEffect, useState, useRef } from 'react'
-import toast, { Toaster } from 'react-hot-toast'
+import { toast, Toaster } from 'sonner'
 
 const BASE_URL = 'https://render-qs89.onrender.com' // Change this to your actual backend URL
 

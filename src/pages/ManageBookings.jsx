@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import OwnerLayout from '../componenets/OwnerLayout'
 import {
   FiChevronLeft,

@@ -4,7 +4,7 @@ import { FaLocationDot, FaPhone } from 'react-icons/fa6'
 import { MdEmail } from 'react-icons/md'
 import { IoArrowBack } from 'react-icons/io5'
 import { FiCheckCircle } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import Navbar from '../componenets/Navbar'
 
 export default function SalonDetails() {

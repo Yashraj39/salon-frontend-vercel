@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 
 export default function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token')

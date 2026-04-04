@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import axios from 'axios'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi'
 import OwnerLayout from '../componenets/OwnerLayout'
 

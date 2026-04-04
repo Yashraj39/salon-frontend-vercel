@@ -8,7 +8,7 @@ import {
   FiShield,
   FiArrowRight,
 } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 
 const BASE_URL = 'https://render-qs89.onrender.com'
 

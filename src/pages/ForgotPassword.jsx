@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../axiosConfig'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import { FiArrowLeft, FiLock, FiMail, FiShield } from 'react-icons/fi'
 
 export default function ForgotPassword() {
