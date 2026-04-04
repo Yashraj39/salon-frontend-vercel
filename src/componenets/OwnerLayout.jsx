@@ -11,7 +11,7 @@ import {
   FiClock,
 } from 'react-icons/fi'
 
-const BASE_URL = 'http://localhost:8080' // Change this to your actual backend URL
+const BASE_URL = 'https://render-qs89.onrender.com' // Change this to your actual backend URL
 
 export default function OwnerLayout({ children }) {
   const navigate = useNavigate()

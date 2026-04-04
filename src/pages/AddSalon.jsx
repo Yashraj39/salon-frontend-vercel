@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
-const BASE_URL = 'http://localhost:8080' // Change this to your actual backend URL
+const BASE_URL = 'https://render-qs89.onrender.com' // Change this to your actual backend URL
 
 const emptyForm = {
   name: '',

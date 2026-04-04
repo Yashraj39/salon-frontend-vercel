@@ -13,7 +13,7 @@ import {
 } from 'react-icons/fi'
 import AdminLayout from '../componenets/AdminLayout'
 
-const BASE_URL = 'http://localhost:8080'
+const BASE_URL = 'https://render-qs89.onrender.com'
 
 export default function AdminApproveOwnerPage() {
   const admin = useMemo(() => {

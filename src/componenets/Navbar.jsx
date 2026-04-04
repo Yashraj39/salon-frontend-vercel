@@ -13,7 +13,7 @@ import { FaShoppingCart } from 'react-icons/fa'
 import React, { useEffect, useState, useRef } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
-const BASE_URL = 'http://localhost:8080' // Change this to your actual backend URL
+const BASE_URL = 'https://render-qs89.onrender.com' // Change this to your actual backend URL
 
 const saveOwnerApplication = (userId, data) => {
   const allApps = JSON.parse(localStorage.getItem('allOwnerApplications')) || {}

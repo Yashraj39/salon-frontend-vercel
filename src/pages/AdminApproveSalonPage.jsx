@@ -15,7 +15,7 @@ import {
 } from 'react-icons/fi'
 import AdminLayout from '../componenets/AdminLayout'
 
-const BASE_URL = 'http://localhost:8080' // Change this to your actual backend URL
+const BASE_URL = 'https://render-qs89.onrender.com' // Change this to your actual backend URL
 
 export default function AdminApproveSalonPage() {
   const admin = useMemo(() => {
