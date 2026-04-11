@@ -55,6 +55,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                     email: res.data.email || '',
                     role: res.data.role || 'USER',
                     isAccountVerified: res.data.isAccountVerified || false,
+                    ownerFrozen: res.data.ownerFrozen || false,
                 })
             )
 

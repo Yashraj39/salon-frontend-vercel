@@ -13,6 +13,7 @@ export default function AdminLayout({ children }) {
     { name: 'Category Service', path: '/admin/category-service' },
     { name: 'Approve Owner', path: '/admin/approve-owner' },
     { name: 'Approve Salon', path: '/admin/approve-salon' },
+    { name: 'Manage Owners', path: '/admin/manage-owners' },
   ]
 
   return (

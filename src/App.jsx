@@ -36,6 +36,7 @@ import AdminCityPage from './pages/AdminCityPage'
 import AdminCategoryServicePage from './pages/AdminCategoryServicePage'
 import AdminApproveOwnerPage from './pages/AdminApproveOwnerPage'
 import AdminApproveSalonPage from './pages/AdminApproveSalonPage'
+import AdminManageOwners from './pages/AdminManageOwners'
 
 
 export default function App() {
@@ -104,6 +105,7 @@ export default function App() {
         <Route path='/admin/category-service' element={<AdminCategoryServicePage />} />
         <Route path='/admin/approve-owner' element={<AdminApproveOwnerPage />} />
         <Route path='/admin/approve-salon' element={<AdminApproveSalonPage />} />
+        <Route path='/admin/manage-owners' element={<AdminManageOwners />} />
 
         {/* 404 */}
         <Route

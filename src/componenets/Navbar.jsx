@@ -41,6 +41,7 @@ export default function Navbar() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const userId = user.userId
   const isOwner = user?.role === 'OWNER'
+const isOwnerFrozen = user?.ownerFrozen === true
 
   const [currentUserId, setCurrentUserId] = useState(userId || null)
 
@@ -530,7 +531,7 @@ export default function Navbar() {
   }
 
   const ownerButton = () => {
-    if (isOwner) {
+    if (isOwner && isOwnerFrozen) {
       if (isOwnerPanel) {
         return (
           <button
