@@ -40,6 +40,7 @@ export default function Navbar() {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const userId = user.userId
+  const isOwner = user?.role === 'OWNER'
 
   const [currentUserId, setCurrentUserId] = useState(userId || null)
 
@@ -74,19 +75,52 @@ export default function Navbar() {
   const [fileError, setFileError] = useState('')
 
   useEffect(() => {
-    if (!currentUserId) return
-    const currentUserApp = getOwnerApplication(currentUserId)
-    if (currentUserApp) {
-      setOwnerStatus(currentUserApp.status || null)
-      setPhone(currentUserApp.phone || '')
-      setEmail(currentUserApp.email || '')
-      setAadharFile(currentUserApp.aadhaarUrl || null)
-    } else {
+    if (!currentUserId) {
       setOwnerStatus(null)
       setPhone('')
       setEmail('')
       setAadharFile(null)
+      return
     }
+
+    const fetchOwnerApplication = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/api/owner/application?userId=${currentUserId}`)
+
+        if (res.status === 404) {
+          setOwnerStatus(null)
+          setPhone('')
+          setEmail('')
+          setAadharFile(null)
+          removeOwnerApplication(currentUserId)
+          localStorage.removeItem('ownerId')
+          return
+        }
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => '')
+          console.error('Failed to fetch owner application:', res.status, text)
+          return
+        }
+
+        const data = await res.json()
+
+        setOwnerStatus(data?.status || null)
+        setPhone(data?.phone || '')
+        setEmail(data?.email || '')
+        setAadharFile(data?.aadhaarUrl || null)
+
+        saveOwnerApplication(currentUserId, data)
+
+        if (data?.id) {
+          localStorage.setItem('ownerId', data.id)
+        }
+      } catch (e) {
+        console.error('Owner application fetch error:', e)
+      }
+    }
+
+    fetchOwnerApplication()
   }, [currentUserId])
 
   useEffect(() => {
@@ -172,6 +206,7 @@ export default function Navbar() {
 
         if (res.status === 404) {
           removeOwnerApplication(currentUserId)
+          localStorage.removeItem('ownerId')
           setOwnerStatus(null)
           setPhone('')
           setEmail('')
@@ -197,7 +232,18 @@ export default function Navbar() {
           setOwnerStatus(data.status)
 
           if (data.status === 'APPROVED') {
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+
+            localStorage.setItem(
+              'user',
+              JSON.stringify({
+                ...storedUser,
+                role: 'OWNER',
+              })
+            )
+
             toast.success('Your owner application has been approved!')
+            window.location.reload()
           }
         }
       } catch (e) {
@@ -474,20 +520,17 @@ export default function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem('user')
     localStorage.removeItem('allOwnerApplications')
+    localStorage.removeItem('ownerId')
     setCurrentUserId(null)
+    setOwnerStatus(null)
+    setPhone('')
+    setEmail('')
+    setAadharFile(null)
     navigate('/login')
   }
 
   const ownerButton = () => {
-    if (ownerStatus === 'PENDING') {
-      return (
-        <button className='h-[42px] rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-700 shadow-sm cursor-not-allowed'>
-          Owner Pending
-        </button>
-      )
-    }
-
-    if (ownerStatus === 'APPROVED') {
+    if (isOwner) {
       if (isOwnerPanel) {
         return (
           <button
@@ -567,6 +610,14 @@ export default function Navbar() {
             </div>
           </div>
         </div>
+      )
+    }
+
+    if (ownerStatus === 'PENDING') {
+      return (
+        <button className='h-[42px] rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-700 shadow-sm cursor-not-allowed'>
+          Owner Pending
+        </button>
       )
     }
 
@@ -1065,11 +1116,7 @@ export default function Navbar() {
             </div>
 
             <div className='pt-3 border-t border-[#eef1f5]'>
-              {ownerStatus === 'PENDING' ? (
-                <div className='rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700'>
-                  Owner Application Pending
-                </div>
-              ) : ownerStatus === 'APPROVED' ? (
+              {isOwner ? (
                 isOwnerPanel ? (
                   <div
                     onClick={() => {
@@ -1091,6 +1138,10 @@ export default function Navbar() {
                     Switch to Owner
                   </div>
                 )
+              ) : ownerStatus === 'PENDING' ? (
+                <div className='rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700'>
+                  Owner Application Pending
+                </div>
               ) : (
                 <div
                   onClick={() => {

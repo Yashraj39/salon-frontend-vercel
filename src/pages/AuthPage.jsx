@@ -53,6 +53,7 @@ export default function AuthPage({ defaultMode = 'login' }) {
                     userId: res.data.userId || '',
                     name: res.data.name || '',
                     email: res.data.email || '',
+                    role: res.data.role || 'USER',
                     isAccountVerified: res.data.isAccountVerified || false,
                 })
             )
