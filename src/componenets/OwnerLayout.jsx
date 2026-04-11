@@ -204,7 +204,11 @@ export default function OwnerLayout({ children }) {
       >
         <div className='flex items-center justify-between mb-10'>
           <div className='flex items-center gap-3'>
-            <div className='w-7 h-7 rounded-md bg-black shadow-sm'></div>
+            <img
+              src="/logo.png"   // 👈 put your logo file here
+              alt="logo"
+              className="h-9 w-9 rounded-xl object-contain"
+            />
             <h2 className='text-[17px] font-semibold tracking-[0.2px]'>
               SlotMyStyle
             </h2>
@@ -229,11 +233,10 @@ export default function OwnerLayout({ children }) {
                   navigate(item.path)
                   setMobileMenuOpen(false)
                 }}
-                className={`cursor-pointer px-5 py-3 rounded-xl transition-all text-[15px] ${
-                  isActive
+                className={`cursor-pointer px-5 py-3 rounded-xl transition-all text-[15px] ${isActive
                     ? 'bg-white text-[#111827] font-semibold shadow-[0_10px_25px_rgba(255,255,255,0.10)]'
                     : 'text-gray-200 hover:bg-white/10 hover:text-white'
-                }`}
+                  }`}
               >
                 {item.name}
               </li>
@@ -284,11 +287,10 @@ export default function OwnerLayout({ children }) {
               </button>
 
               <div
-                className={`absolute right-0 top-12 w-[380px] origin-top-right rounded-3xl border border-[#e5e7eb] bg-white/95 backdrop-blur-xl shadow-[0_24px_60px_rgba(15,23,42,0.18)] z-50 overflow-hidden transition-all duration-300 ${
-                  showNotificationDropdown
+                className={`absolute right-0 top-12 w-[380px] origin-top-right rounded-3xl border border-[#e5e7eb] bg-white/95 backdrop-blur-xl shadow-[0_24px_60px_rgba(15,23,42,0.18)] z-50 overflow-hidden transition-all duration-300 ${showNotificationDropdown
                     ? 'opacity-100 visible translate-y-0 scale-100'
                     : 'opacity-0 invisible -translate-y-2 scale-95 pointer-events-none'
-                }`}
+                  }`}
               >
                 <div className='border-b border-[#eef2f6] bg-gradient-to-r from-[#f8fafc] to-white px-5 py-4'>
                   <div className='flex items-center justify-between'>
@@ -334,11 +336,10 @@ export default function OwnerLayout({ children }) {
                         <div
                           key={item.id}
                           onClick={() => markNotificationAsRead(item.id)}
-                          className={`group relative cursor-pointer overflow-hidden rounded-2xl border px-4 py-3 transition-all duration-200 ${
-                            item.isRead
+                          className={`group relative cursor-pointer overflow-hidden rounded-2xl border px-4 py-3 transition-all duration-200 ${item.isRead
                               ? 'border-[#edf1f5] bg-white hover:bg-[#fafbfc] hover:shadow-sm'
                               : 'border-blue-100 bg-gradient-to-r from-blue-50 to-white shadow-[0_6px_18px_rgba(59,130,246,0.08)] hover:shadow-[0_10px_24px_rgba(59,130,246,0.12)]'
-                          }`}
+                            }`}
                           style={{
                             animation: `fadeSlideIn 220ms ease ${index * 40}ms both`,
                           }}
@@ -350,11 +351,10 @@ export default function OwnerLayout({ children }) {
                           <div className='flex items-start justify-between gap-3'>
                             <div className='flex min-w-0 flex-1 gap-3'>
                               <div
-                                className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                                  item.isRead
+                                className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${item.isRead
                                     ? 'bg-[#f2f4f7] text-[#667085]'
                                     : 'bg-blue-100 text-blue-700'
-                                }`}
+                                  }`}
                               >
                                 <FiBell className='text-[16px]' />
                               </div>
@@ -420,11 +420,10 @@ export default function OwnerLayout({ children }) {
               <button
                 type='button'
                 onClick={() => setProfileDropdownOpen((prev) => !prev)}
-                className={`group flex items-center gap-3 h-[50px] pl-4 pr-3 rounded-xl border transition-all bg-white ${
-                  profileDropdownOpen
+                className={`group flex items-center gap-3 h-[50px] pl-4 pr-3 rounded-xl border transition-all bg-white ${profileDropdownOpen
                     ? 'border-[#cfd6e4] shadow-[0_12px_30px_rgba(17,24,39,0.10)]'
                     : 'border-[#d8dee8] shadow-[0_4px_14px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]'
-                }`}
+                  }`}
               >
                 <div className='flex items-center justify-center w-8 h-8 rounded-full bg-[#f3f6fb] text-[#344054] border border-[#e4e7ec]'>
                   <FiUser className='text-[16px]' />
@@ -440,18 +439,16 @@ export default function OwnerLayout({ children }) {
                 </div>
 
                 <FiChevronDown
-                  className={`text-[18px] text-[#667085] transition-transform duration-200 ${
-                    profileDropdownOpen ? 'rotate-180' : ''
-                  }`}
+                  className={`text-[18px] text-[#667085] transition-transform duration-200 ${profileDropdownOpen ? 'rotate-180' : ''
+                    }`}
                 />
               </button>
 
               <div
-                className={`absolute right-0 top-[58px] w-[290px] origin-top-right transition-all duration-200 ${
-                  profileDropdownOpen
+                className={`absolute right-0 top-[58px] w-[290px] origin-top-right transition-all duration-200 ${profileDropdownOpen
                     ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
                     : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
-                }`}
+                  }`}
               >
                 <div className='rounded-2xl border border-[#dde3ec] bg-white shadow-[0_20px_45px_rgba(15,23,42,0.14)] p-3'>
                   <div className='mb-3 rounded-xl border border-[#e6eaf0] bg-[#f8fafc] px-4 py-3'>

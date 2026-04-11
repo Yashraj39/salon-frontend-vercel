@@ -35,7 +35,16 @@ export default function AdminLayout({ children }) {
         `}
       >
         <div className='flex items-center justify-between mb-10'>
-          <h2 className='text-[18px] font-semibold'>SlotMyStyle</h2>
+          <div className='flex items-center gap-3'>
+            <img
+              src="/logo.png"   // 👈 put your logo file here
+              alt="logo"
+              className="h-9 w-9 rounded-xl object-contain"
+            />
+            <h2 className='text-[17px] font-semibold tracking-[0.2px]'>
+              SlotMyStyle
+            </h2>
+          </div>
 
           <button
             className='md:hidden text-xl'
@@ -56,11 +65,10 @@ export default function AdminLayout({ children }) {
                   navigate(item.path)
                   setMobileMenuOpen(false)
                 }}
-                className={`cursor-pointer px-5 py-3 rounded-xl transition-all text-[15px] ${
-                  isActive
-                    ? 'bg-white text-[#111827] font-semibold'
-                    : 'text-gray-200 hover:bg-white/10'
-                }`}
+                className={`cursor-pointer px-5 py-3 rounded-xl transition-all text-[15px] ${isActive
+                  ? 'bg-white text-[#111827] font-semibold'
+                  : 'text-gray-200 hover:bg-white/10'
+                  }`}
               >
                 {item.name}
               </li>
