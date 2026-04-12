@@ -190,6 +190,7 @@ const buildBarberPayload = (form) => ({
 export default function ManageBarbers() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const ownerId = user.userid || user.userId || ''
+  const ownerQuery = `?ownerId=${encodeURIComponent(ownerId)}`
 
   const [barbers, setBarbers] = useState([])
   const [selectedBarber, setSelectedBarber] = useState(null)
@@ -402,7 +403,7 @@ export default function ManageBarbers() {
         cancellationReason: customReason || 'Barber schedule updated by owner',
       }
 
-      const res = await fetch(`${BASE_URL}/api/barber/${selectedBarber.id}`, {
+      const res = await fetch(`${BASE_URL}/api/barber/${selectedBarber.id}${ownerQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -512,7 +513,7 @@ export default function ManageBarbers() {
 
     try {
       const res = await fetch(
-        `${BASE_URL}/api/barber/${selectedBarber.id}/temporary-inactive`,
+        `${BASE_URL}/api/barber/${selectedBarber.id}/temporary-inactive${ownerQuery}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -602,7 +603,7 @@ export default function ManageBarbers() {
 
     try {
       const res = await fetch(
-        `${BASE_URL}/api/barber/${selectedBarber.id}/cancel-temporary-inactive`,
+        `${BASE_URL}/api/barber/${selectedBarber.id}/cancel-temporary-inactive${ownerQuery}`,
         { method: 'POST' }
       )
 
@@ -664,7 +665,7 @@ export default function ManageBarbers() {
     setVacationLoading(true)
 
     try {
-      const res = await fetch(`${BASE_URL}/api/barber/${selectedBarber.id}/vacation`, {
+      const res = await fetch(`${BASE_URL}/api/barber/${selectedBarber.id}/vacation${ownerQuery}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -754,7 +755,7 @@ export default function ManageBarbers() {
     try {
       const payload = buildBarberPayload(form)
 
-      const res = await fetch(`${BASE_URL}/api/barber/add/${salonToUse}`, {
+      const res = await fetch(`${BASE_URL}/api/barber/add/${salonToUse}${ownerQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -813,7 +814,7 @@ export default function ManageBarbers() {
     setIsDeleting(true)
 
     try {
-      const res = await fetch(`${BASE_URL}/api/barber/${barberToDelete.id}`, {
+      const res = await fetch(`${BASE_URL}/api/barber/${barberToDelete.id}${ownerQuery}`, {
         method: 'DELETE',
       })
 
@@ -939,8 +940,8 @@ export default function ManageBarbers() {
               }}
               disabled={!selectedSalonId}
               className={`w-full text-white py-3 rounded-2xl mb-4 transition-all duration-300 inline-flex items-center justify-center gap-2 shadow-sm ${selectedSalonId
-                  ? 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 hover:shadow-md'
-                  : 'bg-gray-400 cursor-not-allowed'
+                ? 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 hover:shadow-md'
+                : 'bg-gray-400 cursor-not-allowed'
                 }`}
             >
               <Plus size={18} />
@@ -958,8 +959,8 @@ export default function ManageBarbers() {
                       key={barber.id}
                       onClick={() => handleSelect(barber)}
                       className={`group p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-0.5 ${selectedBarber?.id === barber.id
-                          ? 'bg-gradient-to-r from-slate-50 to-white border-slate-300 ring-2 ring-slate-200 shadow-[0_10px_30px_rgba(15,23,42,0.08)]'
-                          : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 shadow-sm'
+                        ? 'bg-gradient-to-r from-slate-50 to-white border-slate-300 ring-2 ring-slate-200 shadow-[0_10px_30px_rgba(15,23,42,0.08)]'
+                        : 'bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50 shadow-sm'
                         }`}
                       style={{ animationDelay: `${index * 40}ms` }}
                     >
@@ -974,8 +975,8 @@ export default function ManageBarbers() {
                               }}
                               disabled={isDeleting}
                               className={`p-1.5 rounded-lg transition shrink-0 ${selectedBarber?.id === barber.id
-                                  ? 'text-slate-500 hover:bg-red-50 hover:text-red-600'
-                                  : 'text-red-500 hover:bg-red-50 hover:text-red-600'
+                                ? 'text-slate-500 hover:bg-red-50 hover:text-red-600'
+                                : 'text-red-500 hover:bg-red-50 hover:text-red-600'
                                 } ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                               <Trash2 className='w-4 h-4' />
@@ -984,8 +985,8 @@ export default function ManageBarbers() {
 
                           <p
                             className={`text-sm mt-1 ${selectedBarber?.id === barber.id
-                                ? 'text-slate-600'
-                                : 'text-gray-600'
+                              ? 'text-slate-600'
+                              : 'text-gray-600'
                               }`}
                           >
                             {barber.weeklyOffDays?.length || 0} Weekly Off |{' '}
@@ -995,8 +996,8 @@ export default function ManageBarbers() {
 
                         <span
                           className={`text-xs shrink-0 px-2.5 py-1 rounded-full font-medium ${barberShowInactive
-                              ? 'bg-red-50 text-red-600 border border-red-100'
-                              : 'bg-green-50 text-green-600 border border-green-100'
+                            ? 'bg-red-50 text-red-600 border border-red-100'
+                            : 'bg-green-50 text-green-600 border border-green-100'
                             }`}
                         >
                           {barberShowInactive ? 'Inactive' : 'Active'}
@@ -1143,8 +1144,8 @@ export default function ManageBarbers() {
                     <label
                       key={day.value}
                       className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all duration-300 ${form.weeklyOffDays?.includes(day.value)
-                          ? 'bg-black text-white border-black'
-                          : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                        ? 'bg-black text-white border-black'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                         }`}
                     >
                       <input
@@ -1220,8 +1221,8 @@ export default function ManageBarbers() {
                 onClick={() => handleSave()}
                 disabled={isSaving || !hasChanges}
                 className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${isSaving || !hasChanges
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
                   }`}
               >
                 {isSaving ? 'Saving Changes...' : 'Save Changes'}
@@ -1252,8 +1253,8 @@ export default function ManageBarbers() {
                     onClick={confirmDelete}
                     disabled={isDeleting}
                     className={`px-5 py-2.5 text-white rounded-2xl transition ${isDeleting
-                        ? 'bg-red-300 cursor-not-allowed'
-                        : 'bg-red-500 hover:bg-red-600'
+                      ? 'bg-red-300 cursor-not-allowed'
+                      : 'bg-red-500 hover:bg-red-600'
                       }`}
                   >
                     {isDeleting ? 'Deleting...' : 'Delete'}
@@ -1415,8 +1416,8 @@ export default function ManageBarbers() {
                     onClick={() => handleTemporaryInactive()}
                     disabled={tempInactiveLoading}
                     className={`px-5 py-2.5 text-white rounded-2xl transition ${tempInactiveLoading
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-black hover:bg-gray-800'
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-black hover:bg-gray-800'
                       }`}
                   >
                     {tempInactiveLoading ? 'Saving...' : 'Confirm'}
@@ -1498,8 +1499,8 @@ export default function ManageBarbers() {
                     onClick={() => handleVacationSubmit()}
                     disabled={vacationLoading}
                     className={`px-5 py-2.5 text-white rounded-2xl transition ${vacationLoading
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-black hover:bg-gray-800'
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-black hover:bg-gray-800'
                       }`}
                   >
                     {vacationLoading ? 'Saving...' : 'Add Vacation'}
@@ -1595,8 +1596,8 @@ export default function ManageBarbers() {
                       <label
                         key={day.value}
                         className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer transition-all duration-300 ${form.weeklyOffDays?.includes(day.value)
-                            ? 'bg-black text-white border-black'
-                            : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                          ? 'bg-black text-white border-black'
+                          : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                           }`}
                       >
                         <input

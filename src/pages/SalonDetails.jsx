@@ -13,6 +13,7 @@ export default function SalonDetails() {
 
   const [salon, setSalon] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [bookingDisabled, setBookingDisabled] = useState(false)
 
   const [showBookingModal, setShowBookingModal] = useState(false)
   const [bookingFor, setBookingFor] = useState('myself')
@@ -30,10 +31,18 @@ export default function SalonDetails() {
         const data = await res.json()
 
         if (!Array.isArray(data.services)) data.services = []
+
         setSalon(data)
+
+        if (data.ownerFrozen === true) {
+          setBookingDisabled(true)
+        } else {
+          setBookingDisabled(false)
+        }
       } catch (err) {
         console.error(err)
         setSalon(null)
+        setBookingDisabled(false)
       } finally {
         setLoading(false)
       }
@@ -48,10 +57,20 @@ export default function SalonDetails() {
       return
     }
 
+    if (bookingDisabled) {
+      toast.error('This salon is temporarily unavailable for booking')
+      return
+    }
+
     setShowBookingModal(true)
   }
 
   const handleContinueBooking = () => {
+    if (bookingDisabled) {
+      toast.error('This salon is temporarily unavailable for booking')
+      return
+    }
+
     const user = JSON.parse(localStorage.getItem('user') || '{}')
     const bookedBy = user?.name || ''
 
@@ -208,9 +227,13 @@ export default function SalonDetails() {
               <div className='mt-5 pt-4 border-t border-gray-100 flex flex-wrap gap-3'>
                 <button
                   onClick={handleBookNow}
-                  className='bg-black text-white px-5 py-2.5 cursor-pointer rounded-xl hover:bg-gray-800 shadow-md shadow-black/10 transition-all duration-300'
+                  disabled={bookingDisabled}
+                  className={`px-5 py-2.5 rounded-xl shadow-md shadow-black/10 transition-all duration-300 ${bookingDisabled
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-black text-white cursor-pointer hover:bg-gray-800'
+                    }`}
                 >
-                  Book Appointment
+                  {bookingDisabled ? 'Booking Unavailable' : 'Book Appointment'}
                 </button>
 
                 <button
@@ -220,6 +243,11 @@ export default function SalonDetails() {
                   Go Back
                 </button>
               </div>
+              {bookingDisabled && (
+                <p className='mt-3 text-sm text-red-500 font-medium'>
+                  This salon is temporarily unavailable for booking.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -285,9 +313,13 @@ export default function SalonDetails() {
         <div className='flex justify-center mt-14 sm:mt-16'>
           <button
             onClick={handleBookNow}
-            className='bg-black text-white px-10 py-3.5 cursor-pointer rounded-2xl hover:bg-gray-800 shadow-lg shadow-black/10 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300'
+            disabled={bookingDisabled}
+            className={`px-10 py-3.5 rounded-2xl shadow-lg shadow-black/10 transition-all duration-300 ${bookingDisabled
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-black text-white cursor-pointer hover:bg-gray-800 hover:shadow-xl hover:-translate-y-0.5'
+              }`}
           >
-            Book Now
+            {bookingDisabled ? 'Booking Unavailable' : 'Book Now'}
           </button>
         </div>
       </main>

@@ -177,7 +177,17 @@ export default function SelectService() {
       )
 
       if (!res.ok) {
-        toast.error('Cannot add service')
+        const errorText = await res.text()
+
+        if (
+          errorText.toLowerCase().includes('temporarily unavailable') ||
+          errorText.toLowerCase().includes('booking') && errorText.toLowerCase().includes('unavailable')
+        ) {
+          toast.error('This salon is temporarily unavailable for booking')
+        } else {
+          toast.error(errorText || 'Cannot add service')
+        }
+
         return
       }
 

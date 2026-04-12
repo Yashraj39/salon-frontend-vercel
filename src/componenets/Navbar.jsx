@@ -13,7 +13,7 @@ import { FaShoppingCart } from 'react-icons/fa'
 import React, { useEffect, useState, useRef } from 'react'
 import { toast, Toaster } from 'sonner'
 
-const BASE_URL = 'https://render-qs89.onrender.com' // Change this to your actual backend URL
+const BASE_URL = 'https://render-qs89.onrender.com'
 
 const saveOwnerApplication = (userId, data) => {
   const allApps = JSON.parse(localStorage.getItem('allOwnerApplications')) || {}
@@ -36,12 +36,19 @@ export default function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
   const isOwnerPanel = location.pathname.startsWith('/owner')
-  const isLoggedIn = !!localStorage.getItem('user')
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const userId = user.userId
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}')
+    } catch {
+      return {}
+    }
+  })
+
+  const isLoggedIn = !!user?.userId
+  const userId = user?.userId || ''
   const isOwner = user?.role === 'OWNER'
-const isOwnerFrozen = user?.ownerFrozen === true
+  const isOwnerFrozen = user?.ownerFrozen === true
 
   const [currentUserId, setCurrentUserId] = useState(userId || null)
 
@@ -75,6 +82,45 @@ const isOwnerFrozen = user?.ownerFrozen === true
   const [emailError, setEmailError] = useState('')
   const [fileError, setFileError] = useState('')
 
+  const syncUserFromBackend = async () => {
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
+    const currentStoredUserId = storedUser?.userId
+
+    if (!currentStoredUserId) {
+      setUser({})
+      setCurrentUserId(null)
+      return
+    }
+
+    try {
+      const res = await fetch(`${BASE_URL}/api/v1.0/get-user?userId=${currentStoredUserId}`)
+      if (!res.ok) return
+
+      const freshUser = await res.json()
+
+      const updatedUser = {
+        ...storedUser,
+        ...freshUser,
+      }
+
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+      setUser(updatedUser)
+      setCurrentUserId(updatedUser?.userId || null)
+    } catch (error) {
+      console.error('User sync error:', error)
+    }
+  }
+
+  useEffect(() => {
+    syncUserFromBackend()
+
+    const interval = setInterval(() => {
+      syncUserFromBackend()
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [])
+
   useEffect(() => {
     if (!currentUserId) {
       setOwnerStatus(null)
@@ -82,6 +128,14 @@ const isOwnerFrozen = user?.ownerFrozen === true
       setEmail('')
       setAadharFile(null)
       return
+    }
+
+    const cachedApp = getOwnerApplication(currentUserId)
+    if (cachedApp) {
+      setOwnerStatus(cachedApp?.status || null)
+      setPhone(cachedApp?.phone || '')
+      setEmail(cachedApp?.email || '')
+      setAadharFile(cachedApp?.aadhaarUrl || null)
     }
 
     const fetchOwnerApplication = async () => {
@@ -174,9 +228,7 @@ const isOwnerFrozen = user?.ownerFrozen === true
   const fetchNavbarCart = async () => {
     if (!userId) return
     try {
-      const res = await fetch(
-        `${BASE_URL}/api/cart/navbar-cart?userId=${userId}`
-      )
+      const res = await fetch(`${BASE_URL}/api/cart/navbar-cart?userId=${userId}`)
       if (!res.ok) return
       const cartData = await res.json()
       setNavbarCart(cartData)
@@ -196,7 +248,6 @@ const isOwnerFrozen = user?.ownerFrozen === true
 
   useEffect(() => {
     if (!currentUserId) return
-
     if (ownerStatus !== 'PENDING') return
 
     const checkOwnerApplication = async () => {
@@ -233,16 +284,7 @@ const isOwnerFrozen = user?.ownerFrozen === true
           setOwnerStatus(data.status)
 
           if (data.status === 'APPROVED') {
-            const storedUser = JSON.parse(localStorage.getItem('user') || '{}')
-
-            localStorage.setItem(
-              'user',
-              JSON.stringify({
-                ...storedUser,
-                role: 'OWNER',
-              })
-            )
-
+            await syncUserFromBackend()
             toast.success('Your owner application has been approved!')
             window.location.reload()
           }
@@ -439,7 +481,7 @@ const isOwnerFrozen = user?.ownerFrozen === true
 
       try {
         uploadData = await uploadRes.json()
-      } catch (e) {
+      } catch {
         try {
           uploadText = await uploadRes.text()
         } catch {
@@ -450,9 +492,9 @@ const isOwnerFrozen = user?.ownerFrozen === true
       if (!uploadRes.ok) {
         throw new Error(
           uploadData?.message ||
-          uploadData?.error ||
-          uploadText ||
-          `Image upload failed (${uploadRes.status})`
+            uploadData?.error ||
+            uploadText ||
+            `Image upload failed (${uploadRes.status})`
         )
       }
 
@@ -470,8 +512,6 @@ const isOwnerFrozen = user?.ownerFrozen === true
         termsAccepted: true,
       }
 
-      console.log('OWNER APPLY PAYLOAD:', payload)
-
       const applyRes = await fetch(`${BASE_URL}/api/owner/apply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -483,7 +523,7 @@ const isOwnerFrozen = user?.ownerFrozen === true
 
       try {
         applyData = await applyRes.json()
-      } catch (e) {
+      } catch {
         try {
           applyText = await applyRes.text()
         } catch {
@@ -491,16 +531,12 @@ const isOwnerFrozen = user?.ownerFrozen === true
         }
       }
 
-      console.log('OWNER APPLY STATUS:', applyRes.status)
-      console.log('OWNER APPLY RESPONSE JSON:', applyData)
-      console.log('OWNER APPLY RESPONSE TEXT:', applyText)
-
       if (!applyRes.ok) {
         throw new Error(
           applyData?.message ||
-          applyData?.error ||
-          applyText ||
-          `Application failed (${applyRes.status})`
+            applyData?.error ||
+            applyText ||
+            `Application failed (${applyRes.status})`
         )
       }
 
@@ -522,6 +558,7 @@ const isOwnerFrozen = user?.ownerFrozen === true
     localStorage.removeItem('user')
     localStorage.removeItem('allOwnerApplications')
     localStorage.removeItem('ownerId')
+    setUser({})
     setCurrentUserId(null)
     setOwnerStatus(null)
     setPhone('')
@@ -531,7 +568,19 @@ const isOwnerFrozen = user?.ownerFrozen === true
   }
 
   const ownerButton = () => {
-    if (isOwner && isOwnerFrozen) {
+    if (isOwner) {
+      if (isOwnerFrozen) {
+        return (
+          <button
+            type='button'
+            className='h-[42px] rounded-xl border border-red-200 bg-red-50 px-5 text-sm font-semibold text-red-700 shadow-sm cursor-not-allowed'
+            title='Your owner access is frozen by admin'
+          >
+            Owner Frozen
+          </button>
+        )
+      }
+
       if (isOwnerPanel) {
         return (
           <button
@@ -548,10 +597,11 @@ const isOwnerFrozen = user?.ownerFrozen === true
           <button
             type='button'
             onClick={() => setOwnerDropdownOpen((prev) => !prev)}
-            className={`group flex items-center justify-between min-w-[235px] h-[50px] pl-4 pr-3 rounded-xl border transition-all bg-white ${ownerDropdownOpen
-              ? 'border-[#cfd6e4] shadow-[0_12px_30px_rgba(17,24,39,0.10)]'
-              : 'border-[#d8dee8] shadow-[0_4px_14px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]'
-              }`}
+            className={`group flex items-center justify-between min-w-[235px] h-[50px] pl-4 pr-3 rounded-xl border transition-all bg-white ${
+              ownerDropdownOpen
+                ? 'border-[#cfd6e4] shadow-[0_12px_30px_rgba(17,24,39,0.10)]'
+                : 'border-[#d8dee8] shadow-[0_4px_14px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]'
+            }`}
           >
             <div className='flex items-center justify-center w-8 h-8 rounded-full bg-[#f3f6fb] text-[#344054] border border-[#e4e7ec]'>
               <FiUser className='text-[16px]' />
@@ -565,16 +615,18 @@ const isOwnerFrozen = user?.ownerFrozen === true
             </div>
 
             <FiChevronDown
-              className={`text-[18px] text-[#667085] transition-transform duration-200 ${ownerDropdownOpen ? 'rotate-180' : ''
-                }`}
+              className={`text-[18px] text-[#667085] transition-transform duration-200 ${
+                ownerDropdownOpen ? 'rotate-180' : ''
+              }`}
             />
           </button>
 
           <div
-            className={`absolute right-0 top-[58px] w-[290px] origin-top-right transition-all duration-200 z-50 ${ownerDropdownOpen
-              ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
-              : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
-              }`}
+            className={`absolute right-0 top-[58px] w-[290px] origin-top-right transition-all duration-200 z-50 ${
+              ownerDropdownOpen
+                ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
+                : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
+            }`}
           >
             <div className='rounded-2xl border border-[#dde3ec] bg-white shadow-[0_20px_45px_rgba(15,23,42,0.14)] p-3'>
               <div className='mb-3 rounded-xl border border-[#e6eaf0] bg-[#f8fafc] px-4 py-3'>
@@ -687,9 +739,9 @@ const isOwnerFrozen = user?.ownerFrozen === true
               className='flex items-center gap-3 cursor-pointer shrink-0'
             >
               <img
-                src="/logo.png"   // 👈 put your logo file here
-                alt="logo"
-                className="h-9 w-9 rounded-xl object-contain"
+                src='/logo.png'
+                alt='logo'
+                className='h-9 w-9 rounded-xl object-contain'
               />
 
               <span className='text-[18px] font-semibold tracking-[0.2px] text-[#111827]'>
@@ -723,19 +775,21 @@ const isOwnerFrozen = user?.ownerFrozen === true
                         className='group relative pb-2 text-center'
                       >
                         <span
-                          className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/success' || location.pathname === '/home'
-                            ? 'text-[#111827]'
-                            : 'text-[#667085] group-hover:text-[#111827]'
-                            }`}
+                          className={`text-[15px] font-semibold transition-colors duration-300 ${
+                            location.pathname === '/success' || location.pathname === '/home'
+                              ? 'text-[#111827]'
+                              : 'text-[#667085] group-hover:text-[#111827]'
+                          }`}
                         >
                           Home
                         </span>
 
                         <span
-                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/success' || location.pathname === '/home'
-                            ? 'opacity-100 scale-x-100'
-                            : 'opacity-0 scale-x-0'
-                            }`}
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
+                            location.pathname === '/success' || location.pathname === '/home'
+                              ? 'opacity-100 scale-x-100'
+                              : 'opacity-0 scale-x-0'
+                          }`}
                         />
                       </button>
 
@@ -745,19 +799,21 @@ const isOwnerFrozen = user?.ownerFrozen === true
                         className='group relative pb-2 text-center'
                       >
                         <span
-                          className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/about'
-                            ? 'text-[#111827]'
-                            : 'text-[#667085] group-hover:text-[#111827]'
-                            }`}
+                          className={`text-[15px] font-semibold transition-colors duration-300 ${
+                            location.pathname === '/about'
+                              ? 'text-[#111827]'
+                              : 'text-[#667085] group-hover:text-[#111827]'
+                          }`}
                         >
                           About
                         </span>
 
                         <span
-                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/about'
-                            ? 'opacity-100 scale-x-100'
-                            : 'opacity-0 scale-x-0'
-                            }`}
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
+                            location.pathname === '/about'
+                              ? 'opacity-100 scale-x-100'
+                              : 'opacity-0 scale-x-0'
+                          }`}
                         />
                       </button>
 
@@ -767,19 +823,21 @@ const isOwnerFrozen = user?.ownerFrozen === true
                         className='group relative pb-2 text-center'
                       >
                         <span
-                          className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/contact'
-                            ? 'text-[#111827]'
-                            : 'text-[#667085] group-hover:text-[#111827]'
-                            }`}
+                          className={`text-[15px] font-semibold transition-colors duration-300 ${
+                            location.pathname === '/contact'
+                              ? 'text-[#111827]'
+                              : 'text-[#667085] group-hover:text-[#111827]'
+                          }`}
                         >
                           Contact
                         </span>
 
                         <span
-                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/contact'
-                            ? 'opacity-100 scale-x-100'
-                            : 'opacity-0 scale-x-0'
-                            }`}
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
+                            location.pathname === '/contact'
+                              ? 'opacity-100 scale-x-100'
+                              : 'opacity-0 scale-x-0'
+                          }`}
                         />
                       </button>
 
@@ -789,19 +847,21 @@ const isOwnerFrozen = user?.ownerFrozen === true
                         className='group relative pb-2 text-center'
                       >
                         <span
-                          className={`text-[15px] font-semibold whitespace-nowrap transition-colors duration-300 ${location.pathname === '/bookings'
-                            ? 'text-[#111827]'
-                            : 'text-[#667085] group-hover:text-[#111827]'
-                            }`}
+                          className={`text-[15px] font-semibold whitespace-nowrap transition-colors duration-300 ${
+                            location.pathname === '/bookings'
+                              ? 'text-[#111827]'
+                              : 'text-[#667085] group-hover:text-[#111827]'
+                          }`}
                         >
                           My Bookings
                         </span>
 
                         <span
-                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/bookings'
-                            ? 'opacity-100 scale-x-100'
-                            : 'opacity-0 scale-x-0'
-                            }`}
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
+                            location.pathname === '/bookings'
+                              ? 'opacity-100 scale-x-100'
+                              : 'opacity-0 scale-x-0'
+                          }`}
                         />
                       </button>
                     </div>
@@ -825,7 +885,11 @@ const isOwnerFrozen = user?.ownerFrozen === true
                       }}
                       className='hidden sm:flex relative h-10 w-10 items-center justify-center rounded-full border border-[#e6eaf0] bg-white text-[#344054] shadow-sm hover:bg-[#f8fafc] hover:shadow-md transition-all duration-200'
                     >
-                      <FiBell className={`text-[19px] transition-transform duration-200 ${showNotificationDropdown ? 'scale-110' : ''}`} />
+                      <FiBell
+                        className={`text-[19px] transition-transform duration-200 ${
+                          showNotificationDropdown ? 'scale-110' : ''
+                        }`}
+                      />
 
                       {unreadCount > 0 && (
                         <>
@@ -838,15 +902,14 @@ const isOwnerFrozen = user?.ownerFrozen === true
                     </button>
 
                     <div
-                      className={`absolute right-0 top-12 w-[380px] origin-top-right rounded-3xl border border-[#e5e7eb] bg-white/95 backdrop-blur-xl shadow-[0_24px_60px_rgba(15,23,42,0.18)] z-50 overflow-hidden transition-all duration-300 ${showNotificationDropdown
-                        ? 'opacity-100 visible translate-y-0 scale-100'
-                        : 'opacity-0 invisible -translate-y-2 scale-95 pointer-events-none'
-                        }`}
+                      className={`absolute right-0 top-12 w-[380px] origin-top-right rounded-3xl border border-[#e5e7eb] bg-white/95 backdrop-blur-xl shadow-[0_24px_60px_rgba(15,23,42,0.18)] z-50 overflow-hidden transition-all duration-300 ${
+                        showNotificationDropdown
+                          ? 'opacity-100 visible translate-y-0 scale-100'
+                          : 'opacity-0 invisible -translate-y-2 scale-95 pointer-events-none'
+                      }`}
                     >
                       <div className='border-b border-[#eef2f6] bg-gradient-to-r from-[#f8fafc] to-white px-5 py-4'>
                         <div className='flex items-center justify-between'>
-
-
                           {notifications.length > 0 && (
                             <div className='flex items-center gap-2'>
                               {unreadCount > 0 && (
@@ -889,10 +952,11 @@ const isOwnerFrozen = user?.ownerFrozen === true
                               <div
                                 key={item.id}
                                 onClick={() => markNotificationAsRead(item.id)}
-                                className={`group relative cursor-pointer overflow-hidden rounded-2xl border px-4 py-3 transition-all duration-200 ${item.isRead
-                                  ? 'border-[#edf1f5] bg-white hover:bg-[#fafbfc] hover:shadow-sm'
-                                  : 'border-blue-100 bg-gradient-to-r from-blue-50 to-white shadow-[0_6px_18px_rgba(59,130,246,0.08)] hover:shadow-[0_10px_24px_rgba(59,130,246,0.12)]'
-                                  }`}
+                                className={`group relative cursor-pointer overflow-hidden rounded-2xl border px-4 py-3 transition-all duration-200 ${
+                                  item.isRead
+                                    ? 'border-[#edf1f5] bg-white hover:bg-[#fafbfc] hover:shadow-sm'
+                                    : 'border-blue-100 bg-gradient-to-r from-blue-50 to-white shadow-[0_6px_18px_rgba(59,130,246,0.08)] hover:shadow-[0_10px_24px_rgba(59,130,246,0.12)]'
+                                }`}
                                 style={{
                                   animation: `fadeSlideIn 220ms ease ${index * 40}ms both`,
                                 }}
@@ -904,10 +968,11 @@ const isOwnerFrozen = user?.ownerFrozen === true
                                 <div className='flex items-start justify-between gap-3'>
                                   <div className='flex min-w-0 flex-1 gap-3'>
                                     <div
-                                      className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${item.isRead
-                                        ? 'bg-[#f2f4f7] text-[#667085]'
-                                        : 'bg-blue-100 text-blue-700'
-                                        }`}
+                                      className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                                        item.isRead
+                                          ? 'bg-[#f2f4f7] text-[#667085]'
+                                          : 'bg-blue-100 text-blue-700'
+                                      }`}
                                     >
                                       <FiBell className='text-[16px]' />
                                     </div>
@@ -988,16 +1053,17 @@ const isOwnerFrozen = user?.ownerFrozen === true
 
                     <div
                       className={`
-                      fixed md:absolute top-20 md:top-12 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 md:right-0
-                      w-[95%] max-w-sm md:w-[340px] rounded-2xl border border-[#dde3ec] bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.14)] z-50
-                      transition-all duration-300 ease-in-out
-                      ${showCartDropdown
-                          ? 'opacity-100 visible translate-y-0'
-                          : 'opacity-0 invisible translate-y-3'
+                        fixed md:absolute top-20 md:top-12 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 md:right-0
+                        w-[95%] max-w-sm md:w-[340px] rounded-2xl border border-[#dde3ec] bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.14)] z-50
+                        transition-all duration-300 ease-in-out
+                        ${
+                          showCartDropdown
+                            ? 'opacity-100 visible translate-y-0'
+                            : 'opacity-0 invisible translate-y-3'
                         }
-                      md:opacity-0 md:invisible md:translate-y-3
-                      md:group-hover:opacity-100 md:group-hover:visible md:group-hover:translate-y-0
-                    `}
+                        md:opacity-0 md:invisible md:translate-y-3
+                        md:group-hover:opacity-100 md:group-hover:visible md:group-hover:translate-y-0
+                      `}
                     >
                       <h3 className='mb-4 text-[16px] font-semibold text-[#243B63]'>
                         Pending Bookings
@@ -1118,7 +1184,11 @@ const isOwnerFrozen = user?.ownerFrozen === true
 
             <div className='pt-3 border-t border-[#eef1f5]'>
               {isOwner ? (
-                isOwnerPanel ? (
+                isOwnerFrozen ? (
+                  <div className='rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700'>
+                    Owner Access Frozen
+                  </div>
+                ) : isOwnerPanel ? (
                   <div
                     onClick={() => {
                       navigate('/success')
@@ -1227,10 +1297,11 @@ const isOwnerFrozen = user?.ownerFrozen === true
                     setAgreed(false)
                   }
                 }}
-                className={`w-full rounded-xl py-3 font-semibold transition ${agreed
-                  ? 'bg-gradient-to-r from-[#111827] to-[#1f2937] text-white'
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
+                className={`w-full rounded-xl py-3 font-semibold transition ${
+                  agreed
+                    ? 'bg-gradient-to-r from-[#111827] to-[#1f2937] text-white'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                }`}
               >
                 Continue
               </button>
@@ -1269,21 +1340,17 @@ const isOwnerFrozen = user?.ownerFrozen === true
               </p>
 
               <input
-                type="tel"
+                type='tel'
                 value={phone}
                 maxLength={10}
                 onChange={(e) => {
                   let value = e.target.value
-
-                  // allow only numbers
                   value = value.replace(/[^0-9]/g, '')
 
-                  // limit to 10 digits
                   if (value.length > 10) return
 
                   setPhone(value)
 
-                  // live validation
                   if (!value) {
                     setPhoneError('Mobile number is required')
                   } else if (value.length < 10) {
@@ -1295,7 +1362,6 @@ const isOwnerFrozen = user?.ownerFrozen === true
                   }
                 }}
                 onKeyDown={(e) => {
-                  // block non-numeric keys except control keys
                   if (
                     !/[0-9]/.test(e.key) &&
                     !['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab', 'Delete'].includes(e.key)
@@ -1303,10 +1369,15 @@ const isOwnerFrozen = user?.ownerFrozen === true
                     e.preventDefault()
                   }
                 }}
-                className={`w-full rounded-xl border px-4 py-3 outline-none focus:border-[#243B63] ${phoneError ? 'border-red-500' : 'border-[#d8dee8]'
-                  }`}
-                placeholder="Enter 10 digit mobile number"
+                className={`w-full rounded-xl border px-4 py-3 outline-none focus:border-[#243B63] ${
+                  phoneError ? 'border-red-500' : 'border-[#d8dee8]'
+                }`}
+                placeholder='Enter 10 digit mobile number'
               />
+
+              {phoneError && (
+                <p className='mt-2 text-sm text-red-600'>{phoneError}</p>
+              )}
 
               <div className='mt-4'>
                 <label className='mb-2 block text-sm font-semibold text-[#344054]'>
@@ -1315,9 +1386,25 @@ const isOwnerFrozen = user?.ownerFrozen === true
                 <input
                   type='email'
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className='w-full rounded-xl border border-[#d8dee8] px-4 py-3 outline-none focus:border-[#243B63]'
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setEmail(value)
+
+                    if (!value.trim()) {
+                      setEmailError('Gmail is required')
+                    } else if (!validateGmail(value)) {
+                      setEmailError('Enter valid Gmail address')
+                    } else {
+                      setEmailError('')
+                    }
+                  }}
+                  className={`w-full rounded-xl border px-4 py-3 outline-none focus:border-[#243B63] ${
+                    emailError ? 'border-red-500' : 'border-[#d8dee8]'
+                  }`}
                 />
+                {emailError && (
+                  <p className='mt-2 text-sm text-red-600'>{emailError}</p>
+                )}
               </div>
 
               <div className='mt-6'>
@@ -1329,13 +1416,24 @@ const isOwnerFrozen = user?.ownerFrozen === true
                   type='file'
                   accept='image/*'
                   ref={fileInputRef}
-                  onChange={(e) => setAadharFile(e.target.files[0])}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null
+                    setAadharFile(file)
+
+                    if (!file) {
+                      setFileError('Document upload is required')
+                    } else {
+                      setFileError('')
+                    }
+                  }}
                   className='hidden'
                 />
 
                 <div
                   onClick={() => fileInputRef.current.click()}
-                  className='flex h-56 cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-[#d8dee8] bg-[#fafbfd] hover:bg-[#f6f8fb] transition'
+                  className={`flex h-56 cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed bg-[#fafbfd] hover:bg-[#f6f8fb] transition ${
+                    fileError ? 'border-red-400' : 'border-[#d8dee8]'
+                  }`}
                 >
                   {aadharFile ? (
                     <img
@@ -1352,6 +1450,10 @@ const isOwnerFrozen = user?.ownerFrozen === true
                     </div>
                   )}
                 </div>
+
+                {fileError && (
+                  <p className='mt-2 text-sm text-red-600'>{fileError}</p>
+                )}
               </div>
 
               <button

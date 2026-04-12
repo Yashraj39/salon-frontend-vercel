@@ -10,6 +10,7 @@ const BASE_URL = 'https://render-qs89.onrender.com'
 export default function ServicesPage() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const ownerId = user?.userid || user?.userId || ''
+  const ownerQuery = `&ownerId=${encodeURIComponent(ownerId)}`
 
   const [salons, setSalons] = useState([])
   const savedSalonId = localStorage.getItem('salonId')
@@ -214,13 +215,13 @@ export default function ServicesPage() {
 
       if (editingService) {
         await axios.patch(
-          `${BASE_URL}/api/service/update-service/${editingService.id}`,
+          `${BASE_URL}/api/service/update-service/${editingService.id}?ownerId=${ownerId}`,
           data
         )
         toast.success('Service updated successfully')
       } else {
         await axios.post(
-          `${BASE_URL}/api/service/add-service/${selectedCategory.id}?salonId=${selectedSalonId}`,
+          `${BASE_URL}/api/service/add-service/${selectedCategory.id}?salonId=${selectedSalonId}${ownerQuery}`,
           data,
           { headers: { 'Content-Type': 'multipart/form-data' } }
         )
@@ -240,8 +241,13 @@ export default function ServicesPage() {
 
       fetchServices(selectedSalonId, selectedCategory.id)
     } catch (err) {
-      console.error(err)
-      toast.error('Failed to save service')
+      console.error('Save service error:', err)
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        'Failed to save service'
+      toast.error(String(message))
     } finally {
       setIsSavingService(false)
     }
@@ -261,7 +267,7 @@ export default function ServicesPage() {
 
       if (deleteType === 'service') {
         await axios.delete(
-          `${BASE_URL}/api/service/delete-service/${selectedCategory.id}/${deleteId}`
+          `${BASE_URL}/api/service/delete-service/${selectedCategory.id}/${deleteId}?ownerId=${ownerId}`
         )
         toast.success('Service deleted successfully')
         fetchServices(selectedSalonId, selectedCategory.id)
@@ -837,8 +843,8 @@ function Modal({
               onClick={onSubmit}
               disabled={isSubmitting}
               className={`px-5 py-3 rounded-2xl text-white w-full sm:w-auto transition-all duration-300 ${isSubmitting
-                  ? 'bg-green-300 cursor-not-allowed'
-                  : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                ? 'bg-green-300 cursor-not-allowed'
+                : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
                 }`}
             >
               {isSubmitting ? loadingText : submitText}
