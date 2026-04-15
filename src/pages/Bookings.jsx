@@ -520,14 +520,16 @@ function BookingDetailsModal({ loading, data, onClose }) {
                 </button>
               )}
 
-              {!isPastBooking && statusLabel !== 'Cancelled' && (
-                <button
-                  onClick={handleCancel}
-                  className='min-w-[140px] rounded-full bg-red-500 hover:bg-red-600 px-5 py-2 text-sm font-semibold text-white transition'
-                >
-                  Cancel Booking
-                </button>
-              )}
+              {!isPastBooking &&
+                String(data?.bookingStatus).toUpperCase() !== 'CANCELLED' &&
+                String(data?.bookingStatus).toUpperCase() !== 'COMPLETED' && (
+                  <button
+                    onClick={handleCancel}
+                    className='min-w-[140px] rounded-full bg-red-500 hover:bg-red-600 px-5 py-2 text-sm font-semibold text-white transition'
+                  >
+                    Cancel Booking
+                  </button>
+                )}
 
               <button
                 onClick={onClose}
