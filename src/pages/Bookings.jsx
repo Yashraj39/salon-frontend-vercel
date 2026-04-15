@@ -117,11 +117,10 @@ export default function Bookings() {
               <React.Fragment key={item.value}>
                 <button
                   onClick={() => setFilter(item.value)}
-                  className={`px-6 py-2.5 rounded-full text-sm sm:text-base font-semibold transition ${
-                    filter === item.value
-                      ? 'bg-black text-white'
-                      : 'text-gray-600 hover:text-black'
-                  }`}
+                  className={`px-6 py-2.5 rounded-full text-sm sm:text-base font-semibold transition ${filter === item.value
+                    ? 'bg-black text-white'
+                    : 'text-gray-600 hover:text-black'
+                    }`}
                 >
                   {item.label}
                 </button>
@@ -273,11 +272,47 @@ function BookingCard({ booking, onViewDetails }) {
 }
 
 function BookingDetailsModal({ loading, data, onClose }) {
+
+  const handleCancel = async () => {
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/booking/${data?.bookingId}/user-cancel?userId=${encodeURIComponent(JSON.parse(localStorage.getItem('user'))?.userId)}`,
+        {
+          method: 'POST',
+        }
+      )
+
+      if (!res.ok) throw new Error()
+
+      toast.success('Booking cancelled successfully')
+
+      onClose()
+
+      // refresh bookings
+      window.location.reload()
+
+    } catch {
+      toast.error('Failed to cancel booking')
+    }
+  }
+
   const salon = data?.salon
   const barber = data?.barber
   const services = Array.isArray(data?.services) ? data.services : []
   const statusLabel = normalizeBookingStatus(data?.bookingStatus)
   const paymentLabel = normalizePaymentStatus(data?.paymentStatus)
+
+  const isPastBooking = (() => {
+    if (!data?.bookingDate) return false
+
+    const bookingDate = new Date(data.bookingDate)
+    const today = new Date()
+
+    bookingDate.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
+
+    return bookingDate < today
+  })()
 
   return (
     <div className='fixed inset-0 z-50 bg-black/30 backdrop-blur-[2px] flex items-center justify-center p-4'>
@@ -482,6 +517,15 @@ function BookingDetailsModal({ loading, data, onClose }) {
                   className='min-w-[140px] rounded-full bg-black hover:bg-gray-900 px-5 py-2 text-sm font-semibold text-white transition'
                 >
                   View Bill
+                </button>
+              )}
+
+              {!isPastBooking && statusLabel !== 'Cancelled' && (
+                <button
+                  onClick={handleCancel}
+                  className='min-w-[140px] rounded-full bg-red-500 hover:bg-red-600 px-5 py-2 text-sm font-semibold text-white transition'
+                >
+                  Cancel Booking
                 </button>
               )}
 
