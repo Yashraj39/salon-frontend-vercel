@@ -9,6 +9,7 @@ import {
     FiTrash2,
     FiToggleLeft,
     FiToggleRight,
+    FiEdit2,
     FiX,
 } from 'react-icons/fi'
 import AdminLayout from '../componenets/AdminLayout'
@@ -51,6 +52,8 @@ export default function AdminCityPage() {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
     const [toggleModalOpen, setToggleModalOpen] = useState(false)
     const [selectedCity, setSelectedCity] = useState(null)
+    const [editModalOpen, setEditModalOpen] = useState(false)
+    const [editCityName, setEditCityName] = useState('')
 
     useEffect(() => {
         if (deleteModalOpen || toggleModalOpen) {
@@ -155,6 +158,19 @@ export default function AdminCityPage() {
         setSelectedCity(null)
     }
 
+    const openEditModal = (city) => {
+        setSelectedCity(city)
+        setEditCityName(city.name || '')
+        setEditModalOpen(true)
+    }
+
+    const closeEditModal = () => {
+        if (actionLoadingId) return
+        setEditModalOpen(false)
+        setSelectedCity(null)
+        setEditCityName('')
+    }
+
     const handleDeleteCity = async () => {
         if (!selectedCity?.id || !adminId) return
 
@@ -235,6 +251,51 @@ export default function AdminCityPage() {
                 .includes(term)
         )
     }, [cities, searchTerm])
+
+    const handleEditCity = async () => {
+        if (!selectedCity?.id || !adminId) return
+
+        if (!editCityName.trim()) {
+            toast.error('City name is required')
+            return
+        }
+
+        try {
+            setActionLoadingId(selectedCity.id)
+
+            const res = await fetch(
+                `${BASE_URL}/api/city/admin/update/${selectedCity.id}?adminId=${adminId}`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: editCityName.trim(),
+                    }),
+                }
+            )
+
+            const contentType = res.headers.get('content-type') || ''
+            const data = contentType.includes('application/json')
+                ? await res.json()
+                : await res.text()
+
+            if (!res.ok) {
+                throw new Error(typeof data === 'string' ? data : 'Failed to update city')
+            }
+
+            toast.success('City updated successfully')
+            closeEditModal()
+            fetchCities()
+        } catch (err) {
+            console.error(err)
+            toast.error(err.message || 'Failed to update city')
+        } finally {
+            setActionLoadingId('')
+        }
+    }
+
 
     const totalCities = cities.length
     const activeCities = cities.filter((city) => city.active).length
@@ -383,6 +444,14 @@ export default function AdminCityPage() {
                                                 </button>
 
                                                 <button
+                                                    onClick={() => openEditModal(city)}
+                                                    disabled={actionLoadingId === city.id}
+                                                    className='w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition disabled:opacity-60'
+                                                >
+                                                    <FiEdit2 size={16} className='text-gray-700' />
+                                                </button>
+
+                                                <button
                                                     onClick={() => openDeleteModal(city)}
                                                     disabled={actionLoadingId === city.id}
                                                     className='w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center hover:bg-red-100 transition disabled:opacity-60'
@@ -482,6 +551,15 @@ export default function AdminCityPage() {
                                                                 <FiToggleLeft className='text-gray-500' size={18} />
                                                             )}
                                                             {city.active ? 'Deactivate' : 'Activate'}
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => openEditModal(city)}
+                                                            disabled={actionLoadingId === city.id}
+                                                            className='h-11 px-4 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-medium transition disabled:opacity-60 flex items-center gap-2'
+                                                        >
+                                                            <FiEdit2 size={16} />
+                                                            Edit
                                                         </button>
 
                                                         <button
@@ -621,6 +699,58 @@ export default function AdminCityPage() {
                                         {actionLoadingId ? 'Deleting...' : 'Delete City'}
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </ModalPortal>
+                )}
+
+                {editModalOpen && (
+                    <ModalPortal>
+                        <div className='fixed inset-0 z-[9999] flex items-center justify-center px-3 py-6 animate-fadeIn'>
+                            <div
+                                className='absolute inset-0 bg-black/55 backdrop-blur-[2px]'
+                                onClick={closeEditModal}
+                            ></div>
+
+                            <div className='relative w-full max-w-md bg-white rounded-[28px] shadow-2xl animate-scaleIn flex flex-col'>
+
+                                <div className='flex justify-between items-center px-6 py-4 border-b'>
+                                    <h2 className='text-xl font-semibold'>Edit City</h2>
+                                    <button onClick={closeEditModal}>
+                                        <FiX size={20} />
+                                    </button>
+                                </div>
+
+                                <div className='px-6 py-5'>
+                                    <input
+                                        type='text'
+                                        value={editCityName}
+                                        onChange={(e) => setEditCityName(e.target.value)}
+                                        className='w-full h-[50px] border rounded-xl px-4'
+                                        placeholder='Enter city name'
+                                    />
+                                </div>
+
+                                <div className='flex justify-end gap-3 px-6 py-4 border-t'>
+                                    <button
+                                        onClick={closeEditModal}
+                                        className='px-4 py-2 border rounded-xl'
+                                    >
+                                        Cancel
+                                    </button>
+
+                                    <button
+                                        onClick={handleEditCity}
+                                        disabled={!!actionLoadingId}
+                                        className={`px-4 py-2 rounded-xl text-white ${actionLoadingId
+                                            ? 'bg-gray-400'
+                                            : 'bg-blue-600 hover:bg-blue-700'
+                                            }`}
+                                    >
+                                        {actionLoadingId ? 'Updating...' : 'Update'}
+                                    </button>
+                                </div>
+
                             </div>
                         </div>
                     </ModalPortal>
