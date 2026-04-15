@@ -273,8 +273,13 @@ function BookingCard({ booking, onViewDetails }) {
 
 function BookingDetailsModal({ loading, data, onClose }) {
 
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [cancelLoading, setCancelLoading] = useState(false)
+
   const handleCancel = async () => {
     try {
+      setCancelLoading(true)
+
       const res = await fetch(
         `${BASE_URL}/api/booking/${data?.bookingId}/user-cancel?userId=${encodeURIComponent(JSON.parse(localStorage.getItem('user'))?.userId)}`,
         {
@@ -286,13 +291,14 @@ function BookingDetailsModal({ loading, data, onClose }) {
 
       toast.success('Booking cancelled successfully')
 
+      setConfirmOpen(false)
       onClose()
 
-      // refresh bookings
       window.location.reload()
-
     } catch {
       toast.error('Failed to cancel booking')
+    } finally {
+      setCancelLoading(false)
     }
   }
 
@@ -524,7 +530,7 @@ function BookingDetailsModal({ loading, data, onClose }) {
                 String(data?.bookingStatus).toUpperCase() !== 'CANCELLED' &&
                 String(data?.bookingStatus).toUpperCase() !== 'COMPLETED' && (
                   <button
-                    onClick={handleCancel}
+                    onClick={() => setConfirmOpen(true)}
                     className='min-w-[140px] rounded-full bg-red-500 hover:bg-red-600 px-5 py-2 text-sm font-semibold text-white transition'
                   >
                     Cancel Booking
@@ -541,6 +547,63 @@ function BookingDetailsModal({ loading, data, onClose }) {
           </>
         )}
       </div>
+      {confirmOpen && (
+        <div className='fixed inset-0 z-[9999] flex items-center justify-center px-4 animate-fadeIn'>
+          <div
+            className='absolute inset-0 bg-black/50 backdrop-blur-[2px]'
+            onClick={() => !cancelLoading && setConfirmOpen(false)}
+          />
+
+          <div className='relative w-full max-w-md bg-white rounded-2xl shadow-xl animate-scaleIn'>
+            <div className='flex justify-between items-center px-6 py-4 border-b'>
+              <h2 className='text-xl font-semibold'>Cancel Booking</h2>
+              <button
+                onClick={() => !cancelLoading && setConfirmOpen(false)}
+                className='w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center'
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className='p-6 space-y-4'>
+              <p className='text-gray-600'>
+                Are you sure you want to cancel this booking?
+              </p>
+
+              <div className='bg-gray-50 p-4 rounded-xl text-sm'>
+                <p><b>Salon:</b> {data?.salon?.name}</p>
+                <p><b>Barber:</b> {data?.barber?.name}</p>
+                <p><b>Date:</b> {formatDate(data?.bookingDate)}</p>
+              </div>
+
+              <div className='bg-red-50 text-red-600 p-3 rounded-xl text-sm'>
+                This action cannot be undone.
+              </div>
+            </div>
+
+            <div className='flex justify-end gap-3 px-6 py-4 border-t'>
+              <button
+                onClick={() => setConfirmOpen(false)}
+                disabled={cancelLoading}
+                className='px-4 py-2 rounded-xl border'
+              >
+                Close
+              </button>
+
+              <button
+                onClick={handleCancel}
+                disabled={cancelLoading}
+                className={`px-4 py-2 rounded-xl text-white ${cancelLoading
+                    ? 'bg-red-300'
+                    : 'bg-red-600 hover:bg-red-700'
+                  }`}
+              >
+                {cancelLoading ? 'Cancelling...' : 'Confirm Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
