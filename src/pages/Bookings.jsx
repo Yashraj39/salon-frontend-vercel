@@ -44,6 +44,9 @@ export default function Bookings() {
   const [detailsLoading, setDetailsLoading] = useState(false)
   const [bookingDetails, setBookingDetails] = useState(null)
 
+  const [deleteLoadingId, setDeleteLoadingId] = useState(null)
+  const [deleteAllLoading, setDeleteAllLoading] = useState(false)
+
   useEffect(() => {
     if (!userId) {
       toast.error('User not found')
@@ -102,10 +105,76 @@ export default function Bookings() {
     }
   }
 
+  const handleDeleteBooking = async (bookingId) => {
+    try {
+      setDeleteLoadingId(bookingId)
+
+      const res = await fetch(
+        `${BASE_URL}/api/booking/${bookingId}/user-delete?userId=${encodeURIComponent(userId)}`,
+        {
+          method: 'DELETE',
+        }
+      )
+
+      if (!res.ok) {
+        const msg = await res.text()
+        throw new Error(msg || 'Failed to delete booking')
+      }
+
+      toast.success('Booking deleted from history')
+
+      setBookings((prev) => prev.filter((b) => b.bookingId !== bookingId))
+
+      if (selectedBookingId === bookingId) {
+        closeModal()
+      }
+    } catch (err) {
+      toast.error(err?.message || 'Failed to delete booking')
+    } finally {
+      setDeleteLoadingId(null)
+    }
+  }
+
+  const handleDeleteAllHistory = async () => {
+    try {
+      setDeleteAllLoading(true)
+
+      const res = await fetch(
+        `${BASE_URL}/api/booking/user-delete-all?userId=${encodeURIComponent(userId)}`,
+        {
+          method: 'DELETE',
+        }
+      )
+
+      if (!res.ok) {
+        const msg = await res.text()
+        throw new Error(msg || 'Failed to delete booking history')
+      }
+
+      const visibleAfterDelete = bookings.filter((b) => !canDeleteBooking(b))
+      const deletedCount = bookings.length - visibleAfterDelete.length
+
+      setBookings(visibleAfterDelete)
+      closeModal()
+
+      if (deletedCount > 0) {
+        toast.success(`Deleted ${deletedCount} booking(s) from history`)
+      } else {
+        toast.error('No completed or cancelled bookings to delete')
+      }
+    } catch (err) {
+      toast.error(err?.message || 'Failed to delete booking history')
+    } finally {
+      setDeleteAllLoading(false)
+    }
+  }
+
   const closeModal = () => {
     setSelectedBookingId(null)
     setBookingDetails(null)
   }
+
+  const hasDeletableBookings = bookings.some((booking) => canDeleteBooking(booking))
 
   return (
     <div className='min-h-screen bg-[#f5f6f8] animate-[fadeIn_.25s_ease]'>
@@ -117,10 +186,11 @@ export default function Bookings() {
               <React.Fragment key={item.value}>
                 <button
                   onClick={() => setFilter(item.value)}
-                  className={`px-6 py-2.5 rounded-full text-sm sm:text-base font-semibold transition ${filter === item.value
-                    ? 'bg-black text-white'
-                    : 'text-gray-600 hover:text-black'
-                    }`}
+                  className={`px-6 py-2.5 rounded-full text-sm sm:text-base font-semibold transition ${
+                    filter === item.value
+                      ? 'bg-black text-white'
+                      : 'text-gray-600 hover:text-black'
+                  }`}
                 >
                   {item.label}
                 </button>
@@ -134,7 +204,21 @@ export default function Bookings() {
             ))}
           </div>
 
-          <div className='flex justify-start lg:justify-end'>
+          <div className='flex flex-col sm:flex-row justify-start lg:justify-end gap-3'>
+            {hasDeletableBookings && (
+              <button
+                onClick={handleDeleteAllHistory}
+                disabled={deleteAllLoading}
+                className={`rounded-lg px-4 py-2.5 text-sm sm:text-base font-semibold transition ${
+                  deleteAllLoading
+                    ? 'bg-red-300 text-white cursor-not-allowed'
+                    : 'bg-red-500 hover:bg-red-600 text-white'
+                }`}
+              >
+                {deleteAllLoading ? 'Deleting...' : 'Delete All History'}
+              </button>
+            )}
+
             <div className='relative'>
               <ArrowUpDown
                 size={16}
@@ -180,6 +264,8 @@ export default function Bookings() {
                 key={booking.bookingId}
                 booking={booking}
                 onViewDetails={() => setSelectedBookingId(booking.bookingId)}
+                onDelete={() => handleDeleteBooking(booking.bookingId)}
+                deleteLoading={deleteLoadingId === booking.bookingId}
               />
             ))}
           </div>
@@ -191,26 +277,32 @@ export default function Bookings() {
           loading={detailsLoading}
           data={bookingDetails}
           onClose={closeModal}
+          onDelete={handleDeleteBooking}
+          deleteLoading={deleteLoadingId === selectedBookingId}
         />
       )}
     </div>
   )
 }
 
-function BookingCard({ booking, onViewDetails }) {
+function BookingCard({ booking, onViewDetails, onDelete, deleteLoading }) {
   const statusLabel = normalizeBookingStatus(booking?.bookingStatus)
   const paymentLabel = normalizePaymentStatus(booking?.paymentStatus)
 
   return (
     <div className='relative bg-white rounded-[30px] px-4 pt-9 pb-5.5 shadow-sm border border-gray-100 overflow-hidden'>
       <div className='absolute top-0 left-0'>
-        <div className={`px-7 py-2 rounded-br-[40px] text-sm font-semibold ${statusClass(statusLabel)}`}>
+        <div
+          className={`px-7 py-2 rounded-br-[40px] text-sm font-semibold ${statusClass(statusLabel)}`}
+        >
           {statusLabel}
         </div>
       </div>
 
       <div className='absolute top-4 right-5'>
-        <span className={`px-4 py-1 rounded-md text-sm font-semibold ${paymentClass(paymentLabel)}`}>
+        <span
+          className={`px-4 py-1 rounded-md text-sm font-semibold ${paymentClass(paymentLabel)}`}
+        >
           {paymentLabel}
         </span>
       </div>
@@ -228,12 +320,16 @@ function BookingCard({ booking, onViewDetails }) {
           </h3>
 
           <p className='text-gray-600 mt-2 text-[15px]'>
-            Customer : <span className='font-medium text-gray-900'>{capitalizeWords(booking?.customerName || '-')}</span>
+            Customer :{' '}
+            <span className='font-medium text-gray-900'>
+              {capitalizeWords(booking?.customerName || '-')}
+            </span>
           </p>
 
           <div className='flex items-center gap-6 mt-2 text-gray-600 text-[15px]'>
             <span>
-              {booking?.serviceCount || 0} {booking?.serviceCount === 1 ? 'service' : 'services'}
+              {booking?.serviceCount || 0}{' '}
+              {booking?.serviceCount === 1 ? 'service' : 'services'}
             </span>
             <span>₹ {Number(booking?.totalPrice || 0).toLocaleString('en-IN')}</span>
           </div>
@@ -256,7 +352,7 @@ function BookingCard({ booking, onViewDetails }) {
         </div>
       </div>
 
-      <div className='mt-4 flex justify-center'>
+      <div className='mt-4 flex flex-wrap justify-center gap-3'>
         <button
           onClick={onViewDetails}
           className='inline-flex items-center gap-3 border border-gray-300 rounded-full px-6 py-2 font-semibold text-gray-900 hover:bg-gray-50 transition'
@@ -266,13 +362,26 @@ function BookingCard({ booking, onViewDetails }) {
             <ArrowRight size={16} />
           </span>
         </button>
+
+        {canDeleteBooking(booking) && (
+          <button
+            onClick={onDelete}
+            disabled={deleteLoading}
+            className={`inline-flex items-center gap-2 rounded-full px-6 py-2 font-semibold transition ${
+              deleteLoading
+                ? 'bg-red-200 text-white cursor-not-allowed'
+                : 'bg-red-500 hover:bg-red-600 text-white'
+            }`}
+          >
+            {deleteLoading ? 'Deleting...' : 'Delete'}
+          </button>
+        )}
       </div>
     </div>
   )
 }
 
-function BookingDetailsModal({ loading, data, onClose }) {
-
+function BookingDetailsModal({ loading, data, onClose, onDelete, deleteLoading }) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [cancelLoading, setCancelLoading] = useState(false)
 
@@ -280,23 +389,29 @@ function BookingDetailsModal({ loading, data, onClose }) {
     try {
       setCancelLoading(true)
 
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+
       const res = await fetch(
-        `${BASE_URL}/api/booking/${data?.bookingId}/user-cancel?userId=${encodeURIComponent(JSON.parse(localStorage.getItem('user'))?.userId)}`,
+        `${BASE_URL}/api/booking/${data?.bookingId}/user-cancel?userId=${encodeURIComponent(
+          user?.userId || ''
+        )}`,
         {
           method: 'POST',
         }
       )
 
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const msg = await res.text()
+        throw new Error(msg || 'Failed to cancel booking')
+      }
 
       toast.success('Booking cancelled successfully')
 
       setConfirmOpen(false)
       onClose()
-
       window.location.reload()
-    } catch {
-      toast.error('Failed to cancel booking')
+    } catch (err) {
+      toast.error(err?.message || 'Failed to cancel booking')
     } finally {
       setCancelLoading(false)
     }
@@ -363,10 +478,18 @@ function BookingDetailsModal({ loading, data, onClose }) {
                     </p>
 
                     <div className='flex flex-wrap items-center gap-3 mt-4'>
-                      <span className={`px-3 py-1 rounded-xl text-sm font-semibold ${statusClass(statusLabel)}`}>
+                      <span
+                        className={`px-3 py-1 rounded-xl text-sm font-semibold ${statusClass(
+                          statusLabel
+                        )}`}
+                      >
                         {statusLabel}
                       </span>
-                      <span className={`px-3 py-1 rounded-xl text-sm font-semibold ${paymentClass(paymentLabel)}`}>
+                      <span
+                        className={`px-3 py-1 rounded-xl text-sm font-semibold ${paymentClass(
+                          paymentLabel
+                        )}`}
+                      >
                         {paymentLabel}
                       </span>
                     </div>
@@ -468,7 +591,10 @@ function BookingDetailsModal({ loading, data, onClose }) {
                       className='flex flex-col sm:flex-row sm:items-center gap-4 border border-gray-200 rounded-2xl p-4'
                     >
                       <img
-                        src={service?.imageUrl || 'https://via.placeholder.com/90x90?text=Service'}
+                        src={
+                          service?.imageUrl ||
+                          'https://via.placeholder.com/90x90?text=Service'
+                        }
                         alt={service?.serviceName || 'Service'}
                         className='w-20 h-20 rounded-2xl object-cover border'
                       />
@@ -491,7 +617,10 @@ function BookingDetailsModal({ loading, data, onClose }) {
               <div className='mt-8 border-t border-gray-200 pt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
                 <div className='flex flex-wrap items-center gap-4 text-gray-700'>
                   <span className='font-medium'>
-                    {data?.serviceCount || services.length} {data?.serviceCount === 1 || services.length === 1 ? 'Service' : 'Services'}
+                    {data?.serviceCount || services.length}{' '}
+                    {data?.serviceCount === 1 || services.length === 1
+                      ? 'Service'
+                      : 'Services'}
                   </span>
                   <span className='hidden sm:inline text-gray-300'>|</span>
                   <span>{data?.totalTime || 0} min</span>
@@ -504,19 +633,25 @@ function BookingDetailsModal({ loading, data, onClose }) {
                 <div className='flex items-center gap-3 text-lg'>
                   <CreditCard size={20} className='text-gray-500' />
                   <span className='text-gray-600'>Payment Status:</span>
-                  <span className={`px-4 py-1 rounded-lg text-sm font-semibold ${paymentClass(paymentLabel)}`}>
+                  <span
+                    className={`px-4 py-1 rounded-lg text-sm font-semibold ${paymentClass(
+                      paymentLabel
+                    )}`}
+                  >
                     {paymentLabel}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className='px-8 pb-8 flex justify-center gap-3'>
+            <div className='px-8 pb-8 flex flex-wrap justify-center gap-3'>
               {String(data?.paymentStatus || '').toUpperCase() === 'PAID' && (
                 <button
                   onClick={() =>
                     window.open(
-                      `${BASE_URL}/api/booking/bill/${data?.bookingId}?userId=${encodeURIComponent(data?.userId)}`,
+                      `${BASE_URL}/api/booking/bill/${data?.bookingId}?userId=${encodeURIComponent(
+                        data?.userId
+                      )}`,
                       '_blank'
                     )
                   }
@@ -537,6 +672,18 @@ function BookingDetailsModal({ loading, data, onClose }) {
                   </button>
                 )}
 
+              {canDeleteBooking(data) && (
+                <button
+                  onClick={() => onDelete(data?.bookingId)}
+                  disabled={deleteLoading}
+                  className={`min-w-[140px] rounded-full px-5 py-2 text-sm font-semibold text-white transition ${
+                    deleteLoading ? 'bg-red-300' : 'bg-red-500 hover:bg-red-600'
+                  }`}
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete History'}
+                </button>
+              )}
+
               <button
                 onClick={onClose}
                 className='min-w-[140px] rounded-full bg-gray-100 hover:bg-gray-200 px-5 py-2 text-sm font-semibold text-gray-900 transition'
@@ -547,6 +694,7 @@ function BookingDetailsModal({ loading, data, onClose }) {
           </>
         )}
       </div>
+
       {confirmOpen && (
         <div className='fixed inset-0 z-[9999] flex items-center justify-center px-4 animate-fadeIn'>
           <div
@@ -571,9 +719,15 @@ function BookingDetailsModal({ loading, data, onClose }) {
               </p>
 
               <div className='bg-gray-50 p-4 rounded-xl text-sm'>
-                <p><b>Salon:</b> {data?.salon?.name}</p>
-                <p><b>Barber:</b> {data?.barber?.name}</p>
-                <p><b>Date:</b> {formatDate(data?.bookingDate)}</p>
+                <p>
+                  <b>Salon:</b> {data?.salon?.name}
+                </p>
+                <p>
+                  <b>Barber:</b> {data?.barber?.name}
+                </p>
+                <p>
+                  <b>Date:</b> {formatDate(data?.bookingDate)}
+                </p>
               </div>
 
               <div className='bg-red-50 text-red-600 p-3 rounded-xl text-sm'>
@@ -593,10 +747,9 @@ function BookingDetailsModal({ loading, data, onClose }) {
               <button
                 onClick={handleCancel}
                 disabled={cancelLoading}
-                className={`px-4 py-2 rounded-xl text-white ${cancelLoading
-                    ? 'bg-red-300'
-                    : 'bg-red-600 hover:bg-red-700'
-                  }`}
+                className={`px-4 py-2 rounded-xl text-white ${
+                  cancelLoading ? 'bg-red-300' : 'bg-red-600 hover:bg-red-700'
+                }`}
               >
                 {cancelLoading ? 'Cancelling...' : 'Confirm Cancel'}
               </button>
@@ -618,7 +771,9 @@ function SectionTitle({ title }) {
 
 function InfoRow({ icon, label, value, bordered = true }) {
   return (
-    <div className={`${bordered ? 'border-b border-gray-200 pb-2' : ''} flex items-center gap-4`}>
+    <div
+      className={`${bordered ? 'border-b border-gray-200 pb-2' : ''} flex items-center gap-4`}
+    >
       <div className='text-gray-500 shrink-0'>{icon}</div>
       <div className='min-w-0'>
         <p className='text-gray-500 text-sm'>{label}</p>
@@ -713,4 +868,9 @@ function capitalizeWords(text) {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+function canDeleteBooking(booking) {
+  const status = String(booking?.bookingStatus || '').toUpperCase()
+  return status === 'COMPLETED' || status === 'CANCELLED'
 }
