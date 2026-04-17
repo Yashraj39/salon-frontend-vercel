@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import Navbar from '../componenets/Navbar'
 
-const BASE_URL = 'https://render-qs89.onrender.com'
+const BASE_URL = 'http://localhost:8080'
 
 const FILTERS = [
   { label: 'All Bookings', value: 'ALL' },
