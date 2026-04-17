@@ -326,12 +326,38 @@ export default function Navbar() {
     return () => document.removeEventListener('click', handleOutside)
   }, [])
 
+  const parseNotificationDate = (dateValue) => {
+    if (!dateValue) return null
+
+    if (dateValue instanceof Date) return dateValue
+
+    if (typeof dateValue === 'string') {
+      let normalized = dateValue.trim()
+
+      // If backend sends date without timezone like 2026-04-17T10:30:00
+      // treat it as UTC because Render server likely created it in UTC
+      const hasTimezone = /[zZ]|[+\-]\d{2}:\d{2}$/.test(normalized)
+
+      if (!hasTimezone) {
+        normalized = `${normalized}Z`
+      }
+
+      const parsed = new Date(normalized)
+      return isNaN(parsed.getTime()) ? null : parsed
+    }
+
+    const parsed = new Date(dateValue)
+    return isNaN(parsed.getTime()) ? null : parsed
+  }
+
   const formatNotificationTime = (dateValue) => {
-    if (!dateValue) return ''
+    const created = parseNotificationDate(dateValue)
+    if (!created) return ''
 
     const now = new Date()
-    const created = new Date(dateValue)
-    const diffMs = now - created
+    const diffMs = now.getTime() - created.getTime()
+
+    if (diffMs < 0) return 'Just now'
 
     const seconds = Math.floor(diffMs / 1000)
     const minutes = Math.floor(seconds / 60)
@@ -344,7 +370,11 @@ export default function Navbar() {
     if (days === 1) return 'Yesterday'
     if (days < 7) return `${days} days ago`
 
-    return created.toLocaleDateString()
+    return created.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
   }
 
   const markNotificationAsRead = async (notificationId) => {
@@ -492,9 +522,9 @@ export default function Navbar() {
       if (!uploadRes.ok) {
         throw new Error(
           uploadData?.message ||
-            uploadData?.error ||
-            uploadText ||
-            `Image upload failed (${uploadRes.status})`
+          uploadData?.error ||
+          uploadText ||
+          `Image upload failed (${uploadRes.status})`
         )
       }
 
@@ -534,9 +564,9 @@ export default function Navbar() {
       if (!applyRes.ok) {
         throw new Error(
           applyData?.message ||
-            applyData?.error ||
-            applyText ||
-            `Application failed (${applyRes.status})`
+          applyData?.error ||
+          applyText ||
+          `Application failed (${applyRes.status})`
         )
       }
 
@@ -597,11 +627,10 @@ export default function Navbar() {
           <button
             type='button'
             onClick={() => setOwnerDropdownOpen((prev) => !prev)}
-            className={`group flex items-center justify-between min-w-[235px] h-[50px] pl-4 pr-3 rounded-xl border transition-all bg-white ${
-              ownerDropdownOpen
+            className={`group flex items-center justify-between min-w-[235px] h-[50px] pl-4 pr-3 rounded-xl border transition-all bg-white ${ownerDropdownOpen
                 ? 'border-[#cfd6e4] shadow-[0_12px_30px_rgba(17,24,39,0.10)]'
                 : 'border-[#d8dee8] shadow-[0_4px_14px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)]'
-            }`}
+              }`}
           >
             <div className='flex items-center justify-center w-8 h-8 rounded-full bg-[#f3f6fb] text-[#344054] border border-[#e4e7ec]'>
               <FiUser className='text-[16px]' />
@@ -615,18 +644,16 @@ export default function Navbar() {
             </div>
 
             <FiChevronDown
-              className={`text-[18px] text-[#667085] transition-transform duration-200 ${
-                ownerDropdownOpen ? 'rotate-180' : ''
-              }`}
+              className={`text-[18px] text-[#667085] transition-transform duration-200 ${ownerDropdownOpen ? 'rotate-180' : ''
+                }`}
             />
           </button>
 
           <div
-            className={`absolute right-0 top-[58px] w-[290px] origin-top-right transition-all duration-200 z-50 ${
-              ownerDropdownOpen
+            className={`absolute right-0 top-[58px] w-[290px] origin-top-right transition-all duration-200 z-50 ${ownerDropdownOpen
                 ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
                 : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
-            }`}
+              }`}
           >
             <div className='rounded-2xl border border-[#dde3ec] bg-white shadow-[0_20px_45px_rgba(15,23,42,0.14)] p-3'>
               <div className='mb-3 rounded-xl border border-[#e6eaf0] bg-[#f8fafc] px-4 py-3'>
@@ -775,21 +802,19 @@ export default function Navbar() {
                         className='group relative pb-2 text-center'
                       >
                         <span
-                          className={`text-[15px] font-semibold transition-colors duration-300 ${
-                            location.pathname === '/success' || location.pathname === '/home'
+                          className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/success' || location.pathname === '/home'
                               ? 'text-[#111827]'
                               : 'text-[#667085] group-hover:text-[#111827]'
-                          }`}
+                            }`}
                         >
                           Home
                         </span>
 
                         <span
-                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
-                            location.pathname === '/success' || location.pathname === '/home'
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/success' || location.pathname === '/home'
                               ? 'opacity-100 scale-x-100'
                               : 'opacity-0 scale-x-0'
-                          }`}
+                            }`}
                         />
                       </button>
 
@@ -799,21 +824,19 @@ export default function Navbar() {
                         className='group relative pb-2 text-center'
                       >
                         <span
-                          className={`text-[15px] font-semibold transition-colors duration-300 ${
-                            location.pathname === '/about'
+                          className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/about'
                               ? 'text-[#111827]'
                               : 'text-[#667085] group-hover:text-[#111827]'
-                          }`}
+                            }`}
                         >
                           About
                         </span>
 
                         <span
-                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
-                            location.pathname === '/about'
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/about'
                               ? 'opacity-100 scale-x-100'
                               : 'opacity-0 scale-x-0'
-                          }`}
+                            }`}
                         />
                       </button>
 
@@ -823,21 +846,19 @@ export default function Navbar() {
                         className='group relative pb-2 text-center'
                       >
                         <span
-                          className={`text-[15px] font-semibold transition-colors duration-300 ${
-                            location.pathname === '/contact'
+                          className={`text-[15px] font-semibold transition-colors duration-300 ${location.pathname === '/contact'
                               ? 'text-[#111827]'
                               : 'text-[#667085] group-hover:text-[#111827]'
-                          }`}
+                            }`}
                         >
                           Contact
                         </span>
 
                         <span
-                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
-                            location.pathname === '/contact'
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/contact'
                               ? 'opacity-100 scale-x-100'
                               : 'opacity-0 scale-x-0'
-                          }`}
+                            }`}
                         />
                       </button>
 
@@ -847,21 +868,19 @@ export default function Navbar() {
                         className='group relative pb-2 text-center'
                       >
                         <span
-                          className={`text-[15px] font-semibold whitespace-nowrap transition-colors duration-300 ${
-                            location.pathname === '/bookings'
+                          className={`text-[15px] font-semibold whitespace-nowrap transition-colors duration-300 ${location.pathname === '/bookings'
                               ? 'text-[#111827]'
                               : 'text-[#667085] group-hover:text-[#111827]'
-                          }`}
+                            }`}
                         >
                           My Bookings
                         </span>
 
                         <span
-                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${
-                            location.pathname === '/bookings'
+                          className={`absolute left-1/2 bottom-0 h-[2px] w-[42px] -translate-x-1/2 rounded-full bg-[#111827] transition-all duration-300 ${location.pathname === '/bookings'
                               ? 'opacity-100 scale-x-100'
                               : 'opacity-0 scale-x-0'
-                          }`}
+                            }`}
                         />
                       </button>
                     </div>
@@ -886,9 +905,8 @@ export default function Navbar() {
                       className='hidden sm:flex relative h-10 w-10 items-center justify-center rounded-full border border-[#e6eaf0] bg-white text-[#344054] shadow-sm hover:bg-[#f8fafc] hover:shadow-md transition-all duration-200'
                     >
                       <FiBell
-                        className={`text-[19px] transition-transform duration-200 ${
-                          showNotificationDropdown ? 'scale-110' : ''
-                        }`}
+                        className={`text-[19px] transition-transform duration-200 ${showNotificationDropdown ? 'scale-110' : ''
+                          }`}
                       />
 
                       {unreadCount > 0 && (
@@ -902,11 +920,10 @@ export default function Navbar() {
                     </button>
 
                     <div
-                      className={`absolute right-0 top-12 w-[380px] origin-top-right rounded-3xl border border-[#e5e7eb] bg-white/95 backdrop-blur-xl shadow-[0_24px_60px_rgba(15,23,42,0.18)] z-50 overflow-hidden transition-all duration-300 ${
-                        showNotificationDropdown
+                      className={`absolute right-0 top-12 w-[380px] origin-top-right rounded-3xl border border-[#e5e7eb] bg-white/95 backdrop-blur-xl shadow-[0_24px_60px_rgba(15,23,42,0.18)] z-50 overflow-hidden transition-all duration-300 ${showNotificationDropdown
                           ? 'opacity-100 visible translate-y-0 scale-100'
                           : 'opacity-0 invisible -translate-y-2 scale-95 pointer-events-none'
-                      }`}
+                        }`}
                     >
                       <div className='border-b border-[#eef2f6] bg-gradient-to-r from-[#f8fafc] to-white px-5 py-4'>
                         <div className='flex items-center justify-between'>
@@ -952,11 +969,10 @@ export default function Navbar() {
                               <div
                                 key={item.id}
                                 onClick={() => markNotificationAsRead(item.id)}
-                                className={`group relative cursor-pointer overflow-hidden rounded-2xl border px-4 py-3 transition-all duration-200 ${
-                                  item.isRead
+                                className={`group relative cursor-pointer overflow-hidden rounded-2xl border px-4 py-3 transition-all duration-200 ${item.isRead
                                     ? 'border-[#edf1f5] bg-white hover:bg-[#fafbfc] hover:shadow-sm'
                                     : 'border-blue-100 bg-gradient-to-r from-blue-50 to-white shadow-[0_6px_18px_rgba(59,130,246,0.08)] hover:shadow-[0_10px_24px_rgba(59,130,246,0.12)]'
-                                }`}
+                                  }`}
                                 style={{
                                   animation: `fadeSlideIn 220ms ease ${index * 40}ms both`,
                                 }}
@@ -968,11 +984,10 @@ export default function Navbar() {
                                 <div className='flex items-start justify-between gap-3'>
                                   <div className='flex min-w-0 flex-1 gap-3'>
                                     <div
-                                      className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                                        item.isRead
+                                      className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${item.isRead
                                           ? 'bg-[#f2f4f7] text-[#667085]'
                                           : 'bg-blue-100 text-blue-700'
-                                      }`}
+                                        }`}
                                     >
                                       <FiBell className='text-[16px]' />
                                     </div>
@@ -1056,10 +1071,9 @@ export default function Navbar() {
                         fixed md:absolute top-20 md:top-12 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 md:right-0
                         w-[95%] max-w-sm md:w-[340px] rounded-2xl border border-[#dde3ec] bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.14)] z-50
                         transition-all duration-300 ease-in-out
-                        ${
-                          showCartDropdown
-                            ? 'opacity-100 visible translate-y-0'
-                            : 'opacity-0 invisible translate-y-3'
+                        ${showCartDropdown
+                          ? 'opacity-100 visible translate-y-0'
+                          : 'opacity-0 invisible translate-y-3'
                         }
                         md:opacity-0 md:invisible md:translate-y-3
                         md:group-hover:opacity-100 md:group-hover:visible md:group-hover:translate-y-0
@@ -1297,11 +1311,10 @@ export default function Navbar() {
                     setAgreed(false)
                   }
                 }}
-                className={`w-full rounded-xl py-3 font-semibold transition ${
-                  agreed
+                className={`w-full rounded-xl py-3 font-semibold transition ${agreed
                     ? 'bg-gradient-to-r from-[#111827] to-[#1f2937] text-white'
                     : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                }`}
+                  }`}
               >
                 Continue
               </button>
@@ -1369,9 +1382,8 @@ export default function Navbar() {
                     e.preventDefault()
                   }
                 }}
-                className={`w-full rounded-xl border px-4 py-3 outline-none focus:border-[#243B63] ${
-                  phoneError ? 'border-red-500' : 'border-[#d8dee8]'
-                }`}
+                className={`w-full rounded-xl border px-4 py-3 outline-none focus:border-[#243B63] ${phoneError ? 'border-red-500' : 'border-[#d8dee8]'
+                  }`}
                 placeholder='Enter 10 digit mobile number'
               />
 
@@ -1398,9 +1410,8 @@ export default function Navbar() {
                       setEmailError('')
                     }
                   }}
-                  className={`w-full rounded-xl border px-4 py-3 outline-none focus:border-[#243B63] ${
-                    emailError ? 'border-red-500' : 'border-[#d8dee8]'
-                  }`}
+                  className={`w-full rounded-xl border px-4 py-3 outline-none focus:border-[#243B63] ${emailError ? 'border-red-500' : 'border-[#d8dee8]'
+                    }`}
                 />
                 {emailError && (
                   <p className='mt-2 text-sm text-red-600'>{emailError}</p>
@@ -1431,9 +1442,8 @@ export default function Navbar() {
 
                 <div
                   onClick={() => fileInputRef.current.click()}
-                  className={`flex h-56 cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed bg-[#fafbfd] hover:bg-[#f6f8fb] transition ${
-                    fileError ? 'border-red-400' : 'border-[#d8dee8]'
-                  }`}
+                  className={`flex h-56 cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed bg-[#fafbfd] hover:bg-[#f6f8fb] transition ${fileError ? 'border-red-400' : 'border-[#d8dee8]'
+                    }`}
                 >
                   {aadharFile ? (
                     <img
