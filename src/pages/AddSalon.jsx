@@ -880,10 +880,10 @@ export default function ManageSalons() {
                         onChange={(e) => setDocumentType(e.target.value)}
                         className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400 transition-all duration-300'
                       >
+                        <option value='GST_CERTIFICATE'>GST Certificate</option>
                         <option value='ELECTRICITY_BILL'>Electricity Bill</option>
                         <option value='GUMASTA_LICENSE'>Gumasta License</option>
                         <option value='RENT_AGREEMENT'>Rent Agreement</option>
-                        <option value='GST_CERTIFICATE'>GST Certificate</option>
                         <option value='MUNICIPAL_TRADE_LICENSE'>Municipal Trade License</option>
                       </select>
                     </div>
