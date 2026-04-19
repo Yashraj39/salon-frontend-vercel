@@ -430,8 +430,8 @@ export default function ManageSalons() {
                     key={salon.id}
                     onClick={() => handleSelectSalon(salon)}
                     className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${selectedSalon?.id === salon.id
-                        ? 'bg-black text-white border-black shadow-md'
-                        : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
+                      ? 'bg-black text-white border-black shadow-md'
+                      : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
                       }`}
                     style={{ animationDelay: `${index * 40}ms` }}
                   >
@@ -457,8 +457,8 @@ export default function ManageSalons() {
 
                             <div
                               className={`pointer-events-none absolute left-1/2 top-[-38px] -translate-x-1/2 whitespace-nowrap rounded-lg px-2.5 py-1.5 text-[11px] font-medium shadow-md opacity-0 group-hover:opacity-100 transition ${selectedSalon?.id === salon.id
-                                  ? 'bg-white text-gray-900'
-                                  : 'bg-gray-900 text-white'
+                                ? 'bg-white text-gray-900'
+                                : 'bg-gray-900 text-white'
                                 }`}
                             >
                               {String(salon?.verificationStatus || '').toUpperCase() === 'APPROVED'
@@ -470,8 +470,8 @@ export default function ManageSalons() {
 
                         <p
                           className={`text-sm mt-1 ${selectedSalon?.id === salon.id
-                              ? 'text-white/80'
-                              : 'text-gray-500'
+                            ? 'text-white/80'
+                            : 'text-gray-500'
                             }`}
                         >
                           {salon.city || 'No city'}
@@ -485,8 +485,8 @@ export default function ManageSalons() {
                           handleDeleteClick(salon)
                         }}
                         className={`p-2 rounded-xl transition shrink-0 ${selectedSalon?.id === salon.id
-                            ? 'hover:bg-white/10 text-white'
-                            : 'hover:bg-red-50 text-red-500 hover:text-red-600'
+                          ? 'hover:bg-white/10 text-white'
+                          : 'hover:bg-red-50 text-red-500 hover:text-red-600'
                           }`}
                       >
                         <Trash2 size={18} />
@@ -667,8 +667,8 @@ export default function ManageSalons() {
                   onClick={handleUpdateSalon}
                   disabled={isUpdatingSalon || !hasSalonChanged}
                   className={`px-6 py-3 rounded-2xl transition-all duration-300 text-white font-medium ${isUpdatingSalon || !hasSalonChanged
-                      ? 'bg-gray-300 cursor-not-allowed'
-                      : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
                     }`}
                 >
                   {isUpdatingSalon ? 'Saving Changes...' : 'Save Changes'}
@@ -880,10 +880,11 @@ export default function ManageSalons() {
                         onChange={(e) => setDocumentType(e.target.value)}
                         className='w-full border border-gray-200 px-4 py-3 rounded-2xl outline-none focus:border-gray-400 transition-all duration-300'
                       >
+                        <option value='ELECTRICITY_BILL'>Electricity Bill</option>
+                        <option value='GUMASTA_LICENSE'>Gumasta License</option>
+                        <option value='RENT_AGREEMENT'>Rent Agreement</option>
                         <option value='GST_CERTIFICATE'>GST Certificate</option>
-                        <option value='SHOP_LICENSE'>Shop License</option>
-                        <option value='FSSAI_LICENSE'>FSSAI License</option>
-                        <option value='OTHER'>Other</option>
+                        <option value='MUNICIPAL_TRADE_LICENSE'>Municipal Trade License</option>
                       </select>
                     </div>
 
@@ -910,8 +911,8 @@ export default function ManageSalons() {
                     onClick={handleAddSalon}
                     disabled={isAddingSalon}
                     className={`px-5 py-3 text-white rounded-2xl transition-all duration-300 ${isAddingSalon
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-black hover:bg-gray-800 hover:-translate-y-0.5 shadow-sm hover:shadow-md'
                       }`}
                   >
                     {isAddingSalon ? 'Adding Salon...' : 'Add Salon'}
