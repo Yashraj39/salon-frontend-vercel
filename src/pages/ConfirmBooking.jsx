@@ -163,6 +163,110 @@ export default function Checkout() {
   const totalTime =
     cart?.items?.reduce((sum, item) => sum + (Number(item.time) || 0), 0) || 0
 
+
+  //for activating live razorpay payment
+  // const confirmBooking = async () => {
+  //   if (!selectedBarber) return toast.error('Please select a barber')
+  //   if (!selectedSlot) return toast.error('Please select a time slot')
+  //   if (!selectedDate) return toast.error('Please select a date')
+
+  //   try {
+  //     setPayLoading(true)
+
+  //     const orderRes = await fetch(
+  //       'https://render-qs89.onrender.com/api/payment/create-order',
+  //       {
+  //         method: 'POST',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify({
+  //           userId,
+  //           salonId,
+  //           customerName: selectedCustomerName.trim(),
+  //         }),
+  //       }
+  //     )
+
+  //     if (!orderRes.ok) {
+  //       const t = await orderRes.text()
+  //       setPayLoading(false)
+  //       return toast.error(t || 'Cannot create payment order')
+  //     }
+
+  //     const orderData = await orderRes.json()
+
+  //     const options = {
+  //       key: orderData.key,
+  //       amount: orderData.amount,
+  //       currency: orderData.currency,
+  //       name: 'SlotMyStyle',
+  //       description: 'Salon Booking Payment',
+  //       order_id: orderData.orderId,
+
+  //       handler: async function (response) {
+  //         try {
+  //           const verifyRes = await fetch(
+  //             'https://render-qs89.onrender.com/api/payment/verify-and-confirm',
+  //             {
+  //               method: 'POST',
+  //               headers: { 'Content-Type': 'application/json' },
+  //               body: JSON.stringify({
+  //                 userId,
+  //                 salonId,
+  //                 barberId: selectedBarber,
+  //                 customerName: selectedCustomerName.trim(),
+  //                 bookingDate: selectedDate,
+  //                 startTime: selectedSlot.startTime,
+  //                 endTime: selectedSlot.endTime,
+  //                 razorpayOrderId: response.razorpay_order_id,
+  //                 razorpayPaymentId: response.razorpay_payment_id,
+  //                 razorpaySignature: response.razorpay_signature,
+  //               }),
+  //             }
+  //           )
+
+  //           if (!verifyRes.ok) {
+  //             const err = await verifyRes.text()
+  //             setPayLoading(false)
+  //             return toast.error(err || 'Payment verified but booking failed')
+  //           }
+
+  //           setPayLoading(false)
+  //           toast.success('Payment Successful & Booking Confirmed')
+  //           navigate('/success')
+  //         } catch (e) {
+  //           console.error(e)
+  //           setPayLoading(false)
+  //           toast.error('Payment done but confirm failed')
+  //         }
+  //       },
+
+  //       prefill: {
+  //         name: user?.name || '',
+  //         email: user?.email || '',
+  //       },
+
+  //       theme: { color: '#0B132B' },
+
+  //       modal: {
+  //         ondismiss: function () {
+  //           setPayLoading(false)
+  //         },
+  //       },
+  //     }
+
+  //     const rzp = new window.Razorpay(options)
+  //     rzp.on('payment.failed', function () {
+  //       setPayLoading(false)
+  //       toast.error('Payment Failed')
+  //     })
+  //     rzp.open()
+  //   } catch (err) {
+  //     console.error(err)
+  //     setPayLoading(false)
+  //     toast.error('Something went wrong')
+  //   }
+  // }
+
   const confirmBooking = async () => {
     if (!selectedBarber) return toast.error('Please select a barber')
     if (!selectedSlot) return toast.error('Please select a time slot')
@@ -171,97 +275,42 @@ export default function Checkout() {
     try {
       setPayLoading(true)
 
-      const orderRes = await fetch(
-        'https://render-qs89.onrender.com/api/payment/create-order',
+      const bookingRes = await fetch(
+        'https://render-qs89.onrender.com/api/booking/confirm',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             userId,
             salonId,
+            barberId: selectedBarber,
             customerName: selectedCustomerName.trim(),
+            bookingDate: selectedDate,
+            startTime: selectedSlot.startTime,
+            endTime: selectedSlot.endTime,
           }),
         }
       )
 
-      if (!orderRes.ok) {
-        const t = await orderRes.text()
+      if (!bookingRes.ok) {
+        const errorText = await bookingRes.text()
         setPayLoading(false)
-        return toast.error(t || 'Cannot create payment order')
+        return toast.error(errorText || 'Booking failed')
       }
 
-      const orderData = await orderRes.json()
+      await bookingRes.json()
 
-      const options = {
-        key: orderData.key,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'SlotMyStyle',
-        description: 'Salon Booking Payment',
-        order_id: orderData.orderId,
+      setPayLoading(false)
 
-        handler: async function (response) {
-          try {
-            const verifyRes = await fetch(
-              'https://render-qs89.onrender.com/api/payment/verify-and-confirm',
-              {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  userId,
-                  salonId,
-                  barberId: selectedBarber,
-                  customerName: selectedCustomerName.trim(),
-                  bookingDate: selectedDate,
-                  startTime: selectedSlot.startTime,
-                  endTime: selectedSlot.endTime,
-                  razorpayOrderId: response.razorpay_order_id,
-                  razorpayPaymentId: response.razorpay_payment_id,
-                  razorpaySignature: response.razorpay_signature,
-                }),
-              }
-            )
+      toast.success('Booking Confirmed')
 
-            if (!verifyRes.ok) {
-              const err = await verifyRes.text()
-              setPayLoading(false)
-              return toast.error(err || 'Payment verified but booking failed')
-            }
-
-            setPayLoading(false)
-            toast.success('Payment Successful & Booking Confirmed')
-            navigate('/success')
-          } catch (e) {
-            console.error(e)
-            setPayLoading(false)
-            toast.error('Payment done but confirm failed')
-          }
-        },
-
-        prefill: {
-          name: user?.name || '',
-          email: user?.email || '',
-        },
-
-        theme: { color: '#0B132B' },
-
-        modal: {
-          ondismiss: function () {
-            setPayLoading(false)
-          },
-        },
-      }
-
-      const rzp = new window.Razorpay(options)
-      rzp.on('payment.failed', function () {
-        setPayLoading(false)
-        toast.error('Payment Failed')
-      })
-      rzp.open()
+      navigate('/success')
     } catch (err) {
       console.error(err)
       setPayLoading(false)
-      toast.error('Something went wrong')
+      toast.error('Something went wrong while confirming booking')
     }
   }
 
@@ -510,11 +559,10 @@ export default function Checkout() {
                         setSelectedBarber(b.id || b._id)
                         setSelectedSlot(null)
                       }}
-                      className={`block w-full border p-3 rounded-2xl text-left transition-all duration-300 ${
-                        selectedBarber === (b.id || b._id)
-                          ? 'bg-black text-white border-black shadow-md'
-                          : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                      }`}
+                      className={`block w-full border p-3 rounded-2xl text-left transition-all duration-300 ${selectedBarber === (b.id || b._id)
+                        ? 'bg-black text-white border-black shadow-md'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                        }`}
                     >
                       {b.name}
                     </button>
@@ -560,17 +608,15 @@ export default function Checkout() {
                             key={i}
                             type='button'
                             onClick={() => setSelectedSlot(slot)}
-                            className={`px-3 py-2.5 rounded-xl text-sm border transition-all duration-300 ${
-                              isSelected
-                                ? 'bg-[#0B132B] text-white border-[#0B132B]'
-                                : 'bg-white border-gray-200 hover:bg-gray-100'
-                            }`}
+                            className={`px-3 py-2.5 rounded-xl text-sm border transition-all duration-300 ${isSelected
+                              ? 'bg-[#0B132B] text-white border-[#0B132B]'
+                              : 'bg-white border-gray-200 hover:bg-gray-100'
+                              }`}
                           >
                             <div className='font-semibold'>{start}</div>
                             <div
-                              className={`${
-                                isSelected ? 'text-white/80' : 'text-gray-500'
-                              } text-xs`}
+                              className={`${isSelected ? 'text-white/80' : 'text-gray-500'
+                                } text-xs`}
                             >
                               to {end}
                             </div>
@@ -607,24 +653,30 @@ export default function Checkout() {
                   !(cart?.totalPrice > 0)
                 }
                 onClick={confirmBooking}
-                className={`w-full py-3.5 rounded-2xl shadow-md text-base font-semibold transition-all duration-300 ${
-                  payLoading ||
+                className={`w-full py-3.5 rounded-2xl shadow-md text-base font-semibold transition-all duration-300 ${payLoading ||
                   !selectedDate ||
                   !selectedBarber ||
                   !selectedSlot ||
                   !(cart?.totalPrice > 0)
-                    ? 'bg-gray-300 text-white cursor-not-allowed'
-                    : 'bg-[#0B132B] text-white cursor-pointer hover:opacity-95'
-                }`}
+                  ? 'bg-gray-300 text-white cursor-not-allowed'
+                  : 'bg-[#0B132B] text-white cursor-pointer hover:opacity-95'
+                  }`}
               >
-                {payLoading
+
+              //for activating razorpay live payment
+                {/* {payLoading
                   ? 'Opening Payment...'
-                  : `Proceed to Payment • ₹ ${cart?.totalPrice || 0}`}
+                  : `Proceed to Payment • ₹ ${cart?.totalPrice || 0}`} */}
+
+                {payLoading
+                  ? 'Confirming Booking...'
+                  : `Confirm Booking • ₹ ${cart?.totalPrice || 0}`}
               </button>
 
               <p className='text-xs text-gray-500 text-center'>
-                Secure checkout powered by Razorpay. You can pay via UPI,
-                Netbanking, or Wallet.
+                {/* Secure checkout powered by Razorpay. You can pay via UPI,
+                Netbanking, or Wallet. */}
+                Payment is currently disabled. Your booking will be confirmed without payment.
               </p>
             </div>
           </div>
