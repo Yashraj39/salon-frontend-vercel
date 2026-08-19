@@ -663,7 +663,7 @@ export default function Checkout() {
                   }`}
               >
 
-              //for activating razorpay live payment
+              {/* for activating razorpay live payment */}
                 {/* {payLoading
                   ? 'Opening Payment...'
                   : `Proceed to Payment • ₹ ${cart?.totalPrice || 0}`} */}
